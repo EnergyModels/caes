@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-attributes_time_series = ['pwr', 'pwr_curtail', 'heat',
-                          'm_air', 'm_water', 'm_fuel',
+attributes_time_series = ['pwr_request', 'pwr_input', 'pwr_output', 'heat_input',
+                          'm_air', 'm_water',
                           'P_store', 'T_store']
 
 class CAES:
@@ -43,10 +43,11 @@ class CAES:
 
     def charge(self, s):
         # update for each caes architecture
-        pwr_request = s['pwr_request']
+        pwr_request = abs(s['pwr_request'])
 
         # calculate
-        s['pwr_actual'] = 0.0
+        s['pwr_input'] = pwr_request
+        s['pwr_output'] = 0.0
         s['heat_input'] = 0.0
         s['m_air'] = 0.0
         s['m_water'] = 0.0
@@ -54,10 +55,11 @@ class CAES:
 
     def discharge(self, s):
         # update for each caes architecture
-        pwr_request = s['pwr_request']
+        pwr_request = abs(s['pwr_request'])
 
         # calculate
-        s['pwr_actual'] = 0.0
+        s['pwr_input'] = 0.0
+        s['pwr_output'] = pwr_request
         s['heat_input'] = 0.0
         s['m_air'] = 0.0
         s['m_water'] = 0.0
@@ -83,7 +85,6 @@ class CAES:
         # -----------------------
         # check for errors
         # -----------------------
-        error_msg = ''
         # check storage pressure against limits
         if self.P_store < self.P_store_min:
             msg = 'Error: P_store < P_store_min'
@@ -111,16 +112,16 @@ class CAES:
         pwr_output_total = 0.0 # TODO
         heat_input_total =  0.0 # TODO
         water_input_total = 0.0 # TODO
-        fuel_input_total = heat_input_total / self.fuel_HHV
-        CO2_fuel = m_fuel * self.fuel_CO2
+        fuel_input_total = heat_input_total / self.fuel_HHV # kg
+        CO2_fuel = fuel_input_total * self.fuel_CO2 # ton
         RTE = pwr_output_total / (pwr_input_total + heat_input_total)
 
         # create series to hold results
         entries = ['RTE', 'CO2', 'fuel', 'water']
         results = pd.Series(index=entries)
         results['RTE'] = RTE
-        results['fuel'] = fuel_input_total
-        results['CO2'] = CO2_fuel
-        results['water'] = water_input_total
+        results['fuel_per_MWh'] = fuel_input_total / pwr_output_total
+        results['CO2_per_MWh'] = CO2_fuel / pwr_output_total
+        results['water_per_MWh'] = water_input_total / pwr_output_total
 
         return results
