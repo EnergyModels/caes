@@ -101,7 +101,7 @@ class CAES:
         # -----------------------
         s['P_store'] = self.P_store
         s['T_store'] = self.T_store
-        self.data
+        self.data = self.data.append(s, ignore_index=True)
 
 
     def analyze(self):
