@@ -7,9 +7,10 @@ from math import log
 class CAES:
 
     def __init__(self, delta_t=0.1,
-                 T_atm=298.15, P_atm=101.325,
-                 T_water=298.15, P_water=101.325,
+                 T_atm=298.15, p_atm=101.325,
+                 T_water=298.15, p_water=101.325,
                  fuel_HHV=1.0, fuel_CO2=1.0,  # TODO update
+                 eta_mech=0.95, eta_gen=0.975, eta_storage=0.985,
                  T_store_init=298.15, P_store_init=1.0, P_store_min=1.0, P_store_max=10.0,
                  V_res=1e3, phi=0.15, Slr=0.8):
 
@@ -24,18 +25,23 @@ class CAES:
         self.air = "Air.mix"  # CoolProp fluid name [-]
         self.M = 28.97  # molecular weight [kg/kmol]
         self.T_atm = T_atm  # K
-        self.p_atm = P_atm  # [kPa]
+        self.p_atm = p_atm  # [kPa]
 
         # water properties (used for cooling)
         self.water = 'Water'  # CoolProp fluid name [-]
         self.T_water = T_water  # [K]
-        self.P_water = P_water  # [kPa]
+        self.p_water = p_water  # [kPa]
         self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water,
                                   self.water)  # constant pressure specific heat [J/kg-K]
 
         # fuel properties (default values are for natural gas)
-        self.fuel_HHV = fuel_HHV
-        self.fuel_CO2 = fuel_CO2
+        self.fuel_HHV = fuel_HHV  # [kWh/kg]
+        self.fuel_CO2 = fuel_CO2  # [ton/kg]
+
+        # efficiencies
+        self.eta_mech = eta_mech  # mechanical [fr]
+        self.eta_gen = eta_gen  # generator [fr]
+        self.eta_storage = eta_storage  # storage round-trip-efficiency [fr]
 
         # storage properties
         self.p_store_min = P_store_min  # [kPa]
@@ -54,9 +60,11 @@ class CAES:
         self.error_msg = ''
 
         # dataframe to store data
-        self.attributes_time_series = ['pwr',
+        self.attributes_time_series = ['pwr', 'energy_in', 'energy_out'
+                                                           'work_per_kg', 'total_work_per_kg', 'water_per_kg',
+                                       'fuel_per_kg',
                                        'm_air', 'm_water', 'm_fuel',
-                                       'P_store', 'T_store', 'm_store',
+                                       'p_store', 'T_store', 'm_store',
                                        'error_msg']
         self.data = pd.DataFrame(data=0.0, columns=self.attributes_time_series)
 
@@ -67,125 +75,157 @@ class CAES:
 
         Designed to be kept the same for each caes architecutre
 
-        :param pwr: power input (-) or output (+)
+        :param pwr: power input (-) or output (+) [kW]
         :return:
         """
         # clear warning messages from previous time step
         self.error_msg = ''
 
-        # create series to hold results from current time step
+        # create series to hold results from this time step
         s = pd.Series(data=0.0, index=self.attributes_time_series)
         s['pwr'] = pwr
 
         # Charge/discharge
         if pwr < 0.0:  # (charge)
-            s = self.charge(s)
+            s['energy_in'] = pwr * self.delta_t  # [kWh]
+
+            # calculate compressor performance
+            s = self.charge_perf(s)
+
+            # apply mechanical, generator and storage efficienies
+            s['total_work_per_kg'] = s['work_per_kg'] / self.eta_mech / self.eta_gen / self.eta_storage ** 0.5
 
         elif pwr > 0.0:  # (discharge)
-            s = self.discharge(s)
+            s['energy_out'] = pwr * self.delta_t  # [kWh]
+
+            # calculate expander performance
+            s = self.discharge_perf(s)
+
+            # apply mechanical, generator and storage efficienies
+            s['total_work_per_kg'] = s['work_per_kg'] * self.eta_mech * self.eta_gen * self.eta_storage ** 0.5
+
+        # calculate mass change per time step
+        s['m_air'] = pwr * self.delta_t * 3600 / s['total_work_per_kg']  # 3600 converts from hours to seconds
+        s['m_water'] = s['water_per_kg'] * s['m_air']
+        s['m_fuel'] = s['fuel_per_kg'] * s['m_air']
 
         # update storage pressure
-        self.update_storage_pressure(s)
+        s = self.update_storage_pressure(s)
 
         # -----------------------
-        # save current state and any error messages
+        # finish storing results from current time step
         # -----------------------
-        s['P_store'] = self.P_store
-        s['T_store'] = self.T_store
-        s['m_store'] = self.m_store
+
         s['error_msg'] = self.error_msg
         self.data = self.data.append(s, ignore_index=True)
 
     def analyze_performance(self):
         """
 
+        analyzes system performance - meant to be performed after completing a full cycle of charging/discharging
+
         designed to be kept the same for each caes architecutre
 
-        :return:
+        :return: results - Pandas Series with the following entries
+            RTE - roud trip efficiency [fr]
+            fuel_per_MWh - fuel consumption oer MWh [kg]
+            CO2_per_MWh - CO2 emissions per MWh [kg]
+            water_per_MWh - water consumption per MWh [kg]
         """
 
         # compute performance
-        pwr_input_total = 0.0  # TODO
-        pwr_output_total = 0.0  # TODO
-        water_input_total = 0.0  # TODO
-        fuel_input_total = 0.0  # kg
-        CO2_fuel = fuel_input_total * self.fuel_CO2  # ton
-        heat_input_total = fuel_input_total * self.fuel_HHV  # TODO units
-        RTE = pwr_output_total / (pwr_input_total + heat_input_total)
+        energy_input_total = self.data.loc[:, 'energy_in'].sum()  # [kWh]
+        energy_output_total = self.data.loc[:, 'energy_out'].sum()  # [kWh]
+        water_input_total = self.data.loc[:, 'm_water'].sum()  # [kg]
+        fuel_input_total = self.data.loc[:, 'm_fuel'].sum()  # [kg]
+        CO2_fuel = fuel_input_total * self.fuel_CO2  # [ton]
+        heat_input_total = fuel_input_total * self.fuel_HHV  # [kWh]
+        RTE = energy_output_total / (energy_input_total + heat_input_total)
 
         # create series to hold results
-        entries = ['RTE', 'CO2', 'fuel', 'water']
+        entries = ['RTE', 'water_per_kWh', 'CO2_per_kWh', 'fuel_per_kWh', ]
         results = pd.Series(index=entries)
         results['RTE'] = RTE
-        results['fuel_per_MWh'] = fuel_input_total / pwr_output_total
-        results['CO2_per_MWh'] = CO2_fuel / pwr_output_total
-        results['water_per_MWh'] = water_input_total / pwr_output_total
+        results['water_per_kWh'] = water_input_total / energy_output_total
+        results['CO2_per_kWh'] = CO2_fuel / energy_output_total
+        results['fuel_per_kWh'] = fuel_input_total / energy_output_total
 
         return results
 
     def update_storage_pressure(self, s):
         """
 
+        updates the pressure of the storage based on mass added/removed with machinery
+
         designed to be kept the same for each caes architecutre
 
-        :param s: Pandas Series that contains details of the current timestep
+        :param:
+            s - pandas series containing performance of current time step and error messages
         :return:
+            s - updated
         """
         # update storage mass and pressure
         self.m_store = self.m_store + s['m_air']
         self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M)  # storage pressure
 
         # check storage pressure against limits
-        if self.P_store < self.P_store_min:
+        if self.p_store < self.p_store_min:
             error_msg = 'Error: P_store < P_store_min'
-            self.error_msg = self.msg + error_msg
+            s['error_msg'] = s['error_msg'] + error_msg
             print(error_msg)
-        if self.P_store > self.P_store_max:
+        elif self.p_store > self.p_store_max:
             error_msg = 'Error: P_store > P_store_max'
-            self.error_msg = self.msg + error_msg
+            s['error_msg'] = s['error_msg'] + error_msg
             print(error_msg)
 
-    def charge(self, s):
-        """
+        # store results
+        s['p_store'] = self.p_store
+        s['T_store'] = self.T_store
+        s['m_store'] = self.m_store
 
-        charge - charge storage with compressors to store energy
-
-        designed to be updated for each caes architecture
-
-        :param s: Pandas Series that contains details of the current timestep
-        :return s: updated Pandas Series
-        """
-
-        # idealized isothermal process
-        work_per_kg = self.R / self.M * self.T_atm * log(self.p_atm / self.p_store)
-
-        # apply mechanical and storage efficienies
-        total_work_per_kg = work_per_kg / self.eta_mech / self.eta_storage
-
-        # calculate
-        s['m_air'] = s['pwr'] / total_work_per_kg
-        s['m_water'] = 0.0  # idealized process - no cooling water
-        s['m_fuel'] = 0.0  # isothermal - no heat input
         return s
 
-    def discharge(self, s):
+    def charge_perf(self, s):
         """
-        discharge - discharge storage with expanders to release energy
+
+        charge_perf - performance of compressors to store energy
 
         designed to be updated for each caes architecture
 
-        :param s: Pandas Series that contains details of the current timestep
-        :return s: updated Pandas Series
+        :param:
+            s - pandas series containing performance of current time step and error messages
+        :return:
+            s - updated including (at a minimum) the following entries:
+                work_per_kg - compression work [kJ/kg air]
+                water_per_kg - water use [kg water /kg air ]
+                fuel_per_kg - fuel use [kg fuel /kg air]
         """
 
         # idealized isothermal process
-        work_per_kg = self.R / self.M * self.T_atm * log(self.p_store / self.p_atm)
+        s['work_per_kg'] = self.R / self.M * self.T_atm * log(self.p_atm / self.p_store)
+        s['water_per_kg'] = 0.0  # idealized process - no cooling water
+        s['fuel_per_kg'] = 0.0  # isothermal - no heat input
 
-        # apply mechanical efficiency (storage efficieny only applied to charge)
-        total_work_per_kg = work_per_kg * self.eta_mech
+        return s
 
-        # calculate
-        s['m_air'] = s['pwr'] / total_work_per_kg
-        s['m_water'] = 0.0  # idealized process - no cooling water
-        s['m_fuel'] = 0.0  # isothermal - no heat input
+    def discharge_perf(self, s):
+        """
+        discharge_perf - performance of expanders to release energy from storage
+
+        designed to be updated for each caes architecture
+
+        :param:
+            s - pandas series containing performance of current time step and error messages
+        :return:
+            s - updated including (at a minimum) the following entries:
+                work_per_kg - compression work [kJ/kg air]
+                water_per_kg - water use [kg water /kg air ]
+                fuel_per_kg - fuel use [kg fuel /kg air]
+        """
+
+        # idealized isothermal process
+        s['work_per_kg'] = self.R / self.M * self.T_atm * log(self.p_store / self.p_atm)
+        s['water_per_kg'] = 0.0  # idealized process - no cooling water
+        s['fuel_per_kg'] = 0.0  # isothermal - no heat input
+
         return s
