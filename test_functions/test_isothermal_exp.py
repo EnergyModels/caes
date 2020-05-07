@@ -3,11 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import seaborn as sns
-from caes import isothermal_cmp
+from caes import isothermal_exp
 
-# Compressor test
+# Expander test
 T_air_in = 273.15 + 25.0  # [K]
-p_air_in = 101325.0  # [Pa]
+p_air_out = 101325.0  # [Pa]
 T_water_in = 273.15 + 25.0  # [K]
 p_water_in = 101325.0  # [Pa]
 eta_pump = 0.75  # [Fr] Pump efficiency
@@ -17,16 +17,16 @@ PRs = np.arange(1.1, 5.1, 0.1)  # pressure ratios
 MLs = np.arange(0.5, 2.25, 0.25)  # mass loading ratios
 
 # Store results
-entries = ['ML', 'PR', 'p_air_in', 'T_air_in', 'p_air_out', 'T_air_out', 'w_total', 'w_cmp', 'w_pmp', 'n']
+entries = ['ML', 'PR', 'p_air_in', 'T_air_in', 'p_air_out', 'T_air_out', 'w_total', 'w_exp', 'w_pmp', 'n']
 df = pd.DataFrame(columns=entries)
 
 for PR in PRs:
     for ML in MLs:
         # compute outlet pressure
-        p_air_out = p_air_in * PR
+        p_air_in = p_air_out * PR
 
         # compute performance
-        T_air_out, w_total, w_cmp, w_pmp, n = isothermal_cmp(ML, T_air_in, p_air_in, p_air_out, T_water_in, p_water_in,
+        T_air_out, w_total, w_exp, w_pmp, n = isothermal_exp(ML, T_air_in, p_air_in, p_air_out, T_water_in, p_water_in,
                                                              eta_pump)
         # store results
         s = pd.Series(index=entries, dtype='float64')
@@ -37,7 +37,7 @@ for PR in PRs:
         s['p_air_out'] = p_air_out
         s['T_air_out'] = T_air_out
         s['w_total'] = w_total
-        s['w_cmp'] = w_cmp
+        s['w_exp'] = w_exp
         s['w_pmp'] = w_pmp
         s['n'] = n
         df = df.append(s, ignore_index=True)
@@ -50,8 +50,8 @@ x_var = 'PR'
 x_label = 'Pressure ratio [-]'
 x_convert = 1.0
 
-y_vars = ["T_air_out", "w_cmp", "w_pmp", "w_total"]
-y_labels = ["Outlet Temp\n[K]", "Compression work\n[kJ/kg-air]", "Pump work\n[kJ/kg-air]", "Total work\n[kJ/kg-air]"]
+y_vars = ["T_air_out", "w_exp", "w_pmp", "w_total"]
+y_labels = ["Outlet Temp\n[K]", "Expansion work\n[kJ/kg-air]", "Pump work\n[kJ/kg-air]", "Total work\n[kJ/kg-air]"]
 y_converts = [1.0, 1.0e-3, 1.0e-3, 1.0e-3]
 
 # Column width guidelines https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing
@@ -85,8 +85,7 @@ for i, (y_var, y_label, y_convert) in enumerate(zip(y_vars, y_labels, y_converts
     ax.set_ylabel(y_label)
 
 # title
-title = 'Near-isothermal Compressor Performance\nInlet: ' + str(p_air_in * 1e-3) + ' kPa, ' + str(
-    T_air_in) + ' K'
+title = 'Near-isothermal Expander Performance\nInlet: ' + str(T_air_in) + ' K\nOutlet:' + str(p_air_out * 1e-3) + ' kPa'
 f.suptitle(title)
 
 # legend
@@ -96,7 +95,7 @@ for j, ML in enumerate(MLs):
 leg = ax.legend(handles=patches, bbox_to_anchor=(0.5, -0.4), loc="upper center", title="Mass Loading Ratio", ncol=7)
 plt.tight_layout()
 plt.subplots_adjust(wspace=0.2, top=0.9)
-plt.savefig('isothermal_cmp_brief.png', DPI=600, bbox_extra_artists=leg)
+plt.savefig('isothermal_exp_brief.png', DPI=600, bbox_extra_artists=leg)
 
 # ----------------------------------------------------------------------------------
 # plot results - full
@@ -106,9 +105,9 @@ x_var = 'PR'
 x_label = 'Pressure ratio [-]'
 x_convert = 1.0
 
-y_vars = ["p_air_in", "p_air_out", "T_air_in", "T_air_out", "n", "w_cmp", "w_pmp", "w_total"]
+y_vars = ["p_air_in", "p_air_out", "T_air_in", "T_air_out", "n", "w_exp", "w_pmp", "w_total"]
 y_labels = ["Inlet Pressure\n[kPa]", "Outlet Pressure\n[kPa]", "Inlet Temp\n[K]", "Outlet Temp\n[K]",
-            "Polytropic exponent\n[-]", "Compression work\n[kJ/kg-air]", "Pump work\n[kJ/kg-air]",
+            "Polytropic exponent\n[-]", "Expansion work\n[kJ/kg-air]", "Pump work\n[kJ/kg-air]",
             "Total work\n[kJ/kg-air]"]
 y_converts = [1.0e-3, 1.0e-3, 1.0, 1.0, 1.0, 1.0e-3, 1.0e-3, 1.0e-3]
 
@@ -144,7 +143,7 @@ for i, (y_var, y_label, y_convert) in enumerate(zip(y_vars, y_labels, y_converts
     ax.set_ylabel(y_label)
 
 # Title
-f.suptitle('Near-isothermal Compressor Performance')
+f.suptitle('Near-isothermal Expander Performance')
 
 # legend
 patches = []
@@ -153,4 +152,4 @@ for j, ML in enumerate(MLs):
 leg = ax.legend(handles=patches, bbox_to_anchor=(-0.25, -0.4), loc="upper center", title="Mass Loading Ratio", ncol=7)
 plt.tight_layout()
 plt.subplots_adjust(wspace=0.4, hspace=0.2, top=0.9)
-plt.savefig('isothermal_cmp_full.png', DPI=600, bbox_extra_artists=leg)
+plt.savefig('isothermal_exp_full.png', DPI=600, bbox_extra_artists=leg)

@@ -1,30 +1,31 @@
-from caes import CAES
+from caes import CAES, isothermal_cmp, isothermal_exp
 from CoolProp.CoolProp import PropsSI
-from .isothermal_components import isothermal_cmp, isothermal_exp
 
 
 class ICAES(CAES):
-    def __init__(self, ML=1.0):
+    def __init__(self, ML=1.0, depth=1000.0):
         CAES.__init(self)
 
         # Mass loading
         self.ML = ML
 
         # reservoir
+        self.depth = depth
+
+        # pump
+        self.eta_pump = 0.75
 
     def charge(self, s):
         # update for each caes architecture
         pwr_request = abs(s['pwr_request'])
 
-        # TODO get thermodynamic properties
-        # TODO eff = f(ML)
-
         # LP compressor
-        T_air_out, w_total, w_cmp, w_pmp = isothermal_cmp(ML, T_air_in, p_air_in, p_air_out, T_water_in, p_water_in, eta_pump)
+        p2 =
+        T2, w_total_lp, w_cmp_lp, w_pmp_lp = isothermal_cmp(self.ML, self.T_amb, self.p_amb, p2, self.T_water, self.p_water, self.eta_pump)
 
         # HP compressor
-        T_air_out, w_total, w_cmp, w_pmp = isothermal_cmp(ML, T_air_in, p_air_in, p_air_out, T_water_in, p_water_in,
-                                                          eta_pump)
+        p3 =
+        T3, w_total_hp, w_cmp_hp, w_pmp_hp = isothermal_cmp(self.ML, T2, p2, p3, self.T_water, self.p_water, self.eta_pump)
 
 
         # reservoir
@@ -33,6 +34,8 @@ class ICAES(CAES):
         p2
         p3
 
+
+        m = m +
 
 
         # work

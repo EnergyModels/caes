@@ -5,13 +5,14 @@ attributes_time_series = ['pwr_request', 'pwr_input', 'pwr_output', 'heat_input'
                           'm_air', 'm_water',
                           'P_store', 'T_store']
 
+
 class CAES:
 
     def __init__(self, delta_t=1.0,
                  T_store_init=298.15, P_store_init=1.0, P_store_min=1.0, P_store_max=10.0,
                  T_atm=298.15, P_atm=0.101325,
                  T_water=298.15, P_water=0.101325,
-                 fuel_HHV=, fuel_CO2=):
+                 fuel_HHV=1.0, fuel_CO2=1.0):  # TODO update
 
         # time step
         self.delta_t = delta_t  # hr
@@ -21,6 +22,7 @@ class CAES:
         self.P_store = P_store_init  # MPa
         self.P_store_min = P_store_min  # MPa
         self.P_store_max = P_store_max  # MPa
+        self.m_store = 0.0
 
         # atmospheric conditions
         self.T_atm = T_atm  # K
@@ -39,7 +41,6 @@ class CAES:
         self.data = pd.DataFrame(data=0.0, index=rows, columns=attributes_time_series)
 
         # initialize
-
 
     def charge(self, s):
         # update for each caes architecture
@@ -69,7 +70,7 @@ class CAES:
         # keep the same for each caes architecture
 
         # create series to hold results from current time step
-        s = pd.Series(data = 0.0, index=attributes_time_series)
+        s = pd.Series(data=0.0, index=attributes_time_series)
         s['pwr_request'] = pwr
         s['error_msg'] = ''
 
@@ -103,17 +104,16 @@ class CAES:
         s['T_store'] = self.T_store
         self.data = self.data.append(s, ignore_index=True)
 
-
     def analyze(self):
         # keep the same for each caes architecture
 
         # compute performance
-        pwr_input_total = 0.0 # TODO
-        pwr_output_total = 0.0 # TODO
-        heat_input_total =  0.0 # TODO
-        water_input_total = 0.0 # TODO
-        fuel_input_total = heat_input_total / self.fuel_HHV # kg
-        CO2_fuel = fuel_input_total * self.fuel_CO2 # ton
+        pwr_input_total = 0.0  # TODO
+        pwr_output_total = 0.0  # TODO
+        heat_input_total = 0.0  # TODO
+        water_input_total = 0.0  # TODO
+        fuel_input_total = heat_input_total / self.fuel_HHV  # kg
+        CO2_fuel = fuel_input_total * self.fuel_CO2  # ton
         RTE = pwr_output_total / (pwr_input_total + heat_input_total)
 
         # create series to hold results
