@@ -1,5 +1,6 @@
-from caes import CAES, isothermal_cmp, isothermal_exp
-from CoolProp.CoolProp import PropsSI
+import pandas as pd
+from caes import CAES
+import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.html#propssi-function
 
 
 class ICAES(CAES):
@@ -28,6 +29,11 @@ class ICAES(CAES):
         self.nozzles2 = 5
         self.nozzles3 = 15
 
+        # recreate dataframe to store data (with additional entries)
+        additional_time_series = ['w_1', 'w_2', 'w_3', 'w_pmp1', 'w_pmp2', 'w_pmp3', 'T1', 'T2', 'T3', 'T4']
+        self.attributes_time_series = self.attributes_time_series + additional_time_series
+        self.data = pd.DataFrame(data=0.0, columns=self.attributes_time_series)
+
     def charge_perf(self, s):
         """
 
@@ -43,33 +49,89 @@ class ICAES(CAES):
                 water_per_kg - water use [kg water /kg air ]
                 fuel_per_kg - fuel use [kg fuel /kg air]
         """
+        # --------------
+        # fluid properties
+        # --------------
+        air = 'AIR.MIX'
+        cd = self.c_water
 
-        # pressures
+        # --------------
+        # inlet
+        # --------------
         p1 = self.p_atm
-        p2 = p1 * self.PR1
-        p3 = p2 * self.PR2
-        p4 = self.p_store
-
-        # mass loading
-        ML1 = self.nozzles1 * (1.65 * 1e-3 / p2 - 0.05)
-        ML2 = self.nozzles2 * (1.65 * 1e-3 / p3 - 0.05)
-        ML3 = self.nozzles3 * (1.65 * 1e-3 / p4 - 0.05)
-
-        # polytropic exponent
-        n1 = k * (1 + ML1 * (cd / cp)) / (1 + k * ML1 * (cd / cp))
-        n2 = k * (1 + ML2 * (cd / cp)) / (1 + k * ML1 * (cd / cp))
-        n3 = k * (1 + ML3 * (cd / cp)) / (1 + k * ML1 * (cd / cp))
-
-        # temperatures
         T1 = self.T_atm
-        T2 = T1 * (p2 / p1) ** ((n1 - 1.0) / n1)
+
+        # --------------
+        # low pressure stage (1 -> 2)
+        # --------------
+        # fluid properties
+        cp = CP.PropsSI('CPMASS', 'T', T1, 'P', p1, air)  # constant pressure specific heat [J/kg-K]
+        cv = CP.PropsSI('CVMASS', 'T', T1, 'P', p1, air)  # constrant volume specific heat [J/kg-K]
+        k = cp / cv  # heat capacity ratio [-]
+        # calcs
+        p2 = p1 * self.PR1  # outlet pressure
+        ML1 = self.nozzles1 * (1.65 * 1e-3 / p2 - 0.05)  # mass loading
+        n1 = k * (1 + ML1 * (cd / cp)) / (1 + k * ML1 * (cd / cp))  # polytropic exponent
+        T2 = T1 * (p2 / p1) ** ((n1 - 1.0) / n1)  # outlet temperature
+
+        # --------------
+        # medium pressure stage  (2 -> 3)
+        # --------------
+        # fluid properties
+        cp = CP.PropsSI('CPMASS', 'T', T2, 'P', p2, air)
+        cv = CP.PropsSI('CVMASS', 'T', T2, 'P', p2, air)
+        k = cp / cv
+        # calcs
+        p3 = p2 * self.PR2
+        ML2 = self.nozzles2 * (1.65 * 1e-3 / p3 - 0.05)
+        n2 = k * (1 + ML2 * (cd / cp)) / (1 + k * ML2 * (cd / cp))
         T3 = T2 * (p3 / p2) ** ((n2 - 1.0) / n2)
+
+        # --------------
+        # high pressure stage  (3 -> 4)
+        # --------------
+        # fluid properties
+        cp = CP.PropsSI('CPMASS', 'T', T3, 'P', p3, air)
+        cv = CP.PropsSI('CVMASS', 'T', T3, 'P', p3, air)
+        k = cp / cv
+        # calcs
+        p4 = self.p_store
+        ML3 = self.nozzles3 * (1.65 * 1e-3 / p4 - 0.05)
+        n3 = k * (1 + ML3 * (cd / cp)) / (1 + k * ML3 * (cd / cp))
         T4 = T3 * (p4 / p3) ** ((n3 - 1.0) / n3)
 
-        # idealized isothermal process
-        s['work_per_kg'] = self.R / self.M * self.T_atm * log(self.p_atm / self.p_store)
-        s['water_per_kg'] = 0.0  # idealized process - no cooling water
-        s['fuel_per_kg'] = 0.0  # isothermal - no heat input
+        # --------------
+        # work, work = R / (M * (1-n)) * (T2 - T1)
+        # --------------
+        w_1 = self.R / (self.M * (1 - n1)) * (T2 - T1)
+        w_2 = self.R / (self.M * (1 - n2)) * (T3 - T2)
+        w_3 = self.R / (self.M * (1 - n3)) * (T4 - T3)
+
+        # --------------
+        # pump work, = ML * v * (p2 - p1) / eta_pump
+        # --------------
+        w_pmp1 = - ML1 * self.v_water * (p2 - p1) / self.eta_pump
+        w_pmp2 = - ML2 * self.v_water * (p3 - p2) / self.eta_pump
+        w_pmp3 = - ML3 * self.v_water * (p4 - p3) / self.eta_pump
+
+        # --------------
+        # store results
+        # --------------
+        # required
+        s['work_per_kg'] = w_1 + w_2 + w_3 + w_pmp1 + w_pmp2 + w_pmp3
+        s['water_per_kg'] = ML1 + ML2 + ML3
+        s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input
+        # additional
+        s['w_1'] = w_1
+        s['w_2'] = w_2
+        s['w_3'] = w_3
+        s['w_pmp1'] = w_pmp1
+        s['w_pmp2'] = w_pmp2
+        s['w_pmp3'] = w_pmp3
+        s['T1'] = T1
+        s['T2'] = T2
+        s['T3'] = T3
+        s['T4'] = T4
 
         return s
 
@@ -87,15 +149,88 @@ class ICAES(CAES):
                 water_per_kg - water use [kg water /kg air ]
                 fuel_per_kg - fuel use [kg fuel /kg air]
         """
-        # pressures
-        p4 = self.p_store
-        p3 = p4 / self.PR3
-        p2 = p3 / self.PR2
-        p1 = self.p_atm
+        # --------------
+        # fluid properties
+        # --------------
+        air = 'AIR.MIX'
+        cd = self.c_water
 
-        # idealized isothermal process
-        s['work_per_kg'] = self.R / self.M * self.T_atm * log(self.p_store / self.p_atm)
-        s['water_per_kg'] = 0.0  # idealized process - no cooling water
-        s['fuel_per_kg'] = 0.0  # isothermal - no heat input
+        # --------------
+        # inlet
+        # --------------
+        p4 = self.p_store
+        T4 = self.T_store
+
+        # --------------
+        # high pressure stage (4 -> 3)
+        # --------------
+        # fluid properties
+        cp = CP.PropsSI('CPMASS', 'T', T4, 'P', p4, air)  # constant pressure specific heat [J/kg-K]
+        cv = CP.PropsSI('CVMASS', 'T', T4, 'P', p4, air)  # constrant volume specific heat [J/kg-K]
+        k = cp / cv  # heat capacity ratio [-]
+        # calcs
+        p3 = p4 / self.PR3  # outlet pressure
+        ML3 = self.nozzles3 * (1.65 * 1e-3 / p4 - 0.05)  # stage mass loading
+        n3 = k * (1 + ML3 * (cd / cp)) / (1 + k * ML3 * (cd / cp))  # polytropic exponent
+        T3 = T4 * (p4 / p3) ** ((n3 - 1.0) / n3)  # outlet temperature
+
+        # --------------
+        # medium pressure stage (3 -> 2)
+        # --------------
+        # fluid properties
+        cp = CP.PropsSI('CPMASS', 'T', T3, 'P', p3, air)
+        cv = CP.PropsSI('CVMASS', 'T', T3, 'P', p3, air)
+        k = cp / cv
+        # calcs
+        p2 = p3 / self.PR2
+        ML2 = self.nozzles2 * (1.65 * 1e-3 / p3 - 0.05)
+        n2 = k * (1 + ML2 * (cd / cp)) / (1 + k * ML2 * (cd / cp))
+        T2 = T3 * (p3 / p2) ** ((n2 - 1.0) / n2)
+
+        # --------------
+        # low pressure stage (2 -> 1)
+        # --------------
+        # fluid properties
+        cp = CP.PropsSI('CPMASS', 'T', T2, 'P', p2, air)
+        cv = CP.PropsSI('CVMASS', 'T', T2, 'P', p2, air)
+        k = cp / cv
+        # calcs
+        p1 = self.p_atm
+        ML1 = self.nozzles1 * (1.65 * 1e-3 / p2 - 0.05)
+        n1 = k * (1 + ML1 * (cd / cp)) / (1 + k * ML1 * (cd / cp))
+        T1 = T2 * (p2 / p1) ** ((n1 - 1.0) / n1)
+
+        # --------------
+        # calculate work, work = R / (M * (1-n)) * (T1 - T2)
+        # --------------
+        w_1 = self.R / (self.M * (1 - n1)) * (T1 - T2)
+        w_2 = self.R / (self.M * (1 - n2)) * (T2 - T3)
+        w_3 = self.R / (self.M * (1 - n3)) * (T3 - T4)
+
+        # --------------
+        # pump work, = ML * v * (p2 - p1) / eta_pump
+        # --------------
+        w_pmp1 = - ML1 * self.v_water * (p2 - p1) / self.eta_pump
+        w_pmp2 = - ML2 * self.v_water * (p3 - p2) / self.eta_pump
+        w_pmp3 = - ML3 * self.v_water * (p4 - p3) / self.eta_pump
+
+        # --------------
+        # store results
+        # --------------
+        # required
+        s['work_per_kg'] = w_1 + w_2 + w_3 + w_pmp1 + w_pmp2 + w_pmp3
+        s['water_per_kg'] = ML1 + ML2 + ML3
+        s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input
+        # additional
+        s['w_1'] = w_1
+        s['w_2'] = w_2
+        s['w_3'] = w_3
+        s['w_pmp1'] = w_pmp1
+        s['w_pmp2'] = w_pmp2
+        s['w_pmp3'] = w_pmp3
+        s['T1'] = T1
+        s['T2'] = T2
+        s['T3'] = T3
+        s['T4'] = T4
 
         return s

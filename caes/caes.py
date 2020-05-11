@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.html#propssi-function
 from math import log
 
@@ -33,6 +32,8 @@ class CAES:
         self.p_water = p_water  # [kPa]
         self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water,
                                   self.water)  # constant pressure specific heat [J/kg-K]
+        self.v_water = 1 / CP.PropsSI('D', 'T', self.T_water, 'P', self.p_water,
+                                      self.water)  # specific volume (1/density) [m^3/kg]
 
         # fuel properties (default values are for natural gas)
         self.fuel_HHV = fuel_HHV  # [kWh/kg]
@@ -118,6 +119,20 @@ class CAES:
 
         s['error_msg'] = self.error_msg
         self.data = self.data.append(s, ignore_index=True)
+
+    def single_cycle(self, pwr):
+        """
+        runs a single cycle, charging and discharge at the rate pwr (kW)
+        :param pwr:
+        :return:
+        """
+        pwr_in = -1.0 * pwr
+        pwr_out = 1.0 * pwr
+
+        while self.p_store < self.p_store_max:
+            self.update(pwr_in)
+        while self.p_store > self.p_store_min:
+            self.update(pwr_out)
 
     def analyze_performance(self):
         """
