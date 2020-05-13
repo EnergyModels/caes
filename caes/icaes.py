@@ -4,17 +4,26 @@ import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.
 
 
 class ICAES(CAES):
-    def __init__(self, ML=1.0, depth=1000.0):
+    def get_default_inputs():
+        inputs = CAES.get_default_inputs()
+        inputs['depth'] = 2.0
+        inputs['ML'] = 1.0
+        inputs['nozzles1'] = 1.0
+        inputs['nozzles2'] = 5.0
+        inputs['nozzles3'] = 15.0
+        return inputs
+
+    def __init__(self, inputs=get_default_inputs()):
         """
         Initializes a 3 stage near-isothermal CAES system
         """
-        CAES.__init__(self)
+        CAES.__init__(self, inputs)
 
         # Mass loading
-        self.ML = ML
+        self.ML = inputs['ML']
 
         # reservoir
-        self.depth = depth
+        self.depth = inputs['depth']
 
         # fluid properties
         self.cp = CP.PropsSI('CPMASS', 'T', self.T_atm, 'P', self.p_atm * 1000.0,
@@ -32,9 +41,9 @@ class ICAES(CAES):
         self.PR3 = (self.p_store_max / self.p_atm) ** (1. / 3.)
 
         # stage number of nozzles
-        self.nozzles1 = 1
-        self.nozzles2 = 5
-        self.nozzles3 = 15
+        self.nozzles1 = inputs['nozzles1']
+        self.nozzles2 = inputs['nozzles2']
+        self.nozzles3 = inputs['nozzles3']
 
         # recreate dataframe to store data (with additional entries)
         additional_time_series = ['ML1', 'ML2', 'ML3', 'n1', 'n2', 'n3',

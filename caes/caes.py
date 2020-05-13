@@ -5,16 +5,42 @@ from math import log
 
 class CAES:
 
-    def __init__(self, delta_t=0.08333,  # 5 min
-                 T_atm=298.15, p_atm=101.325,
-                 T_water=298.15, p_water=101.325,
-                 fuel_HHV=15.4, fuel_CO2=2.75,
-                 eta_mech=0.95, eta_gen=0.975, eta_storage=0.985,
-                 T_store_init=298.15, P_store_init=1.0e3, P_store_min=1.0e3, P_store_max=10.0e3,
-                 V_res=5e3, phi=0.15, Slr=0.8):
+    def get_default_inputs():
+        attributes = ['delta_t', 'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2', 'eta_mech',
+                      'eta_storage',
+                      'T_store_init', 'p_store_init', 'V_res', 'phi', 'Slr']
+        inputs = pd.Series(index=attributes)
+        inputs['delta_t'] = 0.0167#8333  # 5 min
+
+        inputs['T_atm'] = 298.15  # 25 deg C [K]
+        inputs['p_atm'] = 101.325  # 1 atm [kPa]
+
+        inputs['T_water'] = 298.15  # 25 deg C [K]
+        inputs['p_water'] = 101.325  # 1 atm [kPa]
+
+        # methane, from https://www.engineeringtoolbox.com/co2-emission-fuels-d_1085.html, Accessed 5/12/20
+        inputs['fuel_HHV'] = 15.4  # [kWh/kg fuel]
+        inputs['fuel_CO2'] = 2.75  # [kg CO2/kg fuel]
+
+        inputs['eta_mech'] = 0.95  # [-]
+        inputs['eta_gen'] = 0.975  # [-]
+        inputs['eta_storage'] = 0.985  # [-]
+
+        inputs['T_store_init'] = 298.15  # 25 deg C [K]
+        inputs['p_store_init'] = 1.0e3  # [kPa]
+        inputs['p_store_min'] = 1.0e3  # [kPa]
+        inputs['p_store_max'] = 10.0e3  # [kPa]
+
+        inputs['V_res'] = 5e3  # [m3]
+        inputs['phi'] = 0.15  # porosity [-]
+        inputs['Slr'] = 0.8  # liquid residual fraction [-]
+
+        return inputs
+
+    def __init__(self, inputs=get_default_inputs()):
 
         # time step
-        self.delta_t = delta_t  # [hr]
+        self.delta_t = inputs['delta_t']  # [hr]
 
         # constants
         self.g = 9.81  # gravitational constant [m/s^2]
@@ -23,39 +49,43 @@ class CAES:
         # atmospheric air properties
         self.air = "Air.mix"  # CoolProp fluid name [-]
         self.M = 28.97  # molecular weight [kg/kmol]
-        self.T_atm = T_atm  # K
-        self.p_atm = p_atm  # [kPa]
+        self.T_atm = inputs['T_atm']  # K
+        self.p_atm = inputs['p_atm']  # [kPa]
 
         # water properties (used for cooling)
         self.water = 'Water'  # CoolProp fluid name [-]
-        self.T_water = T_water  # [K]
-        self.p_water = p_water  # [kPa]
-        self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water*1000.0,
+        self.T_water = inputs['T_water']  # [K]
+        self.p_water = inputs['p_water']  # [kPa]
+        self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water * 1000.0,
                                   self.water) / 1000.0  # constant pressure specific heat [kJ/kg-K]
-        self.v_water = 1.0 / CP.PropsSI('D', 'T', self.T_water, 'P', self.p_water*1000.0,
-                                      self.water)  # specific volume (1/density) [m^3/kg]
+        self.v_water = 1.0 / CP.PropsSI('D', 'T', self.T_water, 'P', self.p_water * 1000.0,
+                                        self.water)  # specific volume (1/density) [m^3/kg]
 
         # fuel properties (default values are for natural gas)
-        self.fuel_HHV = fuel_HHV  # [kWh/kg] https://www.engineeringtoolbox.com/co2-emission-fuels-d_1085.html Accessed 5/12/20
-        self.fuel_CO2 = fuel_CO2  # [kg CO2/kg fuel]  https://www.engineeringtoolbox.com/co2-emission-fuels-d_1085.html Accessed 5/12/20
+        self.fuel_HHV = inputs['fuel_HHV']  # [kWh/kg]
+        self.fuel_CO2 = inputs['fuel_CO2']  # [kg CO2/kg fuel]
 
         # efficiencies
-        self.eta_mech = eta_mech  # mechanical [fr]
-        self.eta_gen = eta_gen  # generator [fr]
-        self.eta_storage = eta_storage  # storage round-trip-efficiency [fr]
+        self.eta_mech = inputs['eta_mech']  # mechanical [fr]
+        self.eta_gen = inputs['eta_gen']  # generator [fr]
+        self.eta_storage = inputs['eta_storage']  # storage round-trip-efficiency [fr]
 
         # storage properties
-        self.p_store_min = P_store_min  # [kPa]
-        self.p_store_max = P_store_max  # [kPa]
-        self.V_res = V_res  # storage total volume [m^3], formation total size or cavern volume
-        self.phi = phi  # porosity [-], set to 1.0 for cavern
-        self.Slr = Slr  # residual liquid fraction [-], set to 0.0 for cavern
-        self.V = V_res * phi * (1.0 - Slr)  # volume available for air storage
+        self.p_store_min = inputs['p_store_min']  # [kPa]
+        self.p_store_max = inputs['p_store_max']  # [kPa]
+        self.V_res = inputs['V_res']  # storage total volume [m^3], formation total size or cavern volume
+        self.phi = inputs['phi']  # porosity [-], set to 1.0 for cavern
+        self.Slr = inputs['Slr']  # residual liquid fraction [-], set to 0.0 for cavern
+        self.V = self.V_res * self.phi * (1.0 - self.Slr)  # volume available for air storage
 
         # storage  - initialize state
-        self.T_store = T_store_init  # storage temperature [K]
-        self.p_store = P_store_init  # storage pressure [MPa]
+        self.T_store = inputs['T_store_init']  # storage temperature [K]
+        if inputs['p_store_init'] < inputs['p_store_min']:
+            inputs['p_store_init'] = inputs['p_store_min']
+        self.p_store = inputs['p_store_init']  # storage pressure [MPa]
         self.m_store = self.p_store * self.V * self.M / (self.R * self.T_store)  # mass stored
+        self.m_store_min = self.p_store_min * self.V * self.M / (self.R * self.T_store)  # mass stored
+        self.m_store_max = self.p_store_max * self.V * self.M / (self.R * self.T_store)  # mass stored
 
         # store error messages for current state
         self.error_msg = ''
@@ -88,7 +118,6 @@ class CAES:
 
         # Charge/discharge
         if pwr < 0.0:  # (charge)
-            s['energy_in'] = abs(pwr) * self.delta_t  # [kWh]
 
             # calculate compressor performance
             s = self.charge_perf(s)
@@ -97,7 +126,6 @@ class CAES:
             s['total_work_per_kg'] = s['work_per_kg'] / self.eta_mech / self.eta_gen / self.eta_storage ** 0.5
 
         elif pwr > 0.0:  # (discharge)
-            s['energy_out'] = abs(pwr) * self.delta_t  # [kWh]
 
             # calculate expander performance
             s = self.discharge_perf(s)
@@ -107,8 +135,22 @@ class CAES:
 
         # calculate mass change per time step
         s['m_air'] = -1.0 * abs(pwr) * self.delta_t * 3600 / s['total_work_per_kg']  # 3600 converts from kWh to kJ
+
+        # check if this will go above or below pressure limits, if so, enfore limits
+        if self.m_store + s['m_air'] > self.m_store_max:
+            s['m_air'] = abs(self.m_store_max - self.m_store)
+            s['pwr'] = -1.0*abs(s['total_work_per_kg'] * s['m_air'])
+        elif self.m_store + s['m_air'] < self.m_store_min:
+            s['m_air'] = -1.0*abs(self.m_store - self.m_store_min)
+            s['pwr'] = abs(s['total_work_per_kg'] * s['m_air'])
+
         s['m_water'] = s['water_per_kg'] * abs(s['m_air'])
         s['m_fuel'] = s['fuel_per_kg'] * abs(s['m_air'])
+
+        if pwr < 0.0:  # (charge)
+            s['energy_in'] = abs(pwr) * self.delta_t  # [kWh]
+        elif pwr > 0.0:  # (discharge)
+            s['energy_out'] = abs(pwr) * self.delta_t  # [kWh]
 
         # update storage pressure
         s = self.update_storage_pressure(s)
@@ -127,8 +169,10 @@ class CAES:
         pwr_in = -1.0 * pwr
         pwr_out = 1.0 * pwr
 
+        print('charging')
         while self.p_store < self.p_store_max:
             self.update(pwr_in)
+        print('discharging')
         while self.p_store > self.p_store_min:
             self.update(pwr_out)
 
