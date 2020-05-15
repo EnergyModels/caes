@@ -10,7 +10,7 @@ class CAES:
                       'eta_storage',
                       'T_store_init', 'p_store_init', 'V_res', 'phi', 'Slr']
         inputs = pd.Series(index=attributes)
-        inputs['delta_t'] = 0.0167#8333  # 5 min
+        inputs['delta_t'] = 0.00167  # 8333  # 5 min
 
         inputs['T_atm'] = 298.15  # 25 deg C [K]
         inputs['p_atm'] = 101.325  # 1 atm [kPa]
@@ -139,10 +139,10 @@ class CAES:
         # check if this will go above or below pressure limits, if so, enfore limits
         if self.m_store + s['m_air'] > self.m_store_max:
             s['m_air'] = abs(self.m_store_max - self.m_store)
-            s['pwr'] = -1.0*abs(s['total_work_per_kg'] * s['m_air'])
+            s['pwr'] = -1.0 * abs(s['total_work_per_kg'] * s['m_air'] / (self.delta_t * 3600))
         elif self.m_store + s['m_air'] < self.m_store_min:
-            s['m_air'] = -1.0*abs(self.m_store - self.m_store_min)
-            s['pwr'] = abs(s['total_work_per_kg'] * s['m_air'])
+            s['m_air'] = -1.0 * abs(self.m_store - self.m_store_min)
+            s['pwr'] = abs(s['total_work_per_kg'] * s['m_air'] / (self.delta_t * 3600))
 
         s['m_water'] = s['water_per_kg'] * abs(s['m_air'])
         s['m_fuel'] = s['fuel_per_kg'] * abs(s['m_air'])

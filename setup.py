@@ -9,4 +9,4 @@ setup(name='estorage',
       license='MIT',
       packages=['caes'],
       zip_safe=False,
-      install_requires=['CoolProp', 'pandas', 'numpy', 'seaborn', 'matplotlib'])
+      install_requires=['CoolProp', 'pandas', 'numpy', 'seaborn', 'matplotlib', 'scipy'])
