@@ -10,7 +10,7 @@ class CAES:
                       'eta_storage',
                       'T_store_init', 'p_store_init', 'V_res', 'phi', 'Slr']
         inputs = pd.Series(index=attributes)
-        inputs['delta_t'] = 0.00167  # 8333  # 5 min
+        inputs['delta_t'] = 0.0167  # 8333  # 5 min
 
         inputs['T_atm'] = 298.15  # 25 deg C [K]
         inputs['p_atm'] = 101.325  # 1 atm [kPa]
@@ -27,13 +27,13 @@ class CAES:
         inputs['eta_storage'] = 0.985  # [-]
 
         inputs['T_store_init'] = 298.15  # 25 deg C [K]
-        inputs['p_store_init'] = 1.0e3  # [kPa]
-        inputs['p_store_min'] = 1.0e3  # [kPa]
-        inputs['p_store_max'] = 10.0e3  # [kPa]
+        inputs['p_store_init'] = 10.0e3  # [kPa]
+        inputs['p_store_min'] = 10.0e3  # [kPa]
+        inputs['p_store_max'] = 22.0e3  # [kPa]
 
-        inputs['V_res'] = 5e3  # [m3]
-        inputs['phi'] = 0.15  # porosity [-]
-        inputs['Slr'] = 0.8  # liquid residual fraction [-]
+        inputs['V_res'] = 5.88e4  # [m3]
+        inputs['phi'] = 0.29  # porosity [-]
+        inputs['Slr'] = 0.0  # liquid residual fraction [-]
 
         return inputs
 
