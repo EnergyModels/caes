@@ -219,7 +219,7 @@ class ICAES(CAES):
         # --------------
         ML3 = self.nozzles3 * (1.65 * 1e3 / p4 - 0.05)  # stage mass loading
         n3 = k * (1 + ML3 * (cd / cp)) / (1 + k * ML3 * (cd / cp))  # polytropic exponent
-        T3 = T4 * (p4 / p3) ** ((n3 - 1.0) / n3)  # outlet temperature
+        T3 = T4 * (p3 / p4) ** ((n3 - 1.0) / n3)  # outlet temperature
 
         # --------------
         # medium pressure stage (3 -> 2)
@@ -231,7 +231,7 @@ class ICAES(CAES):
         else:
             ML2 = self.nozzles2 * (1.65 * 1e3 / p3 - 0.05)
             n2 = k * (1 + ML2 * (cd / cp)) / (1 + k * ML2 * (cd / cp))
-            T2 = T3 * (p3 / p2) ** ((n2 - 1.0) / n2)
+            T2 = T3 * (p2 / p3) ** ((n2 - 1.0) / n2)
 
         # --------------
         # low pressure stage (2 -> 1)
@@ -243,14 +243,14 @@ class ICAES(CAES):
         else:
             ML1 = self.nozzles1 * (1.65 * 1e3 / p2 - 0.05)
             n1 = k * (1 + ML1 * (cd / cp)) / (1 + k * ML1 * (cd / cp))
-            T1 = T2 * (p2 / p1) ** ((n1 - 1.0) / n1)
+            T1 = T2 * (p1 / p2) ** ((n1 - 1.0) / n1)
 
         # --------------
         # calculate work, work = R / (M * (1-n)) * (T2 - T1)
         # --------------
-        w_1 = self.R / (self.M * (1 - n1)) * (T2 - T1)
-        w_2 = self.R / (self.M * (1 - n2)) * (T3 - T2)
-        w_3 = self.R / (self.M * (1 - n3)) * (T4 - T3)
+        w_1 = self.R / (self.M * (1 - n1)) * (T1 - T2)
+        w_2 = self.R / (self.M * (1 - n2)) * (T2 - T3)
+        w_3 = self.R / (self.M * (1 - n3)) * (T3 - T4)
 
         # --------------
         # pump work, = ML * v * (p2 - p1) / eta_pump
