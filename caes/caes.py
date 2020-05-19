@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.html#propssi-function
 from math import log
 
@@ -6,11 +7,13 @@ from math import log
 class CAES:
 
     def get_default_inputs():
-        attributes = ['delta_t', 'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2', 'eta_mech',
+        attributes = ['debug', 'steps', 'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2', 'eta_mech',
                       'eta_storage',
                       'T_store_init', 'p_store_init', 'V_res', 'phi', 'Slr']
         inputs = pd.Series(index=attributes)
-        inputs['delta_t'] = 0.0167  # 8333  # 5 min
+
+        inputs['debug'] = False  # debug
+        inputs['steps'] = 100.0  # number of timesteps to use in single cycle simulation
 
         inputs['T_atm'] = 298.15  # 25 deg C [K]
         inputs['p_atm'] = 101.325  # 1 atm [kPa]
@@ -39,8 +42,11 @@ class CAES:
 
     def __init__(self, inputs=get_default_inputs()):
 
-        # time step
-        self.delta_t = inputs['delta_t']  # [hr]
+        # debug option
+        self.debug = inputs['debug']  # debug
+
+        # number of timesteps to use in single cycle simulations
+        self.steps = inputs['steps']  # (-)
 
         # constants
         self.g = 9.81  # gravitational constant [m/s^2]
@@ -91,7 +97,7 @@ class CAES:
         self.error_msg = ''
 
         # dataframe to store data
-        self.attributes_time_series = ['pwr', 'energy_in', 'energy_out',
+        self.attributes_time_series = ['time', 'delta_t', 'pwr', 'energy_in', 'energy_out',
                                        'work_per_kg', 'total_work_per_kg', 'water_per_kg',
                                        'fuel_per_kg',
                                        'm_air', 'm_water', 'm_fuel',
@@ -99,13 +105,14 @@ class CAES:
                                        'error_msg']
         self.data = pd.DataFrame(columns=self.attributes_time_series)
 
-    def update(self, pwr):
+    def update(self, pwr, delta_t=1.0):
         """
 
         Updates the CAES system for one time step given a power request
 
         Designed to be kept the same for each caes architecutre
 
+        :param delta_t: time step [hr]
         :param pwr: power input (-) or output (+) [kW]
         :return:
         """
@@ -115,6 +122,7 @@ class CAES:
         # create series to hold results from this time step
         s = pd.Series(data=0.0, index=self.attributes_time_series)
         s['pwr'] = pwr
+        s['delta_t'] = delta_t
 
         # Charge/discharge
         if pwr < 0.0:  # (charge)
@@ -134,23 +142,23 @@ class CAES:
             s['total_work_per_kg'] = s['work_per_kg'] * self.eta_mech * self.eta_gen * self.eta_storage ** 0.5
 
         # calculate mass change per time step
-        s['m_air'] = -1.0 * abs(pwr) * self.delta_t * 3600 / s['total_work_per_kg']  # 3600 converts from kWh to kJ
+        s['m_air'] = -1.0 * abs(pwr) * delta_t * 3600 / s['total_work_per_kg']  # 3600 converts from kWh to kJ
 
         # check if this will go above or below pressure limits, if so, enfore limits
         if self.m_store + s['m_air'] > self.m_store_max:
             s['m_air'] = abs(self.m_store_max - self.m_store)
-            s['pwr'] = -1.0 * abs(s['total_work_per_kg'] * s['m_air'] / (self.delta_t * 3600))
+            s['pwr'] = -1.0 * abs(s['total_work_per_kg'] * s['m_air'] / (delta_t * 3600))
         elif self.m_store + s['m_air'] < self.m_store_min:
             s['m_air'] = -1.0 * abs(self.m_store - self.m_store_min)
-            s['pwr'] = abs(s['total_work_per_kg'] * s['m_air'] / (self.delta_t * 3600))
+            s['pwr'] = abs(s['total_work_per_kg'] * s['m_air'] / (delta_t * 3600))
 
         s['m_water'] = s['water_per_kg'] * abs(s['m_air'])
         s['m_fuel'] = s['fuel_per_kg'] * abs(s['m_air'])
 
         if pwr < 0.0:  # (charge)
-            s['energy_in'] = abs(pwr) * self.delta_t  # [kWh]
+            s['energy_in'] = abs(pwr) * delta_t  # [kWh]
         elif pwr > 0.0:  # (discharge)
-            s['energy_out'] = abs(pwr) * self.delta_t  # [kWh]
+            s['energy_out'] = abs(pwr) * delta_t  # [kWh]
 
         # update storage pressure
         s = self.update_storage_pressure(s)
@@ -160,21 +168,103 @@ class CAES:
         # -----------------------
         self.data = self.data.append(s, ignore_index=True)
 
-    def single_cycle(self, pwr):
+    def update_mass(self, m_air, delta_t=1.0):
         """
-        runs a single cycle, charging and discharge at the rate pwr (kW)
-        :param pwr:
+
+        Updates the CAES system for the addition time step given a power request
+
+        Designed to be kept the same for each caes architecutre
+
+        :param delta_t: time step [hr]
+        :param m_air: mass injection (+) or release (-) [kg]
         :return:
         """
-        pwr_in = -1.0 * pwr
-        pwr_out = 1.0 * pwr
+        # clear warning messages from previous time step
+        self.error_msg = ''
 
-        print('charging')
-        while self.p_store < self.p_store_max:
-            self.update(pwr_in)
-        print('discharging')
-        while self.p_store > self.p_store_min:
-            self.update(pwr_out)
+        # create series to hold results from this time step
+        s = pd.Series(data=0.0, index=self.attributes_time_series)
+        s['m_air'] = m_air
+        s['delta_t'] = delta_t
+
+        # check if this will go above or below pressure limits, if so, enfore limits
+        if self.m_store + s['m_air'] > self.m_store_max:
+            s['m_air'] = abs(self.m_store_max - self.m_store)
+        elif self.m_store + s['m_air'] < self.m_store_min:
+            s['m_air'] = -1.0 * abs(self.m_store - self.m_store_min)
+
+        # Charge/discharge
+        if s['m_air'] > 0.0:  # (charge)
+
+            # calculate compressor performance
+            s = self.charge_perf(s)
+
+            # apply mechanical, generator and storage efficienies
+            s['total_work_per_kg'] = s['work_per_kg'] / self.eta_mech / self.eta_gen / self.eta_storage ** 0.5
+
+        elif s['m_air'] < 0.0:  # (discharge)
+
+            # calculate expander performance
+            s = self.discharge_perf(s)
+
+            # apply mechanical, generator and storage efficienies
+            s['total_work_per_kg'] = s['work_per_kg'] * self.eta_mech * self.eta_gen * self.eta_storage ** 0.5
+
+        # calculate the power per time step
+        s['pwr'] = -1.0 * s['m_air'] * s['total_work_per_kg'] / (3600 * delta_t)  # 3600 converts from hr to s
+
+        # calculate water and fuel use
+        s['m_water'] = s['water_per_kg'] * abs(s['m_air'])
+        s['m_fuel'] = s['fuel_per_kg'] * abs(s['m_air'])
+
+        # calculate energy stored
+        if s['m_air'] > 0.0:  # (charge)
+            s['energy_in'] = -1.0 * s['m_air'] * s['total_work_per_kg'] / 3600  # [kWh]
+        elif s['m_air'] < 0.0:  # (discharge)
+            s['energy_out'] = -1.0 * s['m_air'] * s['total_work_per_kg'] / 3600  # [kWh]
+
+        # update storage pressure
+        s = self.update_storage_pressure(s)
+
+        # -----------------------
+        # finish storing results from current time step
+        # -----------------------
+        self.data = self.data.append(s, ignore_index=True)
+
+    def single_cycle(self):
+        """
+        runs a single cycle, charging and discharge in the number of steps specified in self.steps
+        :param:
+        :return:
+        """
+
+        # mass injection per timestep
+        buffer = 1e-6 # buffer to ensure operation remains under limit
+        m_air = (self.m_store_max - self.m_store_min
+                 - buffer) / self.steps
+        # nondimensional time, start at 0, full at 0.5, empty at 1.0
+        delta_t = 1.0 / (self.steps * 2.0)
+
+        # save initial state
+        self.update_mass(m_air=0.0, delta_t=1e-6)
+
+        if self.debug:
+            print("Charging")
+
+        for i in range(int(self.steps)):
+            # charge
+            self.update_mass(m_air, delta_t=delta_t)
+            if self.debug:
+                print('/t' + str(i) + ' of ' + str(self.steps))
+
+        if self.debug:
+            print("Charging")
+
+        for i in range(int(self.steps)):
+            # discharge
+            self.update_mass(-1.0 * m_air, delta_t=delta_t)
+            if self.debug:
+                print('/t' + str(i) + ' of ' + str(self.steps))
 
     def debug(self, pwr):
         """
@@ -252,10 +342,10 @@ class CAES:
 
         # check storage pressure against limits
         if self.p_store < self.p_store_min:
-            s['error_msg'] = 'Error: P_store < P_store_min'
+            s['error_msg'] = 'Error: P_store < P_store_min (' + str(self.p_store) + ' < ' + str(self.p_store_min) + ')'
             print(s['error_msg'])
         elif self.p_store > self.p_store_max:
-            s['error_msg'] = 'Error: P_store > P_store_max'
+            s['error_msg'] = 'Error: P_store > P_store_max (' + str(self.p_store) + ' > ' + str(self.p_store_max) + ')'
             print(s['error_msg'])
 
         # store results
