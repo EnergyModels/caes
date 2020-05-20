@@ -129,11 +129,11 @@ class ICAES(CAES):
             T4 = T3 * (p4 / p3) ** ((n3 - 1.0) / n3)
 
         # --------------
-        # work, work = R / (M * (1-n)) * (T2 - T1)
+        # work, work = n * R / M *T1 / (n-1) * (1 - (p2/p1)**((n-1)/n)
         # --------------
-        w_1 = self.R / (self.M * (1 - n1)) * (T2 - T1)  # [kJ/kg]
-        w_2 = self.R / (self.M * (1 - n2)) * (T3 - T2)  # [kJ/kg]
-        w_3 = self.R / (self.M * (1 - n3)) * (T4 - T3)  # [kJ/kg]
+        w_1 = n1 * self.R / self.M * T1 / (n1 - 1.0) * (1.0 - (p2 / p1) ** ((n1 - 1) / n1))  # [kJ/kg]
+        w_2 = n2 * self.R / self.M * T2 / (n2 - 1.0) * (1.0 - (p3 / p2) ** ((n2 - 1) / n2))  # [kJ/kg]
+        w_3 = n3 * self.R / self.M * T3 / (n3 - 1.0) * (1.0 - (p4 / p3) ** ((n3 - 1) / n3))  # [kJ/kg]
 
         # --------------
         # pump work, = ML * v * (p2 - p1) / eta_pump
@@ -246,11 +246,15 @@ class ICAES(CAES):
             T1 = T2 * (p1 / p2) ** ((n1 - 1.0) / n1)
 
         # --------------
-        # calculate work, work = R / (M * (1-n)) * (T2 - T1)
+        # calculate work, work = n * R / M *T1 / (n-1) * (1 - (p2/p1)**((n-1)/n)
         # --------------
-        w_1 = self.R / (self.M * (1 - n1)) * (T1 - T2)
-        w_2 = self.R / (self.M * (1 - n2)) * (T2 - T3)
-        w_3 = self.R / (self.M * (1 - n3)) * (T3 - T4)
+        # w_1 = n1 * self.R / (self.M * (1 - n1)) * (T1 - T2)
+        # w_2 = n2 * self.R / (self.M * (1 - n2)) * (T2 - T3)
+        # w_3 = n3 * self.R / (self.M * (1 - n3)) * (T3 - T4)
+
+        w_1 = n1 * self.R / self.M * T2 / (n1 - 1.0) * (1.0 - (p1 / p2) ** ((n1 - 1) / n1))  # [kJ/kg]
+        w_2 = n2 * self.R / self.M * T3 / (n2 - 1.0) * (1.0 - (p2 / p3) ** ((n2 - 1) / n2))  # [kJ/kg]
+        w_3 = n3 * self.R / self.M * T4 / (n3 - 1.0) * (1.0 - (p3 / p4) ** ((n3 - 1) / n3))  # [kJ/kg]
 
         # --------------
         # pump work, = ML * v * (p2 - p1) / eta_pump
