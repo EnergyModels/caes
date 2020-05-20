@@ -6,11 +6,20 @@ import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.
 class ICAES(CAES):
     def get_default_inputs():
         inputs = CAES.get_default_inputs()
-        inputs['depth'] = 2.0
-        inputs['ML'] = 1.0
-        inputs['nozzles1'] = 1.0
-        inputs['nozzles2'] = 5.0
-        inputs['nozzles3'] = 15.0
+        # general
+        inputs['depth'] = 2.0  # currently unused
+        inputs['eta_pump'] = 0.75  # 'fixed' or 'free' pressure ratios
+        # machinery
+        inputs['PR_type'] = 'free'  # 'fixed' or 'free' pressure ratios
+        # compression
+        inputs['n_stages_cmp'] = 3
+        inputs['PR_cmp'] = [5.0, 5.0, 5.0]
+        inputs['nozzles_cmp'] = [1.0, 5.0, 15.0]
+        # expansion
+        inputs['n_stages_exp'] = 3
+        inputs['PR_exp'] = [5.0, 5.0, 5.0]
+        inputs['nozzles_exp'] = [15.0, 5.0, 1.0]
+
         return inputs
 
     def __init__(self, inputs=get_default_inputs()):
@@ -18,9 +27,6 @@ class ICAES(CAES):
         Initializes a 3 stage near-isothermal CAES system
         """
         CAES.__init__(self, inputs)
-
-        # Mass loading
-        self.ML = inputs['ML']
 
         # reservoir
         self.depth = inputs['depth']
@@ -33,23 +39,83 @@ class ICAES(CAES):
         self.k = self.cp / self.cv  # heat capacity ratio [-]
 
         # pump
-        self.eta_pump = 0.75
+        self.eta_pump = inputs['eta_pump']
 
-        # stage pressure ratios # equally divide among stages
-        self.PR1 = (self.p_store_max / self.p_atm) ** (1. / 3.)
-        self.PR2 = (self.p_store_max / self.p_atm) ** (1. / 3.)
-        self.PR3 = (self.p_store_max / self.p_atm) ** (1. / 3.)
+        # machinery - general
+        if inputs['PR_type'] == 'fixed' or inputs['PR_type'] == 'free':
+            self.PR_type = inputs['PR_type']
+        else:
+            self.PR_type = 'fixed'
 
-        # stage number of nozzles
-        self.nozzles1 = inputs['nozzles1']
-        self.nozzles2 = inputs['nozzles2']
-        self.nozzles3 = inputs['nozzles3']
+        # -------------------
+        # compression
+        # -------------------
+        if inputs['n_stages_cmp'] >= 1:
+            self.n_stages_cmp = inputs['n_stages_cmp']
+        else:
+            self.n_stages_cmp = 1
+
+        # need to make sure the number of PR entries matches the number of stages
+        # if not, make an assumption about PR per stage
+        if len(inputs['PR_cmp']) == self.n_stages_cmp:
+            self.PR_cmp = inputs['PR_cmp']
+        else:
+            self.PR_cmp = []
+            PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_cmp)
+            for n in range(self.n_stages_cmp):
+                self.PR_cmp.append(PR_equal)  # default value of equally divided pressure ratio
+
+        # need to make sure the number of nozzles entries matches the number of stages
+        # if not, make an assumption about PR per stage
+        if len(inputs['nozzles_cmp']) == self.n_stages_cmp:
+            self.nozzles_cmp = inputs['nozzles_cmp']
+        else:
+            self.nozzles_cmp = []
+            for n in range(self.n_stages_cmp):
+                self.nozzles_cmp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
+
+        # -------------------
+        # expansion
+        # -------------------
+
+        if inputs['n_stages_exp'] >= 1:
+            self.n_stages_exp = inputs['n_stages_exp']
+        else:
+            self.n_stages_exp = 1
+
+        # need to make sure the number of PR entries matches the number of stages
+        # if not, make an assumption about PR per stage
+        if len(inputs['PR_exp']) == self.n_stages_exp:
+            self.PR_exp = inputs['PR_exp']
+        else:
+            self.PR_exp = []
+            PR_equal = (self.p_store_min / self.p_atm) ** (1. / self.n_stages_exp)
+            for n in range(self.n_stages_exp):
+                self.PR_exp.append(PR_equal)  # default value of equally divided pressure ratio
+
+        # need to make sure the number of nozzles entries matches the number of stages
+        # if not, make an assumption about PR per stage
+        if len(inputs['nozzles_exp']) == self.n_stages_exp:
+            self.nozzles_exp = inputs['nozzles_exp']
+        else:
+            self.nozzles_exp = []
+            for n in range(self.n_stages_exp):
+                self.nozzles_exp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
 
         # recreate dataframe to store data (with additional entries)
-        additional_time_series = ['ML1', 'ML2', 'ML3', 'n1', 'n2', 'n3',
-                                  'w_1', 'w_2', 'w_3', 'w_pmp1', 'w_pmp2', 'w_pmp3',
-                                  'p1', 'p2', 'p3', 'p4',
-                                  'T1', 'T2', 'T3', 'T4']
+        additional_time_series = ['cmp_p_in', 'cmp_T_in', 'exp_p_in', 'exp_T_in']
+        stage_entries = ['ML', 'n', 'w_stg', 'w_pmp']
+        state_entries = ['p_out', 'T_out']
+        for n in range(self.n_stages_cmp):
+            for entry in stage_entries:
+                additional_time_series.append('cmp_' + entry + str(n))
+            for entry in state_entries:
+                additional_time_series.append('cmp_' + entry + str(n))
+        for n in range(self.n_stages_exp):
+            for entry in stage_entries:
+                additional_time_series.append('exp_' + entry + str(n))
+            for entry in state_entries:
+                additional_time_series.append('exp_' + entry + str(n))
         self.attributes_time_series = self.attributes_time_series + additional_time_series
         self.data = pd.DataFrame(columns=self.attributes_time_series)
 
@@ -76,100 +142,62 @@ class ICAES(CAES):
         k = self.k  # air - heat capacity ratio [-]
 
         # --------------
+        # determine stage pressure ratios
+        # --------------
+        if self.PR_type == 'fixed':
+            PRs = self.PR_cmp
+        else:  # self.PR_type == 'free'
+            PRs = []
+            p_in_stg = self.p_atm
+            p_out_final = self.p_store
+            for PR_design in self.PR_cmp:
+                if p_in_stg * PR_design >= p_out_final:
+                    PR = p_out_final / p_in_stg
+                else:
+                    PR = PR_design
+                PRs.append(PR)
+                # update for next stage
+                p_in_stg = p_in_stg * PR
+
+        # --------------
         # inlet
         # --------------
-        p1 = self.p_atm
-        T1 = self.T_atm
+        p_in = self.p_atm
+        T_in = self.T_atm
+        s['cmp_p_in'] = p_in
+        s['cmp_T_in'] = T_in
 
         # --------------
-        # determine stage outlet pressures
+        # calculate performance for each stage
         # --------------
-        p4 = self.p_store  # final outlet pressure always at storage pressure
-        if (p1 * self.PR1) >= p4:  # check if LP stage alone is sufficient
-            p2 = p4
-            p3 = p4
-        else:
-            p2 = p1 * self.PR1
-            if (p2 * self.PR2) >= p4:  # check if LP and MP stages togehter are sufficient
-                p3 = p4
-            else:
-                p3 = p2 * self.PR2
+        for n_stg, nozzles, PR in zip(range(self.n_stages_cmp), self.nozzles_cmp, PRs):
+            p_out = p_in * PR
+            ML = nozzles * (1.65 * 1e3 / p_out - 0.05)  # mass loading (based on higher pressure)
+            n = k * (1 + ML * (cd / cp)) / (1 + k * ML * (cd / cp))  # polytropic exponent
+            w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
+            w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
+            T_out = T_in * (p_out / p_in) ** ((n - 1.0) / n)  # outlet temperature
 
-        # --------------
-        # low pressure stage (1 -> 2)
-        # --------------
+            # -------------
+            # inlet state for next stage
+            # -------------
+            p_in = p_out
+            T_in = T_out
 
-        ML1 = self.nozzles1 * (1.65 * 1e3 / p2 - 0.05)  # mass loading
-        n1 = k * (1 + ML1 * (cd / cp)) / (1 + k * ML1 * (cd / cp))  # polytropic exponent
-        T2 = T1 * (p2 / p1) ** ((n1 - 1.0) / n1)  # outlet temperature
-
-        # --------------
-        # medium pressure stage  (2 -> 3)
-        # --------------
-        if p2 == p4:  # check if this stage is needed
-            ML2 = 0.0
-            n2 = 0.0
-            T3 = T2
-        else:
-
-            ML2 = self.nozzles2 * (1.65 * 1e3 / p3 - 0.05)
-            n2 = k * (1 + ML2 * (cd / cp)) / (1 + k * ML2 * (cd / cp))
-            T3 = T2 * (p3 / p2) ** ((n2 - 1.0) / n2)
-
-        # --------------
-        # high pressure stage  (3 -> 4)
-        # --------------
-        if p3 == p4:  # check if this stage is needed
-            ML3 = 0.0
-            n3 = 0.0
-            T4 = T3
-        else:
-            ML3 = self.nozzles3 * (1.65 * 1e3 / p4 - 0.05)
-            n3 = k * (1 + ML3 * (cd / cp)) / (1 + k * ML3 * (cd / cp))
-            T4 = T3 * (p4 / p3) ** ((n3 - 1.0) / n3)
-
-        # --------------
-        # work, work = n * R / M *T1 / (n-1) * (1 - (p2/p1)**((n-1)/n)
-        # --------------
-        w_1 = n1 * self.R / self.M * T1 / (n1 - 1.0) * (1.0 - (p2 / p1) ** ((n1 - 1) / n1))  # [kJ/kg]
-        w_2 = n2 * self.R / self.M * T2 / (n2 - 1.0) * (1.0 - (p3 / p2) ** ((n2 - 1) / n2))  # [kJ/kg]
-        w_3 = n3 * self.R / self.M * T3 / (n3 - 1.0) * (1.0 - (p4 / p3) ** ((n3 - 1) / n3))  # [kJ/kg]
-
-        # --------------
-        # pump work, = ML * v * (p2 - p1) / eta_pump
-        # --------------
-        w_pmp1 = - ML1 * self.v_water * (p2 - p1) / self.eta_pump / 1000.0  # [kJ/kg]
-        w_pmp2 = - ML2 * self.v_water * (p3 - p1) / self.eta_pump / 1000.0  # [kJ/kg]
-        w_pmp3 = - ML3 * self.v_water * (p4 - p1) / self.eta_pump / 1000.0  # [kJ/kg]
-
-        # --------------
-        # store results
-        # --------------
-        # required
-        s['work_per_kg'] = w_1 + w_2 + w_3 + w_pmp1 + w_pmp2 + w_pmp3  # [kJ/kg]
-        s['water_per_kg'] = ML1 + ML2 + ML3  # [kg/kg air]
-        s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input [kg/kg air]
-        # additional
-        s['ML1'] = ML1
-        s['ML2'] = ML2
-        s['ML3'] = ML3
-        s['n1'] = n1
-        s['n2'] = n2
-        s['n3'] = n3
-        s['w_1'] = w_1
-        s['w_2'] = w_2
-        s['w_3'] = w_3
-        s['w_pmp1'] = w_pmp1
-        s['w_pmp2'] = w_pmp2
-        s['w_pmp3'] = w_pmp3
-        s['p1'] = p1
-        s['p2'] = p2
-        s['p3'] = p3
-        s['p4'] = p4
-        s['T1'] = T1
-        s['T2'] = T2
-        s['T3'] = T3
-        s['T4'] = T4
+            # -------------
+            # store results
+            # -------------
+            # required
+            s['work_per_kg'] = s['work_per_kg'] + w_stg + w_pmp  # [kJ/kg]
+            s['water_per_kg'] = s['water_per_kg'] + ML  # [kg/kg air]
+            s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input [kg/kg air]
+            # additional
+            s['cmp_ML' + str(n_stg)] = ML
+            s['cmp_n' + str(n_stg)] = n
+            s['cmp_w_stg' + str(n_stg)] = w_stg
+            s['cmp_w_pmp' + str(n_stg)] = w_pmp
+            s['cmp_p_out' + str(n_stg)] = p_out
+            s['cmp_T_out' + str(n_stg)] = T_out
 
         return s
 
@@ -187,6 +215,7 @@ class ICAES(CAES):
                 water_per_kg - water use [kg water /kg air ]
                 fuel_per_kg - fuel use [kg fuel /kg air]
         """
+
         # --------------
         # fluid properties
         # --------------
@@ -195,101 +224,68 @@ class ICAES(CAES):
         k = self.k  # air - heat capacity ratio [-]
 
         # --------------
+        # determine stage pressure ratios
+        # --------------
+        if self.PR_type == 'fixed':
+            PRs = self.PR_exp
+        else:  # self.PR_type == 'free'
+            PRs = []
+            p_in_stg = self.p_store
+            p_out_final = self.p_atm
+            for PR_design in self.PR_exp:
+                if p_in_stg / PR_design <= p_out_final:
+                    PR = p_in_stg / p_out_final
+                else:
+                    PR = PR_design
+                PRs.append(PR)
+                # update for next stage
+                p_in_stg = p_in_stg / PR
+
+        # --------------
         # inlet
         # --------------
-        p4 = self.p_store
-        T4 = self.T_store
+        if self.PR_type == 'free':
+            p_in = self.p_store
+        else:  # if self.PR_type == 'fixed':
+            p_in = self.p_atm
+            for PR_design in self.PR_exp:
+                p_in = p_in * PR_design  # back-calculate throttle pressure
+            if p_in > self.p_store:
+                print('expander inlet pressure > storage pressure')
+        T_in = self.T_store
+        s['exp_p_in'] = p_in
+        s['exp_T_in'] = T_in
 
         # --------------
-        # determine stage outlet pressures
+        # calculate performance for each stage
         # --------------
-        p1 = self.p_atm  # final outlet pressure always at atmospheric pressure
-        if (p4 / self.PR3) <= p1:  # check if HP stage alone is sufficient
-            p3 = p1
-            p2 = p1
-        else:
-            p3 = p4 / self.PR3
-            if (p3 / self.PR2) <= p1:  # check if HP and MP stages together are sufficient
-                p2 = p1
-            else:
-                p2 = p3 / self.PR2
+        for n_stg, nozzles, PR in zip(range(self.n_stages_exp), self.nozzles_exp, PRs):
+            p_out = p_in / PR
+            ML = nozzles * (1.65 * 1e3 / p_in - 0.05)  # mass loading (based on higher pressure)
+            n = k * (1 + ML * (cd / cp)) / (1 + k * ML * (cd / cp))  # polytropic exponent
+            w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
+            w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
+            T_out = T_in * (p_out / p_in) ** ((n - 1.0) / n)  # outlet temperature
 
-        # --------------
-        # high pressure stage (4 -> 3)
-        # --------------
-        ML3 = self.nozzles3 * (1.65 * 1e3 / p4 - 0.05)  # stage mass loading
-        n3 = k * (1 + ML3 * (cd / cp)) / (1 + k * ML3 * (cd / cp))  # polytropic exponent
-        T3 = T4 * (p3 / p4) ** ((n3 - 1.0) / n3)  # outlet temperature
+            # -------------
+            # inlet state for next stage
+            # -------------
+            p_in = p_out
+            T_in = T_out
 
-        # --------------
-        # medium pressure stage (3 -> 2)
-        # --------------
-        if p3 == p4:  # check if this stage is needed
-            ML2 = 0.0
-            n2 = 0.0
-            T2 = T3
-        else:
-            ML2 = self.nozzles2 * (1.65 * 1e3 / p3 - 0.05)
-            n2 = k * (1 + ML2 * (cd / cp)) / (1 + k * ML2 * (cd / cp))
-            T2 = T3 * (p2 / p3) ** ((n2 - 1.0) / n2)
-
-        # --------------
-        # low pressure stage (2 -> 1)
-        # --------------
-        if p3 == p4:  # check if this stage is needed
-            ML1 = 0.0
-            n1 = 0.0
-            T1 = T2
-        else:
-            ML1 = self.nozzles1 * (1.65 * 1e3 / p2 - 0.05)
-            n1 = k * (1 + ML1 * (cd / cp)) / (1 + k * ML1 * (cd / cp))
-            T1 = T2 * (p1 / p2) ** ((n1 - 1.0) / n1)
-
-        # --------------
-        # calculate work, work = n * R / M *T1 / (n-1) * (1 - (p2/p1)**((n-1)/n)
-        # --------------
-        # w_1 = n1 * self.R / (self.M * (1 - n1)) * (T1 - T2)
-        # w_2 = n2 * self.R / (self.M * (1 - n2)) * (T2 - T3)
-        # w_3 = n3 * self.R / (self.M * (1 - n3)) * (T3 - T4)
-
-        w_1 = n1 * self.R / self.M * T2 / (n1 - 1.0) * (1.0 - (p1 / p2) ** ((n1 - 1) / n1))  # [kJ/kg]
-        w_2 = n2 * self.R / self.M * T3 / (n2 - 1.0) * (1.0 - (p2 / p3) ** ((n2 - 1) / n2))  # [kJ/kg]
-        w_3 = n3 * self.R / self.M * T4 / (n3 - 1.0) * (1.0 - (p3 / p4) ** ((n3 - 1) / n3))  # [kJ/kg]
-
-        # --------------
-        # pump work, = ML * v * (p2 - p1) / eta_pump
-        # --------------
-        w_pmp1 = - ML1 * self.v_water * (p2 - p1) / self.eta_pump / 1000.0  # [kJ/kg]
-        w_pmp2 = - ML2 * self.v_water * (p3 - p1) / self.eta_pump / 1000.0  # [kJ/kg]
-        w_pmp3 = - ML3 * self.v_water * (p4 - p1) / self.eta_pump / 1000.0  # [kJ/kg]
-
-        # --------------
-        # store results
-        # --------------
-        # required
-        s['work_per_kg'] = w_1 + w_2 + w_3 + w_pmp1 + w_pmp2 + w_pmp3  # [kJ/kg]
-        s['water_per_kg'] = ML1 + ML2 + ML3  # [kg/kg air]
-        s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input [kg/kg air]
-        # additional
-        s['ML1'] = ML1
-        s['ML2'] = ML2
-        s['ML3'] = ML3
-        s['n1'] = n1
-        s['n2'] = n2
-        s['n3'] = n3
-        s['w_1'] = w_1
-        s['w_2'] = w_2
-        s['w_3'] = w_3
-        s['w_pmp1'] = w_pmp1
-        s['w_pmp2'] = w_pmp2
-        s['w_pmp3'] = w_pmp3
-        s['p1'] = p1
-        s['p2'] = p2
-        s['p3'] = p3
-        s['p4'] = p4
-        s['T1'] = T1
-        s['T2'] = T2
-        s['T3'] = T3
-        s['T4'] = T4
+            # -------------
+            # store results
+            # -------------
+            # required
+            s['work_per_kg'] = s['work_per_kg'] + w_stg + w_pmp  # [kJ/kg]
+            s['water_per_kg'] = s['water_per_kg'] + ML  # [kg/kg air]
+            s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input [kg/kg air]
+            # additional
+            s['exp_ML' + str(n_stg)] = ML
+            s['exp_n' + str(n_stg)] = n
+            s['exp_w_stg' + str(n_stg)] = w_stg
+            s['exp_w_pmp' + str(n_stg)] = w_pmp
+            s['exp_p_out' + str(n_stg)] = p_out
+            s['exp_T_out' + str(n_stg)] = T_out
 
         return s
