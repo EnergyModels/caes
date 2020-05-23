@@ -53,7 +53,8 @@ if __name__ == '__main__':
     # numpy array inputs
     # ------------------
     # investigated
-    V_ress = np.array([1.0e3, 5.0e3, 1.0e4, 5.0e4, 1.0e5, 5.0e5, 1.0e6])  # reservoir volume [m3]
+    V_ress = np.array([1.0e3, 5.0e3, 1.0e4, 5.0e4, 1.0e5, 5.0e5, 1.0e6, 5.0e6,
+                       1.0e7, 5.0e7, 1.0e8, 5.0e8, 1.0e9, 5.0e9,])  # reservoir volume [m3]
     PRs = np.arange(1.1, 2.1, 0.1)  # pressure ratio [-]
     phis = np.array([1.0])  # porosity [-]
     Slrs = np.array([0.0])  # liquid residual fraction [-]
@@ -102,6 +103,8 @@ if __name__ == '__main__':
     # ==============
     df.loc[:, 'Efficiency [%]'] = df.loc[:, 'RTE'] * 100.0
     df.loc[:, 'Energy [MWh]'] = df.loc[:, 'kWh_out'] * 1.0e-3
+    df.loc[:, 'Energy [GWh]'] = df.loc[:, 'kWh_out'] * 1.0e-6
+    df.loc[:, 'Volume [m3]'] = df.loc[:, 'V_res']
     df.loc[:, 'Volume [1000 m3]'] = df.loc[:, 'V_res'] * 1.0e-3
     df.loc[:, 'Pressure ratio [-]'] = round(df.loc[:, 'PR'], 2)
 
@@ -114,22 +117,26 @@ if __name__ == '__main__':
     sns.set_style('white')
     sns.set_context('paper')
 
-    sns.lineplot(data=df, x='Volume [1000 m3]', y='Efficiency [%]', hue='Pressure ratio [-]', legend='full',
+    ax = sns.lineplot(data=df, x='Volume [m3]', y='Efficiency [%]', hue='Pressure ratio [-]', legend='full',
                  palette=palette)
+    ax.set_xscale('log')
     plt.savefig('sweep_PR_volume1.png', dpi=DPI)
     plt.close()
 
-    sns.lineplot(data=df, x='Volume [1000 m3]', y='Energy [MWh]', hue='Pressure ratio [-]', legend='full',
+    ax = sns.lineplot(data=df, x='Volume [m3]', y='Energy [GWh]', hue='Pressure ratio [-]', legend='full',
                  palette=palette)
+    ax.set_xscale('log')
+    ax.set_yscale('log')
     plt.savefig('sweep_PR_volume2.png', dpi=DPI)
     plt.close()
 
-    sns.lineplot(data=df, x='Pressure ratio [-]', y='Efficiency [%]', hue='Volume [1000 m3]', legend='full',
+    ax = sns.lineplot(data=df, x='Pressure ratio [-]', y='Efficiency [%]', hue='Volume [1000 m3]', legend='full',
                  palette=palette)
     plt.savefig('sweep_PR_volume3.png', dpi=DPI)
     plt.close()
 
-    sns.lineplot(data=df, x='Pressure ratio [-]', y='Energy [MWh]', hue='Volume [1000 m3]', legend='full',
+    ax = sns.lineplot(data=df, x='Pressure ratio [-]', y='Energy [GWh]', hue='Volume [1000 m3]', legend='full',
                  palette=palette)
+    ax.set_yscale('log')
     plt.savefig('sweep_PR_volume4.png', dpi=DPI)
     plt.close()

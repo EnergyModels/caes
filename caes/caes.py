@@ -44,6 +44,7 @@ class CAES:
 
         # debug option
         self.debug = inputs['debug']  # debug
+        self.buffer = 1e-6  # to prevent warnings when limits are exceeded due to numerical rounding
 
         # number of timesteps to use in single cycle simulations
         self.steps = inputs['steps']  # (-)
@@ -239,9 +240,7 @@ class CAES:
         """
 
         # mass injection per timestep
-        buffer = 1e-6 # buffer to ensure operation remains under limit
-        m_air = (self.m_store_max - self.m_store_min
-                 - buffer) / self.steps
+        m_air = (self.m_store_max - self.m_store_min) / self.steps
         # nondimensional time, start at 0, full at 0.5, empty at 1.0
         delta_t = 1.0 / (self.steps * 2.0)
 
@@ -258,7 +257,7 @@ class CAES:
                 print('/t' + str(i) + ' of ' + str(self.steps))
 
         if self.debug:
-            print("Charging")
+            print("Discharging")
 
         for i in range(int(self.steps)):
             # discharge
@@ -341,10 +340,10 @@ class CAES:
         self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M)  # storage pressure
 
         # check storage pressure against limits
-        if self.p_store < self.p_store_min:
+        if self.p_store < self.p_store_min - self.buffer:
             s['error_msg'] = 'Error: P_store < P_store_min (' + str(self.p_store) + ' < ' + str(self.p_store_min) + ')'
             print(s['error_msg'])
-        elif self.p_store > self.p_store_max:
+        elif self.p_store > self.p_store_max + self.buffer:
             s['error_msg'] = 'Error: P_store > P_store_max (' + str(self.p_store) + ' > ' + str(self.p_store_max) + ')'
             print(s['error_msg'])
 
