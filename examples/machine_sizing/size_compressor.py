@@ -11,7 +11,6 @@ p_in = 1.01325  # [bar]
 p_out = 100.0  # [bar]
 t_in = 298.15  # [K]
 
-
 # --------------
 # specific work
 # --------------
@@ -64,6 +63,29 @@ plt.savefig('cmp_sizing_3600rpm.png', dpi=300)
 plt.close()
 
 # --------------
+# costs
+# --------------
+designs2 = designs[designs['type'] != 'Rotary Piston']
+
+machine_types = ['Piston', 'Radial', 'Mixed', 'Axial']
+costs = [900, 500, 500, 500]
+
+for machine_type, cost in zip(machine_types, costs):
+    designs2.loc[designs2.loc[:, 'type'] == machine_type, 'Cost ($/kW)'] = cost
+
+# calculate cost per kW in
+designs2.loc[:, 'Cost ($/kWin)'] = designs2.loc[:, 'Cost ($/kW)'] / designs2.loc[:, 'eff']
+
+# --------------
+# plot results - costs
+# --------------
+ax = sns.scatterplot(x='pwr', y='Cost ($/kWin)', hue='type', data=designs2)
+ax.set(xscale='log')
+ax.set_xlabel('Power [MW]')
+plt.savefig('cmp_sizing_3600rpm_cost.png', dpi=300)
+plt.close()
+
+# --------------
 # run sweep @ 7200 rpm
 # --------------
 RPM = 7200
@@ -89,11 +111,34 @@ for machine_type in types:
             designs = designs.append(design, ignore_index=True)
 
 # --------------
-# plot results
+# plot results - efficiency
 # --------------
 ax = sns.scatterplot(x='pwr', y='eff', hue='type', data=designs)
 ax.set(xscale='log')
 ax.set_xlabel('Power [MW]')
 ax.set_ylabel('Isentropic efficiency [fr]')
 plt.savefig('cmp_sizing_7200rpm.png', dpi=300)
+plt.close()
+
+# --------------
+# costs
+# --------------
+designs2 = designs[designs['type'] != 'Rotary Piston']
+
+machine_types = ['Piston', 'Radial', 'Mixed', 'Axial']
+costs = [900, 500, 500, 500]
+
+for machine_type, cost in zip(machine_types, costs):
+    designs2.loc[designs2.loc[:, 'type'] == machine_type, 'Cost ($/kW)'] = cost
+
+# calculate cost per kW in
+designs2.loc[:, 'Cost ($/kWin)'] = designs2.loc[:, 'Cost ($/kW)'] / designs2.loc[:, 'eff']
+
+# --------------
+# plot results - costs
+# --------------
+ax = sns.scatterplot(x='pwr', y='Cost ($/kWin)', hue='type', data=designs2)
+ax.set(xscale='log')
+ax.set_xlabel('Power [MW]')
+plt.savefig('cmp_sizing_7200rpm_cost.png', dpi=300)
 plt.close()
