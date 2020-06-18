@@ -13,7 +13,7 @@ def sopher_method(Q=1, r_f=100.0, r_w=0.25, k=100, mu=0.5, h=40.0, p_f=10.0, T=2
     # Mu - viscosity[cP]
     # Z - gas deviation factor[-]
 
-    delta_p = (p_f ** 2 + Q * mu * T * Z * log(r_f / r_w) / (8.834 * 10 ** -3 * k * h)) ** 0.5 - p_f
+    delta_p = p_f - (p_f ** 2 - Q * mu * T * Z * log(r_f / r_w) / (8.834 * 10 ** -3 * k * h)) ** 0.5
 
     return delta_p
 

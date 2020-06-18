@@ -12,27 +12,19 @@ T = 298.15  # [K]
 Z = 1.0  # [-]
 
 # variables
-m_dots = np.arange(1, 100, 1)  # [m3/s]
-p_fs = [10.0, 22.0]  # [MPa]
+m_dots = np.arange(1, 300, 1)  # [kg/s]
+p_fs = [14.02, 17.34]  # [MPa]
 ks = [50, 100, 200, 300, 500]  # [mD] (range based on Sopher et al)
 r_fs = [250, 500]  # [m]
 
-Vs = [5.88e5]
-
-attributes = ['Q', 'p_in', 'r_f', 'r_w', 'k', 'h', 'mu', 'T', 'Z',  'm_dot', 'delta_p', 'rho']
+attributes = ['Q', 'p_f', 'r_f', 'r_w', 'k', 'h', 'mu', 'T', 'Z', 'm_dot', 'delta_p', 'rho']
 df = pd.DataFrame(columns=attributes)
 
 for p_f in p_fs:
 
-    if p_f == 10.0:
-        rho = CP.PropsSI('D', 'T', T, 'P', p_f * 1e6, 'AIR.MIX')  # [kg/m3] inputs are degrees K and Pa
-        mu = CP.PropsSI('V', 'T', T, 'P', p_f * 1e6, 'AIR.MIX') * 1000  # convert Pa*s (output) to cP
-        Z = CP.PropsSI('Z', 'T', T, 'P', p_f * 1e6, 'AIR.MIX')
-
-    else:  # p_f == 22.0:
-        rho = CP.PropsSI('D', 'T', T, 'P', p_f * 1e6, 'AIR.MIX')
-        mu = CP.PropsSI('V', 'T', T, 'P', p_f * 1e6, 'AIR.MIX') * 1000
-        Z = CP.PropsSI('Z', 'T', T, 'P', p_f * 1e6, 'AIR.MIX')
+    rho = CP.PropsSI('D', 'T', T, 'P', p_f * 1e6, 'AIR.MIX')  # [kg/m3] inputs are degrees K and Pa
+    mu = CP.PropsSI('V', 'T', T, 'P', p_f * 1e6, 'AIR.MIX') * 1000  # convert Pa*s (output) to cP
+    Z = CP.PropsSI('Z', 'T', T, 'P', p_f * 1e6, 'AIR.MIX')
 
     for r_f in r_fs:
 
@@ -43,7 +35,7 @@ for p_f in p_fs:
 
                 s = pd.Series(index=attributes)
                 s['Q'] = Q
-                s['p_in'] = p_f
+                s['p_f'] = p_f
                 s['r_f'] = r_f
                 s['r_w'] = r_w
                 s['k'] = k
@@ -58,9 +50,20 @@ for p_f in p_fs:
 
                 df = df.append(s, ignore_index=True)
 
+# rename columns for plotting
+df['Mass flow [kg/s]'] = df['m_dot']
+df['Pressure drop [MPa]'] = df['delta_p']
+df['Permeability [mD]'] = df['k']
+df['Air radius [m]'] = df['r_f']
+df['Air pressure, p3 [MPa]'] = df['p_f']
+df.to_csv('results.csv')
+
 sns.set_context('talk')
-ax = sns.relplot(x='m_dot', y='delta_p', hue='k', data=df, row='r_f', col='p_in', legend='full', palette='colorblind')
+ax = sns.relplot(x='Mass flow [kg/s]', y='Pressure drop [MPa]', hue='Permeability [mD]', data=df,
+                 row='Air radius [m]', col='Air pressure, p3 [MPa]', legend='full',
+                 palette='colorblind', kind='line')
 # ax.set_xlabel('Flow rate [kg/s]')
 # ax.set_ylabel('Pressure drop [MPa]')
+ax.set_titles(row_template = '{row_name}', col_template = '{col_name}')
 plt.savefig('delta_p.png', dpi=300)
 plt.close()
