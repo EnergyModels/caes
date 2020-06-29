@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.html#propssi-function
-from math import log
+from math import log, pi
+from well_flow import sopher_method
 
 
 class CAES:
@@ -15,11 +16,11 @@ class CAES:
         inputs['debug'] = False  # debug
         inputs['steps'] = 100.0  # number of timesteps to use in single cycle simulation
 
-        inputs['T_atm'] = 298.15  # 25 deg C [K]
+        inputs['T_atm'] = 290.00  # 16.85 deg C [K], yearly average VA coast
         inputs['p_atm'] = 101.325  # 1 atm [kPa]
 
-        inputs['T_water'] = 298.15  # 25 deg C [K]
-        inputs['p_water'] = 101.325  # 1 atm [kPa]
+        inputs['T_water'] = inputs['T_atm']  # same as atmospheric [K]
+        inputs['p_water'] = inputs['p_atm']  # same as atmospheric [kPa]
 
         # methane, from https://www.engineeringtoolbox.com/co2-emission-fuels-d_1085.html, Accessed 5/12/20
         inputs['fuel_HHV'] = 15.4  # [kWh/kg fuel]
@@ -27,16 +28,34 @@ class CAES:
 
         inputs['eta_mech'] = 0.95  # [-]
         inputs['eta_gen'] = 0.975  # [-]
-        inputs['eta_storage'] = 0.985  # [-]
+        # inputs['eta_storage'] = 0.985  # [-] # TODO - remove
 
-        inputs['T_store_init'] = 298.15  # 25 deg C [K]
-        inputs['p_store_init'] = 10.0e3  # [kPa]
-        inputs['p_store_min'] = 10.0e3  # [kPa]
-        inputs['p_store_max'] = 22.0e3  # [kPa]
+        # inputs['T_store_init'] = 273.15 + 41.35  # 25 deg C [K]
+        # inputs['p_store_init'] = 14.02e3  # [kPa]
+        # inputs['p_store_min'] = 14.02e3  # [kPa]
+        # inputs['p_store_max'] = 17.34e3  # [kPa]
 
-        inputs['V_res'] = 5.88e4  # [m3]
-        inputs['phi'] = 0.29  # porosity [-]
+        # wellbore
+        inputs['r_w'] = 0.53  # wellbore radius [m]
+        inputs['epsilon'] = 0.002 * 1e-3  # pipe roughness [m]
+        inputs['depth'] = 1402.35  # depth [m]
+
+        # aquifer thermal gradient
+        inputs['T_grad_m'] = 0.007376668 * 3.28084  # m, slope [deg C/m], TODO Fukai et al. 2020
+        inputs['T_grad_b'] = 7.412436  # b, intercept [deg C], TODO Fukai et al. 2020
+
+        # aquifer  pressure and limits
+        inputs['p_hydro_grad'] = 10.0  # hydrostatic pressure gradient [MPa/km], Fukai et al. 2020
+        inputs['p_safety_factor'] = 0.5  # pressure safety factor [-], Allen et al. 1983
+        inputs['p_frac_grad'] = 14.73  # fracture gradient [MPa/km], Fukai et al. 2020
+
+        # reservoir
+        inputs['thk'] = 62.44  # thickness [m]
+        inputs['r_f'] = 500.0  # formation radius [m]
+        # inputs['V_res'] = 5.88e4  # [m3]
+        inputs['phi'] = 0.2292  # porosity [-]
         inputs['Slr'] = 0.0  # liquid residual fraction [-]
+        inputs['k'] = 339  # permeability [mD] # TODO - update
 
         return inputs
 
@@ -80,7 +99,11 @@ class CAES:
         # storage properties
         self.p_store_min = inputs['p_store_min']  # [kPa]
         self.p_store_max = inputs['p_store_max']  # [kPa]
-        self.V_res = inputs['V_res']  # storage total volume [m^3], formation total size or cavern volume
+        self.depth = inputs['depth']  # depth [m]
+        self.thk = inputs['thk']  # thickness [m]
+        self.r_f = inputs['r_f']  # radius [m]
+        self.V_res = self.thk * pi * self.r_f ** 2  # storage total volume [m^3]
+        # self.V_res = inputs['V_res']  # storage total volume [m^3], formation total size or cavern volume
         self.phi = inputs['phi']  # porosity [-], set to 1.0 for cavern
         self.Slr = inputs['Slr']  # residual liquid fraction [-], set to 0.0 for cavern
         self.V = self.V_res * self.phi * (1.0 - self.Slr)  # volume available for air storage
@@ -93,6 +116,10 @@ class CAES:
         self.m_store = self.p_store * self.V * self.M / (self.R * self.T_store)  # mass stored
         self.m_store_min = self.p_store_min * self.V * self.M / (self.R * self.T_store)  # mass stored
         self.m_store_max = self.p_store_max * self.V * self.M / (self.R * self.T_store)  # mass stored
+
+        # flow pressure drops
+        self.dp_pipe = 0.0  # TODO
+        self.dp_aquifer = 0.0  # TODO
 
         # store error messages for current state
         self.error_msg = ''
@@ -188,7 +215,7 @@ class CAES:
         s['m_air'] = m_air
         s['delta_t'] = delta_t
 
-        # check if this will go above or below pressure limits, if so, enfore limits
+        # check if this will go above or below pressure limits, if so, enforce limits
         if self.m_store + s['m_air'] > self.m_store_max:
             s['m_air'] = abs(self.m_store_max - self.m_store)
         elif self.m_store + s['m_air'] < self.m_store_min:
@@ -398,3 +425,11 @@ class CAES:
         s['fuel_per_kg'] = 0.0  # isothermal - no heat input [kg/kg air]
 
         return s
+
+    def pipe_flow(self):
+        delta_p = 0.1  # MPa
+        return delta_p
+
+    def aquifer_flow(self):
+        dp = 5.0  # MPa
+        return delta_p
