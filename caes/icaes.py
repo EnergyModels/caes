@@ -148,8 +148,8 @@ class ICAES(CAES):
             PRs = self.PR_cmp
         else:  # self.PR_type == 'free'
             PRs = []
-            p_in_stg = self.p_atm
-            p_out_final = self.p_store
+            p_in_stg = s['p0']
+            p_out_final = s['p1']
             for PR_design in self.PR_cmp:
                 if p_in_stg * PR_design >= p_out_final:
                     PR = p_out_final / p_in_stg
@@ -162,7 +162,7 @@ class ICAES(CAES):
         # --------------
         # inlet
         # --------------
-        p_in = self.p_atm
+        p_in = s['p0']
         T_in = self.T_atm
         s['cmp_p_in'] = p_in
         s['cmp_T_in'] = T_in
@@ -230,8 +230,8 @@ class ICAES(CAES):
             PRs = self.PR_exp
         else:  # self.PR_type == 'free'
             PRs = []
-            p_in_stg = self.p_store
-            p_out_final = self.p_atm
+            p_in_stg = s['p1']
+            p_out_final = s['p0']
             for PR_design in self.PR_exp:
                 if p_in_stg / PR_design <= p_out_final:
                     PR = p_in_stg / p_out_final
@@ -245,9 +245,9 @@ class ICAES(CAES):
         # inlet
         # --------------
         if self.PR_type == 'free':
-            p_in = self.p_store
+            p_in = s['p1']
         else:  # if self.PR_type == 'fixed':
-            p_in = self.p_atm
+            p_in = s['p0']
             for PR_design in self.PR_exp:
                 p_in = p_in * PR_design  # back-calculate throttle pressure
             if p_in > self.p_store:

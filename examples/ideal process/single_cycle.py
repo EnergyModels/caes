@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 
 # create system
 inputs = CAES.get_default_inputs()
-inputs['p_store_min'] = 10.0e3  # kPa
-inputs['p_store_init'] = 10.0e3  # kPa
-inputs['p_store_max'] = 22.0e3  # kPa
 system = CAES(inputs=inputs)
 
 # run single cycle and analyze
