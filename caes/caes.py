@@ -1,7 +1,9 @@
 import pandas as pd
 import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.html#propssi-function
 from math import log, pi
-from pressure_drop import aquifer_dp, pipe_dp
+from .pressure_drop import aquifer_dp, pipe_fric_dp, pipe_grav_dp
+from .plot_functions import plot_series
+import matplotlib.pyplot as plt
 
 
 # references
@@ -36,10 +38,10 @@ class CAES:
         inputs['steps'] = 100.0  # number of steps to use in single cycle simulation
 
         inputs['T_atm'] = 290.00  # 16.85 deg C [K], yearly average for Virginia coast
-        inputs['p_atm'] = 101.325  # 1 atm [kPa]
+        inputs['p_atm'] = 101.325 * 1e-3  # 1 atm [kPa]
 
         inputs['T_water'] = inputs['T_atm']  # same as atmospheric [K]
-        inputs['p_water'] = inputs['p_atm']  # same as atmospheric [kPa]
+        inputs['p_water'] = inputs['p_atm']  # same as atmospheric [MPa]
 
         # methane, from https://www.engineeringtoolbox.com/co2-emission-fuels-d_1085.html, Accessed 5/12/20
         inputs['fuel_HHV'] = 15.4  # [kWh/kg fuel]
@@ -89,15 +91,15 @@ class CAES:
         self.air = "Air.mix"  # CoolProp fluid name [-]
         self.M = 28.97  # molecular weight [kg/kmol]
         self.T_atm = inputs['T_atm']  # K
-        self.p_atm = inputs['p_atm']  # [kPa]
+        self.p_atm = inputs['p_atm']  # [MPa]
 
         # water properties (used for cooling)
         self.water = 'Water'  # CoolProp fluid name [-]
         self.T_water = inputs['T_water']  # [K]
-        self.p_water = inputs['p_water']  # [kPa]
-        self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water * 1000.0,
+        self.p_water = inputs['p_water']  # [MPa]
+        self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water * 1e6,
                                   self.water) / 1000.0  # constant pressure specific heat [kJ/kg-K]
-        self.v_water = 1.0 / CP.PropsSI('D', 'T', self.T_water, 'P', self.p_water * 1000.0,
+        self.v_water = 1.0 / CP.PropsSI('D', 'T', self.T_water, 'P', self.p_water * 1e6,
                                         self.water)  # specific volume (1/density) [m^3/kg]
 
         # fuel properties (default values are for natural gas)
@@ -119,10 +121,10 @@ class CAES:
         self.safety_factor = inputs['safety_factor']  # pressure safety factor [-]
 
         # calculated aquifer operating pressure range
-        self.p_store_min = inputs['p_hydro_grad'] * inputs['depth']  # minimum storage pressure[kPa]
+        self.p_store_min = inputs['p_hydro_grad'] * inputs['depth'] * 1e-3  # minimum storage pressure[MPa]
         self.p_store_range = inputs['safety_factor'] * (
-                inputs['p_frac_grad'] - inputs['p_hydro_grad']) * inputs['depth']  # storage pressure range [kPa]
-        self.p_store_max = self.p_store_min + self.p_store_range  # maximum storage pressure [kPa]
+                inputs['p_frac_grad'] - inputs['p_hydro_grad']) * inputs['depth'] * 1e-3  # storage pressure range [MPa]
+        self.p_store_max = self.p_store_min + self.p_store_range  # maximum storage pressure [Pa]
 
         # aquifer thermal gradient
         self.T_grad_m = inputs['T_grad_m']  # m, slope [deg C/m]
@@ -142,8 +144,8 @@ class CAES:
         # calculated storage volume and mass storage
         self.V_res = self.h * pi * self.r_f ** 2  # storage total volume [m^3]
         self.V = self.V_res * self.phi * (1.0 - self.Slr)  # volume available for air storage [m^3]
-        self.m_store_min = self.p_store_min * self.V * self.M / (self.R * self.T_store_init)  # minimum [kg]
-        self.m_store_max = self.p_store_max * self.V * self.M / (self.R * self.T_store_init)  # maximum [kg]
+        self.m_store_min = self.p_store_min * 1e3 * self.V * self.M / (self.R * self.T_store_init)  # minimum [kg]
+        self.m_store_max = self.p_store_max * 1e3 * self.V * self.M / (self.R * self.T_store_init)  # maximum [kg]
 
         # storage  - initialize state
         self.time = 0.0  # [hr]
@@ -152,8 +154,21 @@ class CAES:
         self.m_store = self.m_store_min  # mass stored [kg]
 
         # flow pressure drops
-        self.dp_pipe = 0.0  # pipe friction and gravitational potential [kPa]
-        self.dp_aquifer = 0.0  # aquifer pressure drop [kPa]
+        self.dp_pipe_f = 0.0  # pipe friction [MPa]
+        self.dp_pipe_g = 0.0  # pipe gravitational potential [MPa]
+        self.dp_aquifer = 0.0  # aquifer pressure drop [MPa]
+
+        # pressure states [MPa]
+        self.p0 = self.p_atm  # ambient / compressor inlet / expander outlet
+        self.p1 = self.p_store  # compressor outlet / expander inlet
+        self.p2 = self.p_store  # downwell
+        self.p3 = self.p_store  # aquifer
+
+        # temperature states [K]
+        self.T0 = self.T_atm  # compressor inlet / expander outlet
+        self.T1 = self.T_atm  # compressor outlet / expander inlet
+        self.T2 = self.T_store  # downwell
+        self.T3 = self.T_store  # aquifer
 
         # store error messages for current state
         self.error_msg = ''
@@ -166,6 +181,8 @@ class CAES:
                                        'm_water', 'm_fuel',
                                        'p_store', 'T_store', 'm_store',
                                        'p0', 'p1', 'p2', 'p3',
+                                       'T0', 'T1', 'T2', 'T3',
+                                       'dp_pipe_f', 'dp_pipe_g', 'dp_well',
                                        'error_msg']
         self.data = pd.DataFrame(columns=self.attributes_time_series)
 
@@ -196,17 +213,27 @@ class CAES:
 
         # update flow pressure losses
         if abs(s['m_dot']) > 0:
-            self.dp_pipe = self.calc_pipe_dp(m_dot)  # pipe friction and gravitational potential [kPa]
-            self.dp_aquifer = self.calc_aquifer_dp(m_dot)  # aquifer pressure losses [kPa]
+            self.calc_pipe_dp(m_dot)  # pipe friction and gravitational potential
+            self.calc_aquifer_dp(m_dot)  # aquifer pressure losses
+
+            s['dp_pipe_f'] = self.dp_pipe_f
+            s['dp_pipe_g'] = self.dp_pipe_g
+            s['dp_well'] = self.dp_aquifer
 
         # charge/discharge
         if s['m_air'] > 0.0:  # (charge)
 
             # pressure states
             s['p0'] = self.p_atm  # atmospheric pressure, compressor inlet
-            s['p1'] = self.p_store + self.dp_aquifer + self.dp_pipe  # compressor outlet, pipe inlet
+            s['p1'] = self.p_store + self.dp_aquifer + self.dp_pipe_f + self.dp_pipe_g  # compressor outlet, pipe inlet
             s['p2'] = self.p_store + self.dp_aquifer  # pipe outlet
             s['p3'] = self.p_store  # storage pressure
+
+            # temperature states
+            s['T0'] = self.T_atm  # atmospheric pressure, compressor inlet
+            s['T1'] = self.T_atm  # compressor outlet, pipe inlet TODO
+            s['T2'] = self.T_store  # pipe outlet TODO
+            s['T3'] = self.T_store  # storage pressure
 
             # calculate compressor performance
             s = self.charge_perf(s)
@@ -217,10 +244,16 @@ class CAES:
         elif s['m_air'] < 0.0:  # (discharge)
 
             # pressure states
-            s['p3'] = self.p_store  # storage pressure
+            s['p3'] = self.p_store  # aquifer pressure
             s['p2'] = self.p_store - self.dp_aquifer  # pipe intlet
-            s['p1'] = self.p_store - self.dp_aquifer - self.dp_pipe  # pipe outlet, expander inlet
+            s['p1'] = self.p_store - self.dp_aquifer - self.dp_pipe_f - self.dp_pipe_g  # pipe outlet, expander inlet
             s['p0'] = self.p_atm  # atmospheric pressure, expander outlet
+
+            # temperature states
+            s['T3'] = self.T_store  # aquifer
+            s['T2'] = self.T_store  # pipe inlet
+            s['T1'] = self.T_atm  # pipe outlet, expander inlet # TODO
+            s['T0'] = self.T_atm  # expander outlet # TODO
 
             # calculate expander performance
             s = self.discharge_perf(s)
@@ -234,6 +267,23 @@ class CAES:
             s['p1'] = self.p_store
             s['p2'] = self.p_store
             s['p3'] = self.p_store
+
+            # temperature states [K]
+            s['T0'] = self.T_atm  # compressor inlet / expander outlet
+            s['T1'] = self.T_atm  # compressor outlet / expander inlet
+            s['T2'] = self.T_store  # downwell
+            s['T3'] = self.T_store  # aquifer
+
+        # store pressure  and temperature states
+        self.p0 = s['p0']
+        self.p1 = s['p1']
+        self.p2 = s['p2']
+        self.p3 = s['p3']
+
+        self.T0 = s['T0']
+        self.T1 = s['T1']
+        self.T2 = s['T2']
+        self.T3 = s['T3']
 
         # calculate the power per time step
         s['pwr'] = -1.0 * s['m_air'] * s['total_work_per_kg'] / (3600 * delta_t)  # 3600 converts from hr to s
@@ -368,7 +418,7 @@ class CAES:
         """
         # update storage mass and pressure
         self.m_store = self.m_store + s['m_air']
-        self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M)  # storage pressure
+        self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M) * 1e-3  # storage pressure
 
         # check storage pressure against limits
         if self.p_store < self.p_store_min - self.buffer:
@@ -431,28 +481,89 @@ class CAES:
         return s
 
     def calc_aquifer_dp(self, m_dot):
-        # fluid properties
-        rho = CP.PropsSI('D', 'T', self.T_store, 'P', self.p_store * 1e3,
-                         self.air)  # [kg/m3] inputs are degrees K and Pa
-        mu = CP.PropsSI('V', 'T', self.T_store, 'P', self.p_store * 1e3,
+        # fluid properties, inputs are degrees K and Pa
+        rho = CP.PropsSI('D', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # density, [kg/m3]
+        mu = CP.PropsSI('V', 'T', self.T_store, 'P', self.p_store * 1e6,
                         self.air) * 1000  # Viscosity, convert Pa*s (output) to cP
-        Z = CP.PropsSI('Z', 'T', self.T_store, 'P', self.p_store * 1e3, self.air)  # gas deviation factor [-]
+        Z = CP.PropsSI('Z', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # gas deviation factor [-]
 
         Q = m_dot / rho  # radial flow rate [m3/s]
 
         # aquifer pressure drop function
-        dp = pipe_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=self.p_store, T=self.T_store,
-                     Z=Z)  # [MPa]
-        dp = dp * 1e3  # [kPa]
-        return dp
+        dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=self.p_store, T=self.T_store,
+                        Z=Z)  # [MPa]
+
+        self.dp_aquifer = dp  # [MPa]
 
     def calc_pipe_dp(self, m_dot):
+        # determine thermodynamic state to use
+        if m_dot > 0.0:  # injection
+            T = self.T1
+            p = self.p1
+        else:  # withdrawl / no movement
+            T = self.T2
+            p = self.p2
 
-        if m_dot == 0:
-            delta_p = 0.0
-        elif m_dot > 0.0:  # injection
-            delta_p = 0.0
+        # fluid properties, inputs are degrees K and Pa
+        rho = CP.PropsSI('D', 'T', T, 'P', p * 1e6, self.air)  # density [kg/m3]
+        mu = CP.PropsSI('V', 'T', T, 'P', p * 1e6, self.air)  # viscosity [Pa*s]
 
-        else:  # release
-            delta_p = 0.0
-        return delta_p
+        # pipe diameter
+        d = 2 * self.r_w
+
+        # friction
+        self.dp_pipe_f, self.f = pipe_fric_dp(epsilon=self.epsilon, d=d, depth=self.depth, m_dot=m_dot, rho=rho, mu=mu)  # [MPa]
+
+        # gravity
+        self.dp_pipe_g = pipe_grav_dp(m_dot=m_dot, rho=rho, z=self.depth)  # [MPa]
+
+    def plot_overview(self):
+        df = self.data
+        df.loc[:, 'step'] = df.index
+
+        x_var = 'time'
+        x_label = 'Time [hr]'
+        x_convert = 1.0
+
+        y_vars = ['m_store', 'p_store', 'total_work_per_kg', 'pwr']
+        y_labels = ['Air stored\n[kton]', 'Well pressure\n[MPa]', 'Work\n[kJ/kg]', 'Power\n[MW]']
+        y_converts = [1.0e-6, 1.0e-3, 1.0, 1.0e-3]
+
+        plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
+        plt.savefig('overview.png', dpi=600)
+        plt.close()
+
+    def plot_pressures(self):
+        df = self.data
+        df.loc[:, 'step'] = df.index
+
+        x_var = 'time'
+        x_label = 'Time [hr]'
+        x_convert = 1.0
+
+        y_vars = ['m_dot', 'p0', 'p1', 'p2', 'p3']
+        y_labels = ['Mass flow\n[kg/s]', 'p0 - Ambient\n[MPa]', 'p1 - Cmp out/Exp in\n[MPa]',
+                    'p2 - Bottom of well\n[MPa]', 'p3 - Aquifer\n[MPa]']
+        y_converts = [1.0, 1.0, 1.0, 1.0, 1.0]
+
+        plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
+        plt.savefig('pressures.png', dpi=600)
+        plt.close()
+
+    def plot_pressure_losses(self):
+        df = self.data
+        df.loc[:, 'step'] = df.index
+
+        x_var = 'time'
+        x_label = 'Time [hr]'
+        x_convert = 1.0
+
+        y_vars = ['m_dot', 'p0', 'p1', 'p2', 'p3', 'dp_pipe_f', 'dp_pipe_g', 'dp_well']
+        y_labels = ['Mass flow\n[kg/s]', 'p0 - Ambient\n[MPa]', 'p1 - Cmp out/Exp in\n[MPa]',
+                    'p2 - Bottom of well\n[MPa]', 'p3 - Aquifer\n[MPa]',
+                    'Pipe friction loss\n[MPa]', 'Pipe gravitational loss\n[MPa]', 'Aquifer pressure loss\n[MPa]']
+        y_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+        plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
+        plt.savefig('pressure_losses.png', dpi=600)
+        plt.close()

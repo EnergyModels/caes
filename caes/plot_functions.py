@@ -31,7 +31,7 @@ def plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts, sca
             ax.set_xlabel(x_label)
 
         # Caption labels
-        caption_labels = ['A', 'B', 'C', 'D', 'E', 'F']
+        caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N']
         plt.text(0.05, 0.85, caption_labels[i], horizontalalignment='center', verticalalignment='center',
                  transform=ax.transAxes, fontsize='medium', fontweight='bold')
 
