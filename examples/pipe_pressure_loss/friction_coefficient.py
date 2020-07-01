@@ -10,7 +10,7 @@ import seaborn as sns
 T = 290  # [K]
 p = 15.0  # pressures [MPa]
 depth = 1420  # depth [m]
-d = 0.53 * 2.0  # diameter [m]
+d = 0.53  # diameter [m]
 
 # parameters to sweep
 m_dots = np.arange(0.0, 420, 20)  # flow rates [kg/s]

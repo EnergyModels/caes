@@ -4,12 +4,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from math import pi
 
 # fixed inputs
 T = 290  # [K]
 epsilon = 0.002 * 1.0e-3  # roughness [m]
 depth = 1420  # depth [m]
-d = 0.53 * 2.0  # diameter [m]
+d = 0.53  # diameter [m]
 
 # parameters to sweep
 m_dots = np.arange(-400, 420, 20)  # flow rates [kg/s]
