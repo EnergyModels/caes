@@ -7,24 +7,21 @@ class ICAES(CAES):
     def get_default_inputs():
         inputs = CAES.get_default_inputs()
         # general
-        inputs['depth'] = 2.0  # currently unused
-        inputs['eta_pump'] = 0.75  # 'fixed' or 'free' pressure ratios
+        inputs['eta_pump'] = 0.75
         # machinery
         inputs['PR_type'] = 'free'  # 'fixed' or 'free' pressure ratios
         # compression
         inputs['n_stages_cmp'] = 3
-        inputs['PR_cmp'] = [5.0, 5.0, 5.0]
         inputs['nozzles_cmp'] = [1.0, 5.0, 15.0]
         # expansion
         inputs['n_stages_exp'] = 3
-        inputs['PR_exp'] = [5.0, 5.0, 5.0]
         inputs['nozzles_exp'] = [15.0, 5.0, 1.0]
 
         return inputs
 
     def __init__(self, inputs=get_default_inputs()):
         """
-        Initializes a 3 stage near-isothermal CAES system
+        Initializes a mulit-stage near-isothermal CAES system
         """
         CAES.__init__(self, inputs)
 
@@ -55,15 +52,11 @@ class ICAES(CAES):
         else:
             self.n_stages_cmp = 1
 
-        # need to make sure the number of PR entries matches the number of stages
-        # if not, make an assumption about PR per stage
-        if len(inputs['PR_cmp']) == self.n_stages_cmp:
-            self.PR_cmp = inputs['PR_cmp']
-        else:
-            self.PR_cmp = []
-            PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_cmp)
-            for n in range(self.n_stages_cmp):
-                self.PR_cmp.append(PR_equal)  # default value of equally divided pressure ratio
+        # equally divide pressure ratio for each stage
+        PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_cmp)
+        self.PR_cmp = []
+        for n in range(self.n_stages_cmp):
+            self.PR_cmp.append(PR_equal)
 
         # need to make sure the number of nozzles entries matches the number of stages
         # if not, make an assumption about PR per stage
@@ -83,15 +76,11 @@ class ICAES(CAES):
         else:
             self.n_stages_exp = 1
 
-        # need to make sure the number of PR entries matches the number of stages
-        # if not, make an assumption about PR per stage
-        if len(inputs['PR_exp']) == self.n_stages_exp:
-            self.PR_exp = inputs['PR_exp']
-        else:
-            self.PR_exp = []
-            PR_equal = (self.p_store_min / self.p_atm) ** (1. / self.n_stages_exp)
-            for n in range(self.n_stages_exp):
-                self.PR_exp.append(PR_equal)  # default value of equally divided pressure ratio
+        # equally divide pressure ratio for each stage
+        PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_exp)
+        self.PR_exp = []
+        for n in range(self.n_stages_exp):
+            self.PR_exp.append(PR_equal)
 
         # need to make sure the number of nozzles entries matches the number of stages
         # if not, make an assumption about PR per stage
@@ -102,7 +91,9 @@ class ICAES(CAES):
             for n in range(self.n_stages_exp):
                 self.nozzles_exp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
 
+        # -------------------
         # recreate dataframe to store data (with additional entries)
+        # -------------------
         additional_time_series = ['cmp_p_in', 'cmp_T_in', 'exp_p_in', 'exp_T_in']
         stage_entries = ['ML', 'n', 'w_stg', 'w_pmp']
         state_entries = ['p_out', 'T_out']
@@ -172,7 +163,7 @@ class ICAES(CAES):
         # --------------
         for n_stg, nozzles, PR in zip(range(self.n_stages_cmp), self.nozzles_cmp, PRs):
             p_out = p_in * PR
-            ML = nozzles * (1.65 * 1e3 / p_out - 0.05)  # mass loading (based on higher pressure)
+            ML = nozzles * (1.65 / p_out - 0.05)  # mass loading (based on higher pressure)
             n = k * (1 + ML * (cd / cp)) / (1 + k * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
@@ -261,7 +252,7 @@ class ICAES(CAES):
         # --------------
         for n_stg, nozzles, PR in zip(range(self.n_stages_exp), self.nozzles_exp, PRs):
             p_out = p_in / PR
-            ML = nozzles * (1.65 * 1e3 / p_in - 0.05)  # mass loading (based on higher pressure)
+            ML = nozzles * (1.65 / p_in - 0.05)  # mass loading (based on higher pressure)
             n = k * (1 + ML * (cd / cp)) / (1 + k * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]

@@ -52,7 +52,7 @@ class CAES:
         inputs['eta_gen'] = 0.975  # [-]
 
         # wellbore
-        inputs['r_w'] = 0.53  # wellbore radius [m]
+        inputs['r_w'] = 0.53/2.0  # wellbore radius [m]
         inputs['epsilon'] = 0.002 * 1e-3  # pipe roughness [m]
         inputs['depth'] = 1402.35  # depth [m]
 
@@ -355,18 +355,14 @@ class CAES:
         m_dot_in = 1.0 * m_dot
         m_dot_out = -1.0 * m_dot
 
+        n_steps = 5
+
         # charge
-        self.update(m_dot=m_dot_in, delta_t=delta_t)
-        self.update(m_dot=m_dot_in, delta_t=delta_t)
-        self.update(m_dot=m_dot_in, delta_t=delta_t)
-        self.update(m_dot=m_dot_in, delta_t=delta_t)
-        self.update(m_dot=m_dot_in, delta_t=delta_t)
+        for i in range(n_steps):
+            self.update(m_dot=m_dot_in, delta_t=delta_t)
         # discharge
-        self.update(m_dot=m_dot_out, delta_t=delta_t)
-        self.update(m_dot=m_dot_out, delta_t=delta_t)
-        self.update(m_dot=m_dot_out, delta_t=delta_t)
-        self.update(m_dot=m_dot_out, delta_t=delta_t)
-        self.update(m_dot=m_dot_out, delta_t=delta_t)
+        for i in range(n_steps):
+            self.update(m_dot=m_dot_out, delta_t=delta_t)
 
     def analyze_performance(self):
         """
@@ -391,13 +387,19 @@ class CAES:
         heat_input_total = fuel_input_total * self.fuel_HHV  # [kWh]
         RTE = energy_output_total / (energy_input_total + heat_input_total)
 
+        # power in/out indices
+        ind_pwr_in = self.data.loc[:,'m_air']>0.0
+        ind_pwr_out = self.data.loc[:,'m_air']<0.0
+
         # create series to hold results
-        entries = ['RTE', 'kWh_in', 'kWh_out',
+        entries = ['RTE', 'kWh_in', 'kWh_out', 'kW_in_avg', 'kW_out_avg',
                    'kg_water_per_kWh', 'kg_CO2_per_kWh', 'kg_fuel_per_kWh', ]
         results = pd.Series(index=entries)
         results['RTE'] = RTE
         results['kWh_in'] = energy_input_total
         results['kWh_out'] = energy_output_total
+        results['kW_in_avg'] = self.data.loc[ind_pwr_in, 'pwr'].mean()
+        results['kW_out_avg'] = self.data.loc[ind_pwr_out, 'pwr'].mean()
         results['kg_water_per_kWh'] = water_input_total / energy_output_total
         results['kg_CO2_per_kWh'] = CO2_fuel / energy_output_total
         results['kg_fuel_per_kWh'] = fuel_input_total / energy_output_total
@@ -493,7 +495,7 @@ class CAES:
         dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=self.p_store, T=self.T_store,
                         Z=Z)  # [MPa]
 
-        self.dp_aquifer = dp  # [MPa]
+        self.dp_aquifer = abs(dp)  # [MPa]
 
     def calc_pipe_dp(self, m_dot):
         # determine thermodynamic state to use
@@ -527,7 +529,7 @@ class CAES:
 
         y_vars = ['m_store', 'p_store', 'total_work_per_kg', 'pwr']
         y_labels = ['Air stored\n[kton]', 'Well pressure\n[MPa]', 'Work\n[kJ/kg]', 'Power\n[MW]']
-        y_converts = [1.0e-6, 1.0e-3, 1.0, 1.0e-3]
+        y_converts = [1.0e-6, 1.0, 1.0, 1.0e-3]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
         plt.savefig('overview.png', dpi=600)
@@ -542,8 +544,8 @@ class CAES:
         x_convert = 1.0
 
         y_vars = ['m_dot', 'p0', 'p1', 'p2', 'p3']
-        y_labels = ['Mass flow\n[kg/s]', 'p0 - Ambient\n[MPa]', 'p1 - Cmp out/Exp in\n[MPa]',
-                    'p2 - Bottom of well\n[MPa]', 'p3 - Aquifer\n[MPa]']
+        y_labels = ['Mass flow\n[kg/s]', 'p0\nAmbient\n[MPa]', 'p1 \nWell top\n[MPa]',
+                    'p2\nWell btm\n[MPa]', 'p3\nAquifer\n[MPa]']
         y_converts = [1.0, 1.0, 1.0, 1.0, 1.0]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
@@ -558,11 +560,10 @@ class CAES:
         x_label = 'Time [hr]'
         x_convert = 1.0
 
-        y_vars = ['m_dot', 'p0', 'p1', 'p2', 'p3', 'dp_pipe_f', 'dp_pipe_g', 'dp_well']
-        y_labels = ['Mass flow\n[kg/s]', 'p0 - Ambient\n[MPa]', 'p1 - Cmp out/Exp in\n[MPa]',
-                    'p2 - Bottom of well\n[MPa]', 'p3 - Aquifer\n[MPa]',
+        y_vars = ['m_dot', 'dp_pipe_f', 'dp_pipe_g', 'dp_well']
+        y_labels = ['Mass flow\n[kg/s]',
                     'Pipe friction loss\n[MPa]', 'Pipe gravitational loss\n[MPa]', 'Aquifer pressure loss\n[MPa]']
-        y_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        y_converts = [1.0, 1.0, 1.0, 1.0]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
         plt.savefig('pressure_losses.png', dpi=600)

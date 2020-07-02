@@ -1,4 +1,4 @@
-from caes import sopher_method
+from caes import aquifer_dp
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -14,7 +14,7 @@ Z = 1.0  # [-]
 # variables
 m_dots = np.arange(1, 300, 1)  # [kg/s]
 p_fs = [14.02, 17.34]  # [MPa]
-ks = [50, 100, 200, 300, 500]  # [mD] (range based on Sopher et al)
+ks = [50, 100, 200, 300, 500]  # [mD] (range based on Sopher et al. 2019)
 r_fs = [250, 500]  # [m]
 
 attributes = ['Q', 'p_f', 'r_f', 'r_w', 'k', 'h', 'mu', 'T', 'Z', 'm_dot', 'delta_p', 'rho']
@@ -31,7 +31,7 @@ for p_f in p_fs:
         for k in ks:
             for m_dot in m_dots:
                 Q = m_dot / rho
-                delta_p = sopher_method(Q=Q, p_f=p_f, r_f=r_f, r_w=r_w, k=k, h=h, mu=mu, T=T, Z=Z)
+                delta_p = aquifer_dp(Q=Q, p_f=p_f, r_f=r_f, r_w=r_w, k=k, h=h, mu=mu, T=T, Z=Z)
 
                 s = pd.Series(index=attributes)
                 s['Q'] = Q
@@ -64,6 +64,6 @@ ax = sns.relplot(x='Mass flow [kg/s]', y='Pressure drop [MPa]', hue='Permeabilit
                  palette='colorblind', kind='line')
 # ax.set_xlabel('Flow rate [kg/s]')
 # ax.set_ylabel('Pressure drop [MPa]')
-ax.set_titles(row_template = '{row_name}', col_template = '{col_name}')
+ax.set_titles(row_template='{row_name}', col_template='{col_name}')
 plt.savefig('delta_p.png', dpi=300)
 plt.close()

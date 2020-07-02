@@ -17,13 +17,6 @@ def parameter_sweep(sweep_input):
     # create system
     inputs = CAES.get_default_inputs()
     inputs['steps'] = sweep_input['steps']  # [kPa]
-    inputs['p_store_min'] = sweep_input['p_min']  # [kPa]
-    inputs['p_store_init'] = sweep_input['p_min']  # [kPa]
-    inputs['p_store_max'] = sweep_input['p_max']  # [kPa]
-    inputs['eta_storage'] = sweep_input['eta_storage']  # [-]
-    inputs['V_res'] = sweep_input['V_res']  # [m3]
-    inputs['phi'] = sweep_input['phi']  # porosity [-]
-    inputs['Slr'] = sweep_input['Slr']  # liquid residual fraction [-]
     system = CAES(inputs=inputs)
 
     # run single cycle and analyze
@@ -56,40 +49,18 @@ if __name__ == '__main__':
     steps = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 7.0, 8.0, 10.0, 25.0, 50.0, 75.0, 100.0, 250.0, 500.0, 750.0,
                       1000.0])  # number of solution time steps [-]
 
-    # kept at default values
-    p_mins = np.array([CAES.get_default_inputs()['p_store_min']])  # minimum pressure [kPa]
-    PRs = np.array(
-        [CAES.get_default_inputs()['p_store_max'] / CAES.get_default_inputs()['p_store_min']])  # pressure ratio [-]
-    eta_storages = np.array([CAES.get_default_inputs()['eta_storage']])  # storage efficiency [fr]
-    V_ress = np.array([CAES.get_default_inputs()['V_res']])  # reservoir volume [m3]
-    phis = np.array([CAES.get_default_inputs()['phi']])  # porosity [-]
-    Slrs = np.array([CAES.get_default_inputs()['Slr']])  # liquid residual fraction [-]
-
     # ==============
     # run simulations
     # ==============
 
     # prepare dataframe to store inputs
-    attributes = ['steps', 'p_min', 'PR', 'p_max', 'eta_storage', 'V_res', 'phi', 'Slr']
+    attributes = ['steps']
     sweep_inputs = pd.DataFrame(columns=attributes)
 
     count = 0
     for step in steps:
-        for p_min in p_mins:
-            for PR in PRs:
-                for eta_storage in eta_storages:
-                    for V_res in V_ress:
-                        for phi in phis:
-                            for Slr in Slrs:
-                                sweep_inputs.loc[count, 'steps'] = step
-                                sweep_inputs.loc[count, 'p_min'] = p_min
-                                sweep_inputs.loc[count, 'PR'] = PR
-                                sweep_inputs.loc[count, 'p_max'] = p_min * PR
-                                sweep_inputs.loc[count, 'eta_storage'] = eta_storage
-                                sweep_inputs.loc[count, 'V_res'] = V_res
-                                sweep_inputs.loc[count, 'phi'] = phi
-                                sweep_inputs.loc[count, 'Slr'] = Slr
-                                count = count + 1
+        sweep_inputs.loc[count, 'steps'] = step
+        count = count + 1
     n_cases = sweep_inputs.shape[0]
 
     # run each case using parallelization
