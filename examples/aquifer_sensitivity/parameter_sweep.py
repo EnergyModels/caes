@@ -49,10 +49,10 @@ if __name__ == '__main__':
     # numpy array inputs
     # ------------------
     # investigated
-    depths = np.arange(1000.0, 4000.1, 1000.0)  # aquifer depth [m3]
+    depths = np.array([1400])  # p.arange(1000.0, 3000.1, 1000.0)  # aquifer depth [m3] TODO
     r_fs = np.arange(100.0, 500.1, 133.33)  # formation radius [m]
     hs = np.array([50.0, 100.0, 500.0, 1000.0])  # np.arange(50, 1200.1, 380.0)  # formation thickness [m]
-    phis = np.arange(0.18, 0.3714, 0.06)  # porosity [-]
+    phis = np.arange(0.22, 0.3714, 0.04)  # porosity [-] TODO
     # k, permeability [mD] - calculate later
     m_dots = np.arange(100.0, 400.1, 100.0)  # [kg/s] # calculate later
 
@@ -79,6 +79,9 @@ if __name__ == '__main__':
                         sweep_inputs.loc[count, 'm_dot'] = m_dot
                         count = count + 1
     n_cases = sweep_inputs.shape[0]
+
+    # save inputs
+    sweep_inputs.to_csv('parameter_sweep_inputs.csv')
 
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):
