@@ -47,9 +47,9 @@ class CAES:
         inputs['fuel_HHV'] = 15.4  # [kWh/kg fuel]
         inputs['fuel_CO2'] = 2.75  # [kg CO2/kg fuel]
 
-        # mechanical and generator efficiencies
-        inputs['eta_mech'] = 0.95  # [-]
-        inputs['eta_gen'] = 0.975  # [-]
+        # mechanical and generator losses
+        inputs['loss_mech'] = 1.0 - 0.95  # [-]
+        inputs['loss_gen'] = 1.0 - 0.975  # [-]
 
         # wellbore
         inputs['r_w'] = 0.53 / 2.0  # wellbore radius [m]
@@ -110,8 +110,8 @@ class CAES:
         self.fuel_CO2 = inputs['fuel_CO2']  # [kg CO2/kg fuel]
 
         # efficiencies
-        self.eta_mech = inputs['eta_mech']  # mechanical [fr]
-        self.eta_gen = inputs['eta_gen']  # generator [fr]
+        self.eta_mech = 1.0 - inputs['loss_mech']  # mechanical [fr]
+        self.eta_gen = 1.0 - inputs['loss_gen']  # generator [fr]
 
         # wellbore
         self.r_w = inputs['r_w']  # wellbore radius [m]
