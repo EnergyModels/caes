@@ -52,7 +52,7 @@ class CAES:
         inputs['eta_gen'] = 0.975  # [-]
 
         # wellbore
-        inputs['r_w'] = 0.53/2.0  # wellbore radius [m]
+        inputs['r_w'] = 0.53 / 2.0  # wellbore radius [m]
         inputs['epsilon'] = 0.002 * 1e-3  # pipe roughness [m]
         inputs['depth'] = 1402.35  # depth [m]
 
@@ -124,7 +124,8 @@ class CAES:
         self.p_store_min = inputs['p_hydro_grad'] * inputs['depth'] * 1e-3  # minimum storage pressure[MPa]
         self.p_store_range = inputs['safety_factor'] * (
                 inputs['p_frac_grad'] - inputs['p_hydro_grad']) * inputs['depth'] * 1e-3  # storage pressure range [MPa]
-        self.p_store_max = self.p_store_min + self.p_store_range  # maximum storage pressure [Pa]
+        self.p_store_max = self.p_store_min + self.p_store_range  # maximum storage pressure [MPa]
+        self.p_store_max_actual = self.p_store_max  # actual depends on mass flow rate [MPa]
 
         # aquifer thermal gradient
         self.T_grad_m = inputs['T_grad_m']  # m, slope [deg C/m]
@@ -146,6 +147,7 @@ class CAES:
         self.V = self.V_res * self.phi * (1.0 - self.Slr)  # volume available for air storage [m^3]
         self.m_store_min = self.p_store_min * 1e3 * self.V * self.M / (self.R * self.T_store_init)  # minimum [kg]
         self.m_store_max = self.p_store_max * 1e3 * self.V * self.M / (self.R * self.T_store_init)  # maximum [kg]
+        self.m_store_max_actual = self.m_store_max  # actual maximum varies based on mass flow rate
 
         # storage  - initialize state
         self.time = 0.0  # [hr]
@@ -231,8 +233,8 @@ class CAES:
 
             # temperature states
             s['T0'] = self.T_atm  # atmospheric pressure, compressor inlet
-            s['T1'] = self.T_atm  # compressor outlet, pipe inlet TODO
-            s['T2'] = self.T_store  # pipe outlet TODO
+            s['T1'] = self.T_atm  # compressor outlet, pipe inlet # not updated
+            s['T2'] = self.T_store  # pipe outlet # not updated
             s['T3'] = self.T_store  # storage pressure
 
             # calculate compressor performance
@@ -252,8 +254,8 @@ class CAES:
             # temperature states
             s['T3'] = self.T_store  # aquifer
             s['T2'] = self.T_store  # pipe inlet
-            s['T1'] = self.T_atm  # pipe outlet, expander inlet # TODO
-            s['T0'] = self.T_atm  # expander outlet # TODO
+            s['T1'] = self.T_atm  # pipe outlet, expander inlet # not updated
+            s['T0'] = self.T_atm  # expander outlet # not updated
 
             # calculate expander performance
             s = self.discharge_perf(s)
@@ -314,8 +316,16 @@ class CAES:
         :return:
         """
 
+        # calculate aquifer pressure loss based on m_dot
+        self.calc_aquifer_dp(m_dot)  # aquifer pressure losses
+
+        # update m_store_max_actual based aquifer pressure losses
+        self.p_store_max_actual = self.p_store_max - self.dp_aquifer
+        self.m_store_max_actual = self.p_store_max_actual * 1e3 * self.V * self.M / (
+                self.R * self.T_store_init)  # maximum [kg]
+
         # mass injection/release per timestep
-        m_air = (self.m_store_max - self.m_store_min) / self.steps
+        m_air = (self.m_store_max_actual - self.m_store_min) / self.steps
         # timestep duration
         delta_t = m_air / (m_dot * 3600)  # [hr]
 
@@ -327,23 +337,26 @@ class CAES:
         # save initial state
         self.update(m_dot=0.0, delta_t=1e-6)
 
-        if self.debug:
-            print("Charging")
+        # if aquifer pressure losses are greater than well range, then do not perform calculations
+        if m_air > 0.0:
 
-        for i in range(int(self.steps)):
-            # charge
-            self.update(m_dot=m_dot, delta_t=delta_t)
             if self.debug:
-                print('/t' + str(i) + ' of ' + str(self.steps))
+                print("Charging")
 
-        if self.debug:
-            print("Discharging")
+            for i in range(int(self.steps)):
+                # charge
+                self.update(m_dot=m_dot, delta_t=delta_t)
+                if self.debug:
+                    print('/t' + str(i) + ' of ' + str(self.steps))
 
-        for i in range(int(self.steps)):
-            # discharge
-            self.update(m_dot=-1.0 * m_dot, delta_t=delta_t)
             if self.debug:
-                print('/t' + str(i) + ' of ' + str(self.steps))
+                print("Discharging")
+
+            for i in range(int(self.steps)):
+                # discharge
+                self.update(m_dot=-1.0 * m_dot, delta_t=delta_t)
+                if self.debug:
+                    print('/t' + str(i) + ' of ' + str(self.steps))
 
     def debug_perf(self, m_dot=50.0, delta_t=1.0):
         """
@@ -377,32 +390,42 @@ class CAES:
             CO2_per_MWh - CO2 emissions per MWh [kg]
             water_per_MWh - water consumption per MWh [kg]
         """
-
-        # compute performance
-        energy_input_total = self.data.loc[:, 'energy_in'].sum()  # [kWh]
-        energy_output_total = self.data.loc[:, 'energy_out'].sum()  # [kWh]
-        water_input_total = self.data.loc[:, 'm_water'].sum()  # [kg]
-        fuel_input_total = self.data.loc[:, 'm_fuel'].sum()  # [kg]
-        CO2_fuel = fuel_input_total * self.fuel_CO2  # [ton]
-        heat_input_total = fuel_input_total * self.fuel_HHV  # [kWh]
-        RTE = energy_output_total / (energy_input_total + heat_input_total)
-
-        # power in/out indices
-        ind_pwr_in = self.data.loc[:,'m_air']>0.0
-        ind_pwr_out = self.data.loc[:,'m_air']<0.0
-
         # create series to hold results
         entries = ['RTE', 'kWh_in', 'kWh_out', 'kW_in_avg', 'kW_out_avg',
-                   'kg_water_per_kWh', 'kg_CO2_per_kWh', 'kg_fuel_per_kWh', ]
+                   'kg_water_per_kWh', 'kg_CO2_per_kWh', 'kg_fuel_per_kWh', 'errors']
         results = pd.Series(index=entries)
-        results['RTE'] = RTE
-        results['kWh_in'] = energy_input_total
-        results['kWh_out'] = energy_output_total
-        results['kW_in_avg'] = self.data.loc[ind_pwr_in, 'pwr'].mean()
-        results['kW_out_avg'] = self.data.loc[ind_pwr_out, 'pwr'].mean()
-        results['kg_water_per_kWh'] = water_input_total / energy_output_total
-        results['kg_CO2_per_kWh'] = CO2_fuel / energy_output_total
-        results['kg_fuel_per_kWh'] = fuel_input_total / energy_output_total
+
+        if len(self.data) > 1:
+
+            # compute performance
+            energy_input_total = self.data.loc[:, 'energy_in'].sum()  # [kWh]
+            energy_output_total = self.data.loc[:, 'energy_out'].sum()  # [kWh]
+            water_input_total = self.data.loc[:, 'm_water'].sum()  # [kg]
+            fuel_input_total = self.data.loc[:, 'm_fuel'].sum()  # [kg]
+            CO2_fuel = fuel_input_total * self.fuel_CO2  # [ton]
+            heat_input_total = fuel_input_total * self.fuel_HHV  # [kWh]
+            RTE = energy_output_total / (energy_input_total + heat_input_total)
+
+            # power in/out indices
+            ind_pwr_in = self.data.loc[:, 'm_air'] > 0.0
+            ind_pwr_out = self.data.loc[:, 'm_air'] < 0.0
+
+            # store results
+            results['RTE'] = RTE
+            results['kWh_in'] = energy_input_total
+            results['kWh_out'] = energy_output_total
+            results['kW_in_avg'] = self.data.loc[ind_pwr_in, 'pwr'].mean()
+            results['kW_out_avg'] = self.data.loc[ind_pwr_out, 'pwr'].mean()
+            results['kg_water_per_kWh'] = water_input_total / energy_output_total
+            results['kg_CO2_per_kWh'] = CO2_fuel / energy_output_total
+            results['kg_fuel_per_kWh'] = fuel_input_total / energy_output_total
+            if len(self.data.error_msg.unique()) > 1:  # errors
+                results['errors'] = 'true'
+            else:  # no errors
+                results['errors'] = 'false'
+
+        else:  # insufficient data
+            results['errors'] = 'true'
 
         return results
 
@@ -422,12 +445,17 @@ class CAES:
         self.m_store = self.m_store + s['m_air']
         self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M) * 1e-3  # storage pressure
 
-        # check storage pressure against limits
-        if self.p_store < self.p_store_min - self.buffer:
-            s['error_msg'] = 'Error: P_store < P_store_min (' + str(self.p_store) + ' < ' + str(self.p_store_min) + ')'
+        # check storage pressure against limits, p2 (downwell)
+        if self.p2 > self.p_store_max + self.buffer:
+            s['error_msg'] = 'Error: p2 > P_store_max (' + str(self.p2) + ' > ' + str(self.p_store_max) + ')'
             print(s['error_msg'])
-        elif self.p_store > self.p_store_max + self.buffer:
-            s['error_msg'] = 'Error: P_store > P_store_max (' + str(self.p_store) + ' > ' + str(self.p_store_max) + ')'
+
+        # check storage pressure against limits, p3 (formation edge)
+        if self.p3 < self.p_store_min - self.buffer:
+            s['error_msg'] = 'Error: p3 < P_store_min (' + str(self.p3) + ' < ' + str(self.p_store_min) + ')'
+            print(s['error_msg'])
+        elif self.p3 > self.p_store_max + self.buffer:
+            s['error_msg'] = 'Error: p3 > P_store_max (' + str(self.p3) + ' > ' + str(self.p_store_max) + ')'
             print(s['error_msg'])
 
         # store results
@@ -514,7 +542,8 @@ class CAES:
         d = 2 * self.r_w
 
         # friction
-        self.dp_pipe_f, self.f = pipe_fric_dp(epsilon=self.epsilon, d=d, depth=self.depth, m_dot=m_dot, rho=rho, mu=mu)  # [MPa]
+        self.dp_pipe_f, self.f = pipe_fric_dp(epsilon=self.epsilon, d=d, depth=self.depth, m_dot=m_dot, rho=rho,
+                                              mu=mu)  # [MPa]
 
         # gravity
         self.dp_pipe_g = pipe_grav_dp(m_dot=m_dot, rho=rho, z=self.depth)  # [MPa]

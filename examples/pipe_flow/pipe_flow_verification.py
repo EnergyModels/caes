@@ -35,7 +35,3 @@ print('Percent difference [%]')
 print('Friction coefficient  : '+str(pct_diff_f))
 print('Friction pressure drop: '+str(pct_diff_dp_fric))
 print('Gravity pressure drop : '+str(pct_diff_dp_grav))
-
-
-# display results
-print

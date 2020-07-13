@@ -33,7 +33,7 @@ class ICAES(CAES):
                              'AIR.MIX') / 1000.0  # constant pressure specific heat [kJ/kg-K]
         self.cv = CP.PropsSI('CVMASS', 'T', self.T_atm, 'P', self.p_atm * 1000.0,
                              'AIR.MIX') / 1000.0  # constant volume specific heat [kJ/kg-K]
-        self.k = self.cp / self.cv  # heat capacity ratio [-]
+        self.gamma = self.cp / self.cv  # heat capacity ratio [-]
 
         # pump
         self.eta_pump = inputs['eta_pump']
@@ -130,7 +130,7 @@ class ICAES(CAES):
         # --------------
         cd = self.c_water  # water - heat capacity [kJ/kg-K]
         cp = self.cp  # air - constant pressure specific heat [kJ/kg-K]
-        k = self.k  # air - heat capacity ratio [-]
+        gamma = self.gamma  # air - heat capacity ratio [-]
 
         # --------------
         # determine stage pressure ratios
@@ -164,7 +164,7 @@ class ICAES(CAES):
         for n_stg, nozzles, PR in zip(range(self.n_stages_cmp), self.nozzles_cmp, PRs):
             p_out = p_in * PR
             ML = nozzles * (1.65 / p_out - 0.05)  # mass loading (based on higher pressure)
-            n = k * (1 + ML * (cd / cp)) / (1 + k * ML * (cd / cp))  # polytropic exponent
+            n = gamma * (1 + ML * (cd / cp)) / (1 + gamma * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
             T_out = T_in * (p_out / p_in) ** ((n - 1.0) / n)  # outlet temperature
@@ -212,7 +212,7 @@ class ICAES(CAES):
         # --------------
         cd = self.c_water  # water - heat capacity [kJ/kg-K]
         cp = self.cp  # air - constant pressure specific heat [kJ/kg-K]
-        k = self.k  # air - heat capacity ratio [-]
+        gamma = self.gamma  # air - heat capacity ratio [-]
 
         # --------------
         # determine stage pressure ratios
@@ -253,7 +253,7 @@ class ICAES(CAES):
         for n_stg, nozzles, PR in zip(range(self.n_stages_exp), self.nozzles_exp, PRs):
             p_out = p_in / PR
             ML = nozzles * (1.65 / p_in - 0.05)  # mass loading (based on higher pressure)
-            n = k * (1 + ML * (cd / cp)) / (1 + k * ML * (cd / cp))  # polytropic exponent
+            n = gamma * (1 + ML * (cd / cp)) / (1 + gamma * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
             T_out = T_in * (p_out / p_in) ** ((n - 1.0) / n)  # outlet temperature
