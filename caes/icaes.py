@@ -30,9 +30,9 @@ class ICAES(CAES):
 
         # fluid properties
         self.cp = CP.PropsSI('CPMASS', 'T', self.T_atm, 'P', self.p_atm * 1000.0,
-                             'AIR.MIX') / 1000.0  # constant pressure specific heat [kJ/kg-K]
+                             'AIR') / 1000.0  # constant pressure specific heat [kJ/kg-K]
         self.cv = CP.PropsSI('CVMASS', 'T', self.T_atm, 'P', self.p_atm * 1000.0,
-                             'AIR.MIX') / 1000.0  # constant volume specific heat [kJ/kg-K]
+                             'AIR') / 1000.0  # constant volume specific heat [kJ/kg-K]
         self.gamma = self.cp / self.cv  # heat capacity ratio [-]
 
         # pump

@@ -11,7 +11,12 @@ def aquifer_dp(Q=1, r_f=100.0, r_w=0.25, k=100, mu=0.5, h=40.0, p_f=10.0, T=298.
     # Mu - viscosity[cP]
     # Z - gas deviation factor[-]
     """
-    delta_p = p_f - (p_f ** 2 - Q * mu * T * Z * log(r_f / r_w) / (8.834 * 10 ** -3 * k * h)) ** 0.5
+    quantity = p_f ** 2.0 - Q * mu * T * Z * log(r_f / r_w) / (8.834 * 10.0 ** -3.0 * k * h)
+    if quantity > 0.0:
+        delta_p = p_f - quantity ** 0.5
+    else:
+        delta_p = 1e12 # would have been a complex number, make pressure drop extremely large
+        print('Warning - Very large aquifer pressure drop')
 
     return delta_p
 
@@ -24,7 +29,7 @@ def friction_coeff(Re=1000.0, epsilon=0.002 * 1e-3, d=1.06):
     :param d: Pipe diameter [m]
     :return f: friction coefficient [-]
     """
-    if Re ==0.0:
+    if Re == 0.0:
         f = 0.0
     elif Re <= 4000:  # laminar flow
         f = 64.0 / Re

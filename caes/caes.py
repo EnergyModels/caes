@@ -91,7 +91,7 @@ class CAES:
         self.R = 8.314  # universal gas constant [kJ/kmol-K]
 
         # atmospheric air properties
-        self.air = "Air.mix"  # CoolProp fluid name [-]
+        self.air = "Air"  # CoolProp fluid name [-]
         self.M = 28.97  # molecular weight [kg/kmol]
         self.T_atm = inputs['T_atm']  # K
         self.p_atm = inputs['p_atm']  # [MPa]
