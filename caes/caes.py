@@ -516,6 +516,19 @@ class CAES:
 
         return s
 
+    def size_caes(self, kW_in_avg, kWh_in):
+
+        p0
+        p1
+
+        
+        s['work_per_kg']
+
+
+
+        self.m_dot = m_dot
+        self.r_f = r_f
+
     def calc_aquifer_dp(self, m_dot):
         # fluid properties, inputs are degrees K and Pa
         rho = CP.PropsSI('D', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # density, [kg/m3]
