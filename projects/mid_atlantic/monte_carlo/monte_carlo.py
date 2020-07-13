@@ -1,9 +1,8 @@
 from caes import ICAES, monteCarloInputs
 import pandas as pd
-import numpy as np
 from joblib import Parallel, delayed, parallel_backend
 import time
-from math import exp
+import os
 
 
 # =====================
@@ -15,7 +14,7 @@ def parameter_sweep(sweep_input):
     # create system
     inputs = ICAES.get_default_inputs()
     inputs['depth'] = sweep_input['depth']  # [m]
-    inputs['thk'] = sweep_input['thk']  # [m]
+    inputs['h'] = sweep_input['h']  # [m]
     inputs['phi'] = sweep_input['phi']  # [-]
     inputs['k'] = sweep_input['k']  # [mD]
     inputs['m_dot'] = sweep_input['m_dot']  # [kg/s]
@@ -42,8 +41,8 @@ if __name__ == '__main__':
     # ==============
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
     sheet_names = ['monte_carlo']  # Excel sheet_names
-    iterations = 3  # number of runs per scenario
-    ncpus = 6  # int(os.getenv('NUM_PROCS')) # number of cpus to use
+    iterations = 10000  # number of runs per scenario
+    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
 
     # ------------------
     # create sweep_inputs dataframe

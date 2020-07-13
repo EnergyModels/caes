@@ -2,7 +2,7 @@ from caes import ICAES
 from math import pi
 
 # well parameters
-depth = 2500.0#1402.35  # depth [m]
+depth = 1402.35  # depth [m]
 h = 62.44  # thickness [m]
 phi = 0.2292  # porosity
 k = 38.67  # permeability [mD]

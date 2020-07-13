@@ -31,13 +31,13 @@ class CAES:
                       'r_w', 'epsilon', 'depth',
                       'p_hydro_grad', 'p_frac_grad', 'safety_factor',
                       'T_grad_m', 'T_grad_b',
-                      'r_f', 'thk', 'phi', 'Slr', 'k']
+                      'r_f', 'h', 'phi', 'Slr', 'k']
         inputs = pd.Series(index=attributes)
 
         inputs['debug'] = False  # debug
         inputs['steps'] = 100.0  # number of steps to use in single cycle simulation
 
-        inputs['T_atm'] = 290.00  # 16.85 deg C [K], yearly average for Virginia coast
+        inputs['T_atm'] = 16.85  # [deg C] 290 K, yearly average for Virginia coast
         inputs['p_atm'] = 101.325 * 1e-3  # 1 atm [kPa]
 
         inputs['T_water'] = inputs['T_atm']  # same as atmospheric [K]
@@ -93,12 +93,12 @@ class CAES:
         # atmospheric air properties
         self.air = "Air"  # CoolProp fluid name [-]
         self.M = 28.97  # molecular weight [kg/kmol]
-        self.T_atm = inputs['T_atm']  # K
+        self.T_atm = inputs['T_atm'] + 273.15  # K
         self.p_atm = inputs['p_atm']  # [MPa]
 
         # water properties (used for cooling)
         self.water = 'Water'  # CoolProp fluid name [-]
-        self.T_water = inputs['T_water']  # [K]
+        self.T_water = inputs['T_water'] + 273.15  # [K]
         self.p_water = inputs['p_water']  # [MPa]
         self.c_water = CP.PropsSI('CPMASS', 'T', self.T_water, 'P', self.p_water * 1e6,
                                   self.water) / 1000.0  # constant pressure specific heat [kJ/kg-K]

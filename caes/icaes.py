@@ -11,11 +11,19 @@ class ICAES(CAES):
         # machinery
         inputs['PR_type'] = 'free'  # 'fixed' or 'free' pressure ratios
         # compression
-        inputs['n_stages_cmp'] = 3
-        inputs['nozzles_cmp'] = [1.0, 5.0, 15.0]
+        # inputs['n_stages_cmp'] = 3
+        inputs['nozzles_cmp1'] = 1
+        inputs['nozzles_cmp2'] = 5
+        inputs['nozzles_cmp3'] = 15
+        inputs['nozzles_cmp4'] = 0  # 0 - unused
+        inputs['nozzles_cmp5'] = 0  # 0 - unused
         # expansion
-        inputs['n_stages_exp'] = 3
-        inputs['nozzles_exp'] = [15.0, 5.0, 1.0]
+        # inputs['n_stages_exp'] = 3
+        inputs['nozzles_exp1'] = 15
+        inputs['nozzles_exp2'] = 5
+        inputs['nozzles_exp3'] = 1
+        inputs['nozzles_exp4'] = 0  # 0 - unused
+        inputs['nozzles_exp5'] = 0  # 0 - unused
 
         return inputs
 
@@ -47,10 +55,39 @@ class ICAES(CAES):
         # -------------------
         # compression
         # -------------------
-        if inputs['n_stages_cmp'] >= 1:
-            self.n_stages_cmp = inputs['n_stages_cmp']
-        else:
+        # number of compression stages, stops at first 0, negative or non-integer entry for nozzles
+        # need to make sure the number of nozzles entries matches the number of stages
+        if inputs['nozzles_cmp1'] < 1 or not isinstance(inputs['nozzles_cmp1'], int):
             self.n_stages_cmp = 1
+            self.nozzles_cmp = [1]
+
+        elif inputs['nozzles_cmp2'] < 1 or not isinstance(inputs['nozzles_cmp2'], int):
+            self.n_stages_cmp = 1
+            self.nozzles_cmp = [inputs['nozzles_cmp1']]
+
+        elif inputs['nozzles_cmp3'] < 1 or not isinstance(inputs['nozzles_cmp3'], int):
+            self.n_stages_cmp = 2
+            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2']]
+
+        elif inputs['nozzles_cmp4'] < 1 or not isinstance(inputs['nozzles_cmp4'], int):
+            self.n_stages_cmp = 3
+            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2'], inputs['nozzles_cmp3']]
+
+        elif inputs['nozzles_cmp5'] < 1 or not isinstance(inputs['nozzles_cmp5'], int):
+            self.n_stages_cmp = 4
+            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2'], inputs['nozzles_cmp3'],
+                                inputs['nozzles_cmp4']]
+
+        else:
+            self.n_stages_cmp = 5
+            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2'], inputs['nozzles_cmp3'],
+                                inputs['nozzles_cmp4'], inputs['nozzles_cmp5']]
+
+        # # inputs['n_stages_cmp'] = 3
+        # if inputs['n_stages_cmp'] >= 1:
+        #     self.n_stages_cmp = inputs['n_stages_cmp']
+        # else:
+        #     self.n_stages_cmp = 1
 
         # equally divide pressure ratio for each stage
         PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_cmp)
@@ -58,23 +95,47 @@ class ICAES(CAES):
         for n in range(self.n_stages_cmp):
             self.PR_cmp.append(PR_equal)
 
-        # need to make sure the number of nozzles entries matches the number of stages
         # if not, make an assumption about PR per stage
-        if len(inputs['nozzles_cmp']) == self.n_stages_cmp:
-            self.nozzles_cmp = inputs['nozzles_cmp']
-        else:
-            self.nozzles_cmp = []
-            for n in range(self.n_stages_cmp):
-                self.nozzles_cmp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
+        # if len(inputs['nozzles_cmp']) == self.n_stages_cmp:
+        #     self.nozzles_cmp = inputs['nozzles_cmp']
+        # else:
+        #     self.nozzles_cmp = []
+        #     for n in range(self.n_stages_cmp):
+        #         self.nozzles_cmp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
 
         # -------------------
         # expansion
         # -------------------
-
-        if inputs['n_stages_exp'] >= 1:
-            self.n_stages_exp = inputs['n_stages_exp']
-        else:
+        if inputs['nozzles_exp1'] < 1 or not isinstance(inputs['nozzles_exp1'], int):
             self.n_stages_exp = 1
+            self.nozzles_exp = [1]
+
+        elif inputs['nozzles_exp2'] < 1 or not isinstance(inputs['nozzles_exp2'], int):
+            self.n_stages_exp = 1
+            self.nozzles_exp = [inputs['nozzles_exp1']]
+
+        elif inputs['nozzles_exp3'] < 1 or not isinstance(inputs['nozzles_exp3'], int):
+            self.n_stages_exp = 2
+            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2']]
+
+        elif inputs['nozzles_exp4'] < 1 or not isinstance(inputs['nozzles_exp4'], int):
+            self.n_stages_exp = 3
+            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2'], inputs['nozzles_exp3']]
+
+        elif inputs['nozzles_exp5'] < 1 or not isinstance(inputs['nozzles_exp5'], int):
+            self.n_stages_exp = 4
+            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2'], inputs['nozzles_exp3'],
+                                inputs['nozzles_exp4']]
+
+        else:
+            self.n_stages_exp = 5
+            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2'], inputs['nozzles_exp3'],
+                                inputs['nozzles_exp4'], inputs['nozzles_exp5']]
+        # # inputs['n_stages_exp'] = 3
+        # if inputs['n_stages_exp'] >= 1:
+        #     self.n_stages_exp = inputs['n_stages_exp']
+        # else:
+        #     self.n_stages_exp = 1
 
         # equally divide pressure ratio for each stage
         PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_exp)
@@ -82,14 +143,14 @@ class ICAES(CAES):
         for n in range(self.n_stages_exp):
             self.PR_exp.append(PR_equal)
 
-        # need to make sure the number of nozzles entries matches the number of stages
-        # if not, make an assumption about PR per stage
-        if len(inputs['nozzles_exp']) == self.n_stages_exp:
-            self.nozzles_exp = inputs['nozzles_exp']
-        else:
-            self.nozzles_exp = []
-            for n in range(self.n_stages_exp):
-                self.nozzles_exp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
+        # # need to make sure the number of nozzles entries matches the number of stages
+        # # if not, make an assumption about PR per stage
+        # if len(inputs['nozzles_exp']) == self.n_stages_exp:
+        #     self.nozzles_exp = inputs['nozzles_exp']
+        # else:
+        #     self.nozzles_exp = []
+        #     for n in range(self.n_stages_exp):
+        #         self.nozzles_exp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
 
         # -------------------
         # recreate dataframe to store data (with additional entries)
