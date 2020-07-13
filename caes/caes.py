@@ -72,6 +72,9 @@ class CAES:
         inputs['Slr'] = 0.0  # liquid residual fraction [-]
         inputs['k'] = 38.67  # permeability [mD] #
 
+        # operational conditions
+        inputs['m_dot'] = 50.0  # mass flow rate [kg/s]
+
         return inputs
 
     def __init__(self, inputs=get_default_inputs()):
@@ -141,6 +144,9 @@ class CAES:
         self.phi = inputs['phi']  # porosity [-]
         self.Slr = inputs['Slr']  # residual liquid fraction [-]
         self.k = inputs['k']  # permeability [mD]
+
+        # operational
+        self.m_dot = inputs['m_dot']
 
         # calculated storage volume and mass storage
         self.V_res = self.h * pi * self.r_f ** 2  # storage total volume [m^3]
@@ -308,7 +314,7 @@ class CAES:
         # -----------------------
         self.data = self.data.append(s, ignore_index=True)
 
-    def single_cycle(self, m_dot=50):
+    def single_cycle(self):
         """
         runs a single cycle, charging and discharge in the number of steps specified in self.steps
         :param:
@@ -317,7 +323,7 @@ class CAES:
         """
 
         # calculate aquifer pressure loss based on m_dot
-        self.calc_aquifer_dp(m_dot)  # aquifer pressure losses
+        self.calc_aquifer_dp(self.m_dot)  # aquifer pressure losses
 
         # update m_store_max_actual based aquifer pressure losses
         self.p_store_max_actual = self.p_store_max - self.dp_aquifer
@@ -327,10 +333,10 @@ class CAES:
         # mass injection/release per timestep
         m_air = (self.m_store_max_actual - self.m_store_min) / self.steps
         # timestep duration
-        delta_t = m_air / (m_dot * 3600)  # [hr]
+        delta_t = m_air / (self.m_dot * 3600)  # [hr]
 
         if self.debug:
-            print('mdot[kg/s]  : ' + str(round(m_dot, 2)))
+            print('mdot[kg/s]  : ' + str(round(self.m_dot, 2)))
             print('m_air[kg]   : ' + str(round(m_air, 2)))
             print('delta_t[hr] : ' + str(round(delta_t, 2)))
 
@@ -345,7 +351,7 @@ class CAES:
 
             for i in range(int(self.steps)):
                 # charge
-                self.update(m_dot=m_dot, delta_t=delta_t)
+                self.update(m_dot=self.m_dot, delta_t=delta_t)
                 if self.debug:
                     print('/t' + str(i) + ' of ' + str(self.steps))
 
@@ -354,19 +360,19 @@ class CAES:
 
             for i in range(int(self.steps)):
                 # discharge
-                self.update(m_dot=-1.0 * m_dot, delta_t=delta_t)
+                self.update(m_dot=-1.0 * self.m_dot, delta_t=delta_t)
                 if self.debug:
                     print('/t' + str(i) + ' of ' + str(self.steps))
 
-    def debug_perf(self, m_dot=50.0, delta_t=1.0):
+    def debug_perf(self, delta_t=1.0):
         """
         runs several charge and discharge steps to debug calculations
         :param m_dot: mass flow rate [kg/s]
         :param delta_t: time step [hr]
         :return:
         """
-        m_dot_in = 1.0 * m_dot
-        m_dot_out = -1.0 * m_dot
+        m_dot_in = 1.0 * self.m_dot
+        m_dot_out = -1.0 * self.m_dot
 
         n_steps = 5
 

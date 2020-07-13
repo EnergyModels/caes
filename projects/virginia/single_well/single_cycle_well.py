@@ -16,10 +16,11 @@ inputs['h'] = h
 inputs['phi'] = phi
 inputs['k'] = k
 inputs['r_f'] = r_f
+inputs['m_dot'] = m_dot
 system = ICAES(inputs=inputs)
 
 # run single cycle and analyze
-system.single_cycle(m_dot=m_dot)
+system.single_cycle()
 results = system.analyze_performance()
 results.to_csv('single_cycle_performance.csv')
 system.data.to_csv('single_cycle_timeseries.csv')
