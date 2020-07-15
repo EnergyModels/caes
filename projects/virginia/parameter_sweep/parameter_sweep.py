@@ -3,6 +3,7 @@ import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
 import os
+from datetime import datetime
 
 
 # =====================
@@ -36,6 +37,7 @@ def parameter_sweep(sweep_input):
 # main program
 # =====================
 if __name__ == '__main__':
+    start = time.time()
     # ==============
     # user inputs
     # ==============
@@ -71,3 +73,15 @@ if __name__ == '__main__':
 
     # save results
     df.to_csv('sweep_results.csv')
+
+    # save total study time
+    end = time.time()
+    run_time = (end - start) / 3600.0
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    f = open("run_time_history.txt", "a")
+    f.write('\n')
+    f.write('Last run : ' + dt_string + '\n')
+    f.write('Total run time [h]: ' + str(round(run_time, 3)) + '\n')
+    f.write('\n')
+    f.close()

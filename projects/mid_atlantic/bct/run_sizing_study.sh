@@ -14,4 +14,4 @@ source activate caes-py3
 export NUM_PROCS=$SLURM_CPUS_PER_TASK
 
 # run
-python MK_formation.py
+python sizing_study.py

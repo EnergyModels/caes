@@ -3,6 +3,7 @@ import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
 import os
+from datetime import datetime
 
 
 # =====================
@@ -32,12 +33,13 @@ def parameter_sweep(sensitivity_input):
 # main program
 # =====================
 if __name__ == '__main__':
+    start = time.time()
     # ==============
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
     sheet_name = 'sensitivity_variables'  # Excel sheet_names
-    ncpus = 3  # int(os.getenv('NUM_PROCS'))  # number of cpus to use
+    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
     float_perm = 0.1  # permutation of float inputs (0.1 = +/-10%)
     int_perm = 1  # permutation of integer inputs ( 1 = +/-1)
 
@@ -106,3 +108,15 @@ if __name__ == '__main__':
 
     # save results
     df.to_csv('sensitivity_results.csv')
+
+    # save total study time
+    end = time.time()
+    run_time = (end - start) / 3600.0
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    f = open("run_time_history.txt", "a")
+    f.write('\n')
+    f.write('Last run : ' + dt_string + '\n')
+    f.write('Total run time [h]: ' + str(round(run_time, 3)) + '\n')
+    f.write('\n')
+    f.close()

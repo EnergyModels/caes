@@ -3,57 +3,28 @@ import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
 import os
+from datetime import datetime
 
 
 # =====================
 # function to enable parameter sweep
 # =====================
-def parameter_sweep(sweep_input, kW_in, kWh_in):
+def parameter_sweep(sweep_input):
     start = time.time()
 
-    # allowable calculation error
-    error = 1e-6
+    # create system
+    inputs = ICAES.get_default_inputs()
+    inputs['depth'] = sweep_input['depth']  # [m]
+    inputs['h'] = sweep_input['h']  # [m]
+    inputs['phi'] = sweep_input['phi']  # [-]
+    inputs['k'] = sweep_input['k']  # [mD]
+    inputs['m_dot'] = sweep_input['m_dot']  # [kg/s]
+    inputs['r_f'] = sweep_input['r_f']  # [m]
+    system = ICAES(inputs=inputs)
 
-    # maximum number of iterations
-    count_max = 100
-
-    # initial guesses
-    m_dot = 10.0
-    r_f = 10.0
-
-    # initial results
-    kW_in_actual = 0.0
-    kWh_in_actual = 0.0
-
-    count = 0
-    while abs(kW_in_actual - kW_in) + abs(kWh_in_actual - kWh_in) > error:
-        # create system
-        inputs = ICAES.get_default_inputs()
-        inputs['depth'] = sweep_input['depth']  # [m]
-        inputs['h'] = sweep_input['h']  # [m]
-        inputs['phi'] = sweep_input['phi']  # [-]
-        inputs['k'] = sweep_input['k']  # [mD]
-
-        inputs['m_dot'] = m_dot  # [kg/s]
-        inputs['r_f'] = 'r_f'  # [m]
-        system = ICAES(inputs=inputs)
-
-        # run single cycle and analyze
-        system.single_cycle()
-        results = system.analyze_performance()
-
-        # extract results of interest
-        kW_in_actual = results['kW_in_avg']
-        kWh_in_actual = results['kWh_in']
-
-        # update guesses
-        m_dot = m_dot * 0.5 * kW_in / kW_in_actual  # m_dot losses are exponential, 0.5 is to avoid errors
-        r_f = r_f * kWh_in / kWh_in_actual
-
-        count = count + 1
-        if count > count_max:
-            break
-
+    # run single cycle and analyze
+    system.single_cycle()
+    results = system.analyze_performance()
     end = time.time()
     results['solve_time'] = end - start
 
@@ -66,11 +37,12 @@ def parameter_sweep(sweep_input, kW_in, kWh_in):
 # main program
 # =====================
 if __name__ == '__main__':
+    start = time.time()
     # ==============
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
-    sheet_names = ['LK1', 'MK', 'UJ1']  # Excel sheet_names
+    sheet_names = ['monte_carlo']  # Excel sheet_names
     iterations = 10000  # number of runs per scenario
     ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
 
@@ -101,3 +73,15 @@ if __name__ == '__main__':
 
     # save results
     df.to_csv('mc_results.csv')
+
+    # save total study time
+    end = time.time()
+    run_time = (end - start) / 3600.0
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    f = open("run_time_history.txt", "a")
+    f.write('\n')
+    f.write('Last run : ' + dt_string + '\n')
+    f.write('Total run time [h]: ' + str(round(run_time, 3)) + '\n')
+    f.write('\n')
+    f.close()

@@ -14,4 +14,4 @@ source activate caes-py3
 export NUM_PROCS=$SLURM_CPUS_PER_TASK
 
 # run
-python UJ1_formation.py
+python monte_carlo_all.py
