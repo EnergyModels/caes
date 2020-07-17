@@ -36,4 +36,4 @@ def plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts, sca
                  transform=ax.transAxes, fontsize='medium', fontweight='bold')
 
     # Adjust layout
-    plt.tight_layout()
+    # plt.tight_layout()
