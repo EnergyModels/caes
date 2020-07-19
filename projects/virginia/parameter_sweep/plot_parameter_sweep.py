@@ -66,7 +66,7 @@ sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 # Set Color Palette
 colors = sns.color_palette()
 # re-order palette
-colors = [colors[3], (0, 0, 0), colors[1], colors[2]]
+colors = [colors[3], (0, 0, 0), colors[9], colors[0]]
 # colors = sns.diverging_palette(250, 15, n=5, center="dark")
 # colors = [[215, 25, 28], [253, 174, 97], [255, 255, 191], [171, 217, 233], [44, 123, 182]]
 # colors_hex = ['#d7191c','#fdae61','#252525','#abd9e9','#2c7bb6']
