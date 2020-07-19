@@ -25,8 +25,8 @@ y_converts = [100.0, 1.0e-3, 1.0e-3]
 y_limits = [[], [], []]
 
 series_var = 'sheetname'
-series_dict = {'low_k': '0.5 (formation min.)', 'med_low_k': '3.8', 'avg_k': '38 (expected)', 'med_high_k': '383',
-               'high_k': '2514 (formation max.)'}
+series_dict = {'low_k': '0.5 (minimium)', 'med_low_k': '38.3 (expected)',  'med_high_k': '339 (average)',
+               'high_k': '2514 (maximum)'}
 
 # =====================================
 # process data
