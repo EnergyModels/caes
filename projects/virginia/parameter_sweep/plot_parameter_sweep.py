@@ -25,7 +25,7 @@ y_converts = [100.0, 1.0e-3, 1.0e-3]
 y_limits = [[], [], []]
 
 series_var = 'sheetname'
-series_dict = {'low_k': '0.5 (minimium)', 'med_low_k': '38.3 (expected)',  'med_high_k': '339 (average)',
+series_dict = {'low_k': '0.5 (minimium)', 'med_low_k': '38.3 (expected)', 'med_high_k': '339 (average)',
                'high_k': '2514 (maximum)'}
 
 # =====================================
@@ -64,13 +64,13 @@ sns.set_context("paper")
 sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 
 # Set Color Palette
-# colors = sns.color_palette()
+colors = sns.color_palette()
 # re-order palette
-# colors = [colors[0], colors[1], colors[2], colors[3], colors[5]]
+colors = [colors[3], (0, 0, 0), colors[1], colors[2]]
 # colors = sns.diverging_palette(250, 15, n=5, center="dark")
 # colors = [[215, 25, 28], [253, 174, 97], [255, 255, 191], [171, 217, 233], [44, 123, 182]]
-colors_hex = ['#d7191c','#fdae61','#252525','#abd9e9','#2c7bb6']
-colors = sns.color_palette(colors_hex).as_hex()
+# colors_hex = ['#d7191c','#fdae61','#252525','#abd9e9','#2c7bb6']
+# colors = sns.color_palette(colors_hex).as_hex()
 
 # Set marker shapes and sizes
 markers = ['.', '.', '.', '.', '.']
@@ -118,18 +118,20 @@ for i, (x_var, x_label, x_convert, x_limit) in enumerate(zip(x_vars, x_labels, x
 
         # Caption labels
         caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-        plt.text(-0.1, 1.00, caption_labels[count], horizontalalignment='center', verticalalignment='center',transform=ax.transAxes, fontsize='medium', fontweight='bold')
+        plt.text(-0.1, 1.00, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+                 transform=ax.transAxes, fontsize='medium', fontweight='bold')
         count = count + 1
 
 # Legend
 patches = []
 # for serie_label, serie_color in zip(entries, entry_colors):
 for k, entry in enumerate(series_dict.values()):
-        patches.append(mpatches.Patch(facecolor=colors[k], label=entry))
+    patches.append(mpatches.Patch(facecolor=colors[k], label=entry))
 # y_pos = j / 2 + 0.5
 # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
 x_pos = -0.1
-leg = a[j, i].legend(handles=patches, bbox_to_anchor=(x_pos, -0.5), ncol=5, loc='upper center', title='Permeability (mD)')
+leg = a[j, i].legend(handles=patches, bbox_to_anchor=(x_pos, -0.5), ncol=5, loc='upper center',
+                     title='Permeability (mD)')
 
 # Adjust layout
 plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
