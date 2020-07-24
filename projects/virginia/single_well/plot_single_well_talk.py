@@ -40,7 +40,7 @@ width = 7.48  # inches
 height = 6.0  # inches
 
 # create figure
-nrows = 4
+nrows = 3
 f, a = plt.subplots(nrows=nrows, ncols=1, sharex='col', squeeze=False)
 
 # x-variable (same for each row)
@@ -57,16 +57,16 @@ for i in range(nrows):
     ax = a[i, 0]
 
     # indicate y-variables for each subplot(row)
-    if i == 0:
-        y_label = 'Mass flow rate\n[kg/s]'
-        y_convert = 1.0
-        y_vars = ['m_dot_cmp', 'm_dot_exp']
-        y_var_labels = ['Compressor', 'Expander']
-        c_list = [colors[0], colors[1]]
-        markers = ['^', 'v']
-        styles = ['-', '-']
+    # if i == 0:
+    #     y_label = 'Mass flow rate\n[kg/s]'
+    #     y_convert = 1.0
+    #     y_vars = ['m_dot_cmp', 'm_dot_exp']
+    #     y_var_labels = ['Compressor', 'Expander']
+    #     c_list = [colors[0], colors[1]]
+    #     markers = ['^', 'v']
+    #     styles = ['-', '-']
 
-    elif i == 1:
+    if i == 0:
         y_label = 'Air stored\n[kton]'
         y_convert = 1.0e-6
         y_vars = ['m_store']
@@ -75,7 +75,7 @@ for i in range(nrows):
         markers = ['o']
         styles = ['-']
 
-    elif i == 2:
+    elif i == 1:
         y_label = 'Pressure\n[MPa]'
         y_convert = 1.0
         y_vars = ['MAOP', 'p3', 'hydrostatic','p2',  'p1']
@@ -135,5 +135,5 @@ f = plt.gcf()
 f.set_size_inches(width, height)
 
 # save and close
-plt.savefig('Fig_Perf_Model_Overview.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
+plt.savefig('Fig_Perf_Model_Overview_talk.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
 # plt.close()
