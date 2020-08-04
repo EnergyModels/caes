@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
-    sheet_names = ['low_k', 'med_low_k', 'med_high_k', 'high_k', 'iowa_k']  # Excel sheet_names
+    sheet_names = ['low_k', 'med_low_k', 'med_high_k', 'high_k']  # Excel sheet_names
     iterations = 1000  # number of runs per scenario
     ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
 
