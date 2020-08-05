@@ -17,7 +17,7 @@ DPI = 600  # Set resolution for saving figures
 x_vars = ["m_dot", "r_f", "r_w"]
 x_labels = ["Mass flow\n(kg/s)", "Formation radius\n(m)", "Wellbore radius\n(m)"]
 x_converts = [1.0, 1.0, 1.0]
-x_limits = [[], []]
+x_limits = [[], [], []]
 
 y_vars = ["RTE", "kW_in_avg", "kWh_in"]
 y_labels = ["Efficiency\n(%)", "Power Rating\n(MW)", "Energy Storage\n(MWh)"]
@@ -25,8 +25,8 @@ y_converts = [100.0, 1.0e-3, 1.0e-3]
 y_limits = [[], [], []]
 
 series_var = 'sheetname'
-series_dict = {'low_k': '0.5 (minimium)', 'med_low_k': '38.3 (expected)', 'med_high_k': '339 (average)',
-               'high_k': '2514 (maximum)'}
+series_dict = {'low_k': '0.5 (minimium)', 'iowa_k': '3 (Iowa)', 'med_low_k': '38.3 (expected)',
+               'med_high_k': '339 (average)', 'high_k': '2514 (maximum)'}
 
 # =====================================
 # process data
@@ -39,7 +39,7 @@ df = pd.read_csv(results_filename)
 df = df[df.errors == False]
 
 # get list of unique series
-series = df.sheetname.unique()
+series = series_dict.keys()
 
 # =====================================
 # create plots
@@ -66,7 +66,7 @@ sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 # Set Color Palette
 colors = sns.color_palette()
 # re-order palette
-colors = [colors[3], (0, 0, 0), colors[9], colors[0]]
+colors = [colors[3], colors[1], (0, 0, 0), colors[9], colors[0]]
 # colors = sns.diverging_palette(250, 15, n=5, center="dark")
 # colors = [[215, 25, 28], [253, 174, 97], [255, 255, 191], [171, 217, 233], [44, 123, 182]]
 # colors_hex = ['#d7191c','#fdae61','#252525','#abd9e9','#2c7bb6']

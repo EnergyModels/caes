@@ -20,6 +20,7 @@ def parameter_sweep(sweep_input):
     inputs['k'] = sweep_input['k']  # [mD]
     inputs['m_dot'] = sweep_input['m_dot']  # [kg/s]
     inputs['r_f'] = sweep_input['r_f']  # [m]
+    inputs['r_w'] = sweep_input['r_w']  # [m]
     system = ICAES(inputs=inputs)
 
     # run single cycle and analyze
@@ -42,7 +43,7 @@ if __name__ == '__main__':
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
-    sheet_names = ['low_k', 'med_low_k', 'med_high_k', 'high_k']  # Excel sheet_names
+    sheet_names = ['low_k', 'med_low_k', 'med_high_k', 'high_k', 'iowa_k']  # Excel sheet_names
     iterations = 1000  # number of runs per scenario
     ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
 

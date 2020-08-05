@@ -9,6 +9,7 @@ phi = 0.2292  # porosity
 k = 10.0  # permeability [mD] - to accentuate pressure drop
 m_dot = 300.0  # mass flow rate [kg/s]
 r_f = 100.0  # formation radius [m]
+r_w = 0.15  # formation radius [m]
 
 # create system
 inputs = ICAES.get_default_inputs()
@@ -17,7 +18,9 @@ inputs['h'] = h
 inputs['phi'] = phi
 inputs['k'] = k
 inputs['r_f'] = r_f
+inputs['r_w'] = r_w
 inputs['m_dot'] = m_dot
+
 system = ICAES(inputs=inputs)
 
 # run single cycle and analyze
