@@ -8,20 +8,18 @@ import matplotlib.patches as mpatches
 # user inputs
 # =====================================
 # data input
-results_filename = "sizing_study_results.csv"
+results_filename = "sweep_results.csv"
 
 # figure output
 DPI = 300  # Set resolution for saving figures
 
-series_var = 'duration_hr'
-series_dict = {10: '10 hr (0.4 days)', 24: '24 hr (1 day)', 48: '48 hr (2 days)',
-               72: '72 hr (3 days)', 168: '168 hr (1 week)'}
+series_var = 'scenario_name'
+series_dict = {'iowa': '3 (Iowa)'}
 
 # Set Color Palette
-colors = sns.color_palette("colorblind")
-colors = [colors[0],colors[1],colors[2],colors[3],colors[5]]
+colors = sns.color_palette()
 # re-order palette to match series_dict.keys()
-# colors = [colors[3], colors[1], (0, 0, 0), colors[9], colors[0]]
+colors = [colors[3], colors[1], (0, 0, 0), colors[9], colors[0]]
 
 # =====================================
 # process data
@@ -34,7 +32,7 @@ df = pd.read_csv(results_filename)
 df = df[df.errors == False]
 
 # Filter Results with efficiencies less than 10% - not worth considering
-# df = df[df.RTE >= 0.1]
+df = df[df.RTE >= 0.1]
 
 # get list of unique series
 series = series_dict.keys()
@@ -50,36 +48,77 @@ series = series_dict.keys()
 width = 7.48  # inches
 height = 5.5  # inches
 
-x_vars = ["kW_in_avg"]
-x_labels = ["Power Rating\n(MW)", ]
-x_converts = [1e-3]
-x_limits = [[]]
-
-y_vars = ["m_dot", "r_f", "RTE"]
-y_labels = ["Mass flow\n(kg/s)", "Formation radius\n(m)", "Efficiency\n(%)", ]
-y_converts = [1.0, 1.0, 100.0]
-y_limits = [[], [], []]
-
-for ix in range(3):
+for ix in range(4):
 
     if ix == 0:
-        savename = "Fig_Perf_Results_expected.png"
-        df_ix = df[df.loc[:, 'k_type'] == 'expected']
-    elif ix == 1:
-        savename = "Fig_Perf_Results_all.png"
-        # df_ix = df[df.loc[:, 'k_type'] == 'expected']
+        savename = "Fig_Perf_Results.png"
+
+        x_vars = ["m_dot", "r_f", "r_w"]
+        x_labels = ["Mass flow\n(kg/s)", "Formation radius\n(m)", "Well radius (m)"]
+        x_converts = [1.0, 1.0, 1.0]
+        x_limits = [[], [], []]
+
+        y_vars = ["RTE", "kW_in_avg", "kWh_in"]
+        y_labels = ["Efficiency\n(%)", "Power Rating\n(MW)", "Energy Storage\n(MWh)"]
+        y_converts = [100.0, 1.0e-3, 1.0e-3]
+        y_limits = [[], [], []]
+
+        # filter data
         df_ix = df
 
+    elif ix == 1:
+        savename = "Fig_Perf_Results_r_w_fixed.png"
+
+        x_vars = ["m_dot", "r_f"]
+        x_labels = ["Mass flow\n(kg/s)", "Formation radius\n(m)"]
+        x_converts = [1.0, 1.0]
+        x_limits = [[], []]
+
+        y_vars = ["RTE", "kW_in_avg", "kWh_in"]
+        y_labels = ["Efficiency\n(%)", "Power Rating\n(MW)", "Energy Storage\n(MWh)"]
+        y_converts = [100.0, 1.0e-3, 1.0e-3]
+        y_limits = [[], [], []]
+
+        # filter data
+        ind = df.loc[:, 'r_w'] == 0.25
+        df_ix = df.loc[ind, :]
+
     elif ix == 2:
-        savename = "Fig_Perf_Results_expected2.png"
-        df_ix = df[df.loc[:, 'k_type'] == 'expected']
-        y_vars = [y_vars[2]]
-        y_labels = [y_labels[2]]
-        y_converts = [y_converts[2]]
-        y_limits = [y_limits[2]]
+        savename = "Fig_Perf_Results_r_f_fixed.png"
+
+        x_vars = ["m_dot", "r_w"]
+        x_labels = ["Mass flow\n(kg/s)", "Well radius (m)"]
+        x_converts = [1.0, 1.0]
+        x_limits = [[], []]
+
+        y_vars = ["RTE", "kW_in_avg", "kWh_in"]
+        y_labels = ["Efficiency\n(%)", "Power Rating\n(MW)", "Energy Storage\n(MWh)"]
+        y_converts = [100.0, 1.0e-3, 1.0e-3]
+        y_limits = [[], [], []]
+
+        # filter data
+        ind = df.loc[:, 'r_f'] == 100
+        df_ix = df.loc[ind, :]
+
+    elif ix == 3:
+        savename = "Fig_Perf_Results_m_dot_fixed.png"
+
+        x_vars = ["r_f", "r_w"]
+        x_labels = ["Formation radius\n(m)", "Well radius (m)"]
+        x_converts = [1.0, 1.0]
+        x_limits = [[], []]
+
+        y_vars = ["RTE", "kW_in_avg", "kWh_in"]
+        y_labels = ["Efficiency\n(%)", "Power Rating\n(MW)", "Energy Storage\n(MWh)"]
+        y_converts = [100.0, 1.0e-3, 1.0e-3]
+        y_limits = [[], [], []]
+
+        # filter data
+        ind = df.loc[:, 'm_dot'] == 300
+        df_ix = df.loc[ind, :]
 
     # Create plot
-    f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
+    f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row')
 
     # Set size
     f.set_size_inches(width, height)
@@ -97,8 +136,8 @@ for ix in range(3):
     # Set marker shapes and sizes
     markers = ['.', '.', '.', '.', '.']
     # markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
-    marker_size = 7.5
-    markeredgewidth = 2.0
+    marker_size = 2
+    markeredgewidth = 0.5
 
     count = 0
     # iterate through x-variables
@@ -152,8 +191,8 @@ for ix in range(3):
     # y_pos = j / 2 + 0.5
     # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
     x_pos = -0.1
-    leg = a[j, i].legend(handles=patches, bbox_to_anchor=(x_pos, -0.5), ncol=5, loc='upper left',
-                         title='Duration)')
+    leg = a[j, i].legend(handles=patches, bbox_to_anchor=(x_pos, -0.5), ncol=5, loc='upper center',
+                         title='Permeability (mD)')
 
     # Adjust layout
     plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
