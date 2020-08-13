@@ -40,7 +40,7 @@ width = 7.48  # inches
 height = 6.0  # inches
 
 # create figure
-nrows = 4
+nrows = 3
 f, a = plt.subplots(nrows=nrows, ncols=1, sharex='col', squeeze=False)
 
 # x-variable (same for each row)
@@ -71,9 +71,9 @@ for i in range(nrows):
         y_convert = 1.0
         y_vars = ['p3', 'p1']
         y_var_labels = ['Aquifer', 'Top of well']
-        c_list = [colors[2],  colors[7]]
+        c_list = [colors[2], colors[4]]
         markers = ['s', '>']
-        styles = ['-',  '-']
+        styles = ['-', '-']
 
     else:  # if i == 3:
         y_label = 'Power\n[MW]'
@@ -120,15 +120,15 @@ for i in range(nrows):
 
     # plot additional lines
     if i == 1:
-        'time'
+        vspace = 0.1
         # Hydrostatic
         ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
-        # plt.text(-0.1, 1.05, caption_labels[i], horizontalalignment='center', verticalalignment='center',
-        #          transform=ax.transAxes, fontsize='medium', fontweight='bold')
+        ax.text(df.time.max(), df.hydrostatic.max()-vspace, 'Hydrostatic Pressure', horizontalalignment='right',
+                verticalalignment='top', fontsize='medium')
         # MAOP
         ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=colors[3], linewidth=1.5, linestyle='--')
-        # plt.text(-0.1, 1.05, caption_labels[i], horizontalalignment='center', verticalalignment='center',
-        #          transform=ax.transAxes, fontsize='medium', fontweight='bold')
+        ax.text(df.time.max(), df.MAOP.max()-vspace, 'Maximum Operating Pressure', horizontalalignment='right',
+                verticalalignment='top', fontsize='medium')
 
 # align labels
 f.align_ylabels(a[:, 0])
