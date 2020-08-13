@@ -31,7 +31,7 @@ class CAES:
                       'r_w', 'epsilon', 'depth',
                       'p_hydro_grad', 'p_frac_grad', 'safety_factor',
                       'T_grad_m', 'T_grad_b',
-                      'r_f', 'h', 'phi', 'Slr', 'k']
+                      'r_f', 'h', 'phi', 'Slr', 'k', 'loss_m_air', 'm_dot']
         inputs = pd.Series(index=attributes)
 
         inputs['debug'] = False  # debug
@@ -71,6 +71,9 @@ class CAES:
         inputs['phi'] = 0.2292  # porosity [-]
         inputs['Slr'] = 0.0  # liquid residual fraction [-]
         inputs['k'] = 38.67  # permeability [mD] #
+
+        # aquifer mass losses
+        inputs['loss_m_air'] = 3.5 / 100.0  # fraction of air lost in aquifer [-] #
 
         # operational conditions
         inputs['m_dot'] = 50.0  # mass flow rate [kg/s]
@@ -145,6 +148,9 @@ class CAES:
         self.Slr = inputs['Slr']  # residual liquid fraction [-]
         self.k = inputs['k']  # permeability [mD]
 
+        # aquifer mass losses
+        self.loss_m_air = inputs['loss_m_air']  # fraction of air lost in aquifer [-] #
+
         # operational
         self.m_dot = inputs['m_dot']
 
@@ -182,7 +188,7 @@ class CAES:
         self.error_msg = ''
 
         # dataframe to store data
-        self.attributes_time_series = ['time', 'm_dot', 'delta_t', 'm_air',
+        self.attributes_time_series = ['time', 'm_dot', 'delta_t', 'm_air', 'm_air_leakage',
                                        'pwr', 'energy_in', 'energy_out',
                                        'work_per_kg', 'total_work_per_kg', 'water_per_kg',
                                        'fuel_per_kg',
@@ -231,6 +237,9 @@ class CAES:
         # charge/discharge
         if s['m_air'] > 0.0:  # (charge)
 
+            # aquifer mass leakage (leakage occurs after air has been injected and traveled into the aquifer)
+            s['m_air_leakage'] = s['m_air'] * self.loss_m_air
+
             # pressure states
             s['p0'] = self.p_atm  # atmospheric pressure, compressor inlet
             s['p1'] = self.p_store + self.dp_aquifer + self.dp_pipe_f + self.dp_pipe_g  # compressor outlet, pipe inlet
@@ -250,6 +259,9 @@ class CAES:
             s['total_work_per_kg'] = s['work_per_kg'] / self.eta_mech / self.eta_gen
 
         elif s['m_air'] < 0.0:  # (discharge)
+
+            # aquifer mass leakage  - does no occur during discharge
+            s['m_air_leakage'] = 0.0
 
             # pressure states
             s['p3'] = self.p_store  # aquifer pressure
@@ -300,7 +312,7 @@ class CAES:
         s['m_water'] = s['water_per_kg'] * abs(s['m_air'])
         s['m_fuel'] = s['fuel_per_kg'] * abs(s['m_air'])
 
-        # calculate energy stored
+        # calculate energy in/out
         if s['m_air'] > 0.0:  # (charge)
             s['energy_in'] = -1.0 * s['m_air'] * s['total_work_per_kg'] / 3600  # [kWh]
         elif s['m_air'] < 0.0:  # (discharge)
@@ -325,42 +337,54 @@ class CAES:
         # calculate aquifer pressure loss based on m_dot
         self.calc_aquifer_dp(self.m_dot)  # aquifer pressure losses
 
-        # update m_store_max_actual based aquifer pressure losses
+        # update m_store_max_actual based on aquifer pressure losses
         self.p_store_max_actual = self.p_store_max - self.dp_aquifer
         self.m_store_max_actual = self.p_store_max_actual * 1e3 * self.V * self.M / (
                 self.R * self.T_store_init)  # maximum [kg]
 
-        # mass injection/release per timestep
-        m_air = (self.m_store_max_actual - self.m_store_min) / self.steps
+        # mass injection/release per timestep (mass leakage compensated for during injection)
+        m_air_in = (self.m_store_max_actual - self.m_store_min) / self.steps / (1-self.loss_m_air)
+        m_air_out = (self.m_store_max_actual - self.m_store_min) / self.steps
+
         # timestep duration
-        delta_t = m_air / (self.m_dot * 3600)  # [hr]
+        delta_t_in = m_air_in / (self.m_dot * 3600)  # [hr]
+        delta_t_out = m_air_out / (self.m_dot * 3600)  # [hr]
 
         if self.debug:
-            print('mdot[kg/s]  : ' + str(round(self.m_dot, 2)))
-            print('m_air[kg]   : ' + str(round(m_air, 2)))
-            print('delta_t[hr] : ' + str(round(delta_t, 2)))
+            print('mdot        [kg/s] : ' + str(round(self.m_dot, 2)))
+            print('m_air_in    [kg]   : ' + str(round(m_air_in, 2)))
+            print('m_air_out   [kg]   : ' + str(round(m_air_out, 2)))
+            print('delta_t_in  [hr]   : ' + str(round(delta_t_in, 2)))
+            print('delta_t_out [hr]   : ' + str(round(delta_t_out, 2)))
 
         # save initial state
         self.update(m_dot=0.0, delta_t=1e-6)
 
         # if aquifer pressure losses are greater than well range, then do not perform calculations
-        if m_air > 0.0:
+        if m_air_in > 0.0:
+
+            # ========================
+            # charging
+            # ========================
 
             if self.debug:
                 print("Charging")
 
             for i in range(int(self.steps)):
                 # charge
-                self.update(m_dot=self.m_dot, delta_t=delta_t)
+                self.update(m_dot=self.m_dot, delta_t=delta_t_in)
                 if self.debug:
                     print('/t' + str(i) + ' of ' + str(self.steps))
 
+            # ========================
+            # discharging
+            # ========================
             if self.debug:
                 print("Discharging")
 
             for i in range(int(self.steps)):
                 # discharge
-                self.update(m_dot=-1.0 * self.m_dot, delta_t=delta_t)
+                self.update(m_dot=-1.0 * self.m_dot, delta_t=delta_t_out)
                 if self.debug:
                     print('/t' + str(i) + ' of ' + str(self.steps))
 
@@ -448,7 +472,7 @@ class CAES:
             s - updated
         """
         # update storage mass and pressure
-        self.m_store = self.m_store + s['m_air']
+        self.m_store = self.m_store + s['m_air'] - s['m_air_leakage']
         self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M) * 1e-3  # storage pressure
 
         # check storage pressure against limits, p2 (downwell)
@@ -597,7 +621,7 @@ class CAES:
 
         y_vars = ['m_dot', 'dp_pipe_f', 'dp_pipe_g', 'dp_well']
         y_labels = ['Mass flow\n[kg/s]',
-                    'Pipe friction loss\n[MPa]', 'Pipe gravitational loss\n[MPa]', 'Aquifer pressure loss\n[MPa]']
+                    'Pipe friction\n[MPa]', 'Gravitational loss\n[MPa]', 'Aquifer\n[MPa]']
         y_converts = [1.0, 1.0, 1.0, 1.0]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)

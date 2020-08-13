@@ -25,7 +25,7 @@ df.loc[:, 'hydrostatic'] = 14.0235
 df.loc[:, 'MAOP'] = 17.34005775
 
 # Set Color Palette
-colors = sns.color_palette("colorblind") # colorblind
+colors = sns.color_palette("colorblind")  # colorblind
 
 # set style
 sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
@@ -58,15 +58,6 @@ for i in range(nrows):
 
     # indicate y-variables for each subplot(row)
     if i == 0:
-        y_label = 'Mass flow rate\n[kg/s]'
-        y_convert = 1.0
-        y_vars = ['m_dot_cmp', 'm_dot_exp']
-        y_var_labels = ['Compressor', 'Expander']
-        c_list = [colors[0], colors[1]]
-        markers = ['^', 'v']
-        styles = ['-', '-']
-
-    elif i == 1:
         y_label = 'Air stored\n[kton]'
         y_convert = 1.0e-6
         y_vars = ['m_store']
@@ -75,14 +66,14 @@ for i in range(nrows):
         markers = ['o']
         styles = ['-']
 
-    elif i == 2:
+    elif i == 1:
         y_label = 'Pressure\n[MPa]'
         y_convert = 1.0
-        y_vars = ['MAOP', 'p3', 'hydrostatic','p2',  'p1']
-        y_var_labels = ['MAOP', 'Aquifer', 'Hydrostatic','Bottom of well',  'Top of well']
-        c_list = [colors[3], colors[2], (0, 0, 0), colors[5],  colors[7]]
-        markers = ['+', 's', 'x', '<', '>']
-        styles = ['--', '-', '--', '-', '-']
+        y_vars = ['p3', 'p1']
+        y_var_labels = ['Aquifer', 'Top of well']
+        c_list = [colors[2],  colors[7]]
+        markers = ['s', '>']
+        styles = ['-',  '-']
 
     else:  # if i == 3:
         y_label = 'Power\n[MW]'
@@ -126,6 +117,18 @@ for i in range(nrows):
     if len(y_var_labels) > 1:
         l = ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), fancybox=True, fontsize=12)
         leg.append(l)
+
+    # plot additional lines
+    if i == 1:
+        'time'
+        # Hydrostatic
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
+        # plt.text(-0.1, 1.05, caption_labels[i], horizontalalignment='center', verticalalignment='center',
+        #          transform=ax.transAxes, fontsize='medium', fontweight='bold')
+        # MAOP
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=colors[3], linewidth=1.5, linestyle='--')
+        # plt.text(-0.1, 1.05, caption_labels[i], horizontalalignment='center', verticalalignment='center',
+        #          transform=ax.transAxes, fontsize='medium', fontweight='bold')
 
 # align labels
 f.align_ylabels(a[:, 0])

@@ -5,11 +5,10 @@ from math import pi
 depth = 1402.35  # depth [m]
 h = 62.44  # thickness [m]
 phi = 0.2292  # porosity
-# k = 38.67  # permeability [mD]
-k = 10.0  # permeability [mD] - to accentuate pressure drop
-m_dot = 300.0  # mass flow rate [kg/s]
-r_f = 100.0  # formation radius [m]
-r_w = 0.15  # formation radius [m]
+k = 38.33  # permeability [mD]
+m_dot = 424.7815  # mass flow rate [kg/s]
+r_f = 99.247  # formation radius [m]
+r_w = 0.25  # well radius [m]
 
 # create system
 inputs = ICAES.get_default_inputs()
