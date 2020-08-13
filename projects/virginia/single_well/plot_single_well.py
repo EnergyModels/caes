@@ -18,6 +18,8 @@ df.loc[ind_cmp, 'pwr_cmp'] = df.loc[ind_cmp, 'pwr']
 df.loc[ind_exp, 'pwr_exp'] = df.loc[ind_exp, 'pwr']
 df.loc[ind_cmp, 'm_dot_cmp'] = df.loc[ind_cmp, 'm_dot']
 df.loc[ind_exp, 'm_dot_exp'] = -1.0 * df.loc[ind_exp, 'm_dot']
+df.loc[ind_cmp, 'press_cmp'] = df.loc[ind_cmp, 'p1']
+df.loc[ind_exp, 'press_exp'] = df.loc[ind_exp, 'p1']
 df = df.fillna(0.0)
 
 # add entries for hydrostatic pressure and MAOP
@@ -65,24 +67,35 @@ for i in range(nrows):
         c_list = [colors[7]]
         markers = ['o']
         styles = ['-']
+        y_lims = []
 
     elif i == 1:
+        # y_label = 'Pressure\n[MPa]'
+        # y_convert = 1.0
+        # y_vars = ['p3', 'p1']
+        # y_var_labels = ['Aquifer', 'Top of well']
+        # c_list = [colors[2], colors[4]]
+        # markers = ['s', '>']
+        # styles = ['-', '-']
+
         y_label = 'Pressure\n[MPa]'
         y_convert = 1.0
-        y_vars = ['p3', 'p1']
-        y_var_labels = ['Aquifer', 'Top of well']
-        c_list = [colors[2], colors[4]]
-        markers = ['s', '>']
-        styles = ['-', '-']
+        y_vars = ['p3', 'press_cmp', 'press_exp']
+        y_var_labels = ['Aquifer', 'Compressor', 'Turbine']
+        c_list = [colors[2], colors[0], colors[1]]
+        markers = ['s', '>', '<']
+        styles = ['-', '-', '-']
+        y_lims = [11.0, 18.0]
 
     else:  # if i == 3:
         y_label = 'Power\n[MW]'
         y_convert = 1.0e-3
         y_vars = ['pwr_cmp', 'pwr_exp']
-        y_var_labels = ['Compressor', 'Expander']
+        y_var_labels = ['Compressor', 'Turbine']
         c_list = [colors[0], colors[1]]
         markers = ['^', 'v']
         styles = ['-', '-']
+        y_lims = []
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
@@ -123,12 +136,15 @@ for i in range(nrows):
         vspace = 0.1
         # Hydrostatic
         ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
-        ax.text(df.time.max(), df.hydrostatic.max()-vspace, 'Hydrostatic Pressure', horizontalalignment='right',
+        ax.text(df.time.max(), df.hydrostatic.max() - vspace, 'Hydrostatic Pressure', horizontalalignment='right',
                 verticalalignment='top', fontsize='medium')
         # MAOP
         ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=colors[3], linewidth=1.5, linestyle='--')
-        ax.text(df.time.max(), df.MAOP.max()-vspace, 'Maximum Operating Pressure', horizontalalignment='right',
+        ax.text(df.time.max(), df.MAOP.max() - vspace, 'Maximum Operating Pressure', horizontalalignment='right',
                 verticalalignment='top', fontsize='medium')
+
+    if len(y_lims) == 2:
+        ax.set_ylim(bottom=y_lims[0], top=y_lims[1])
 
 # align labels
 f.align_ylabels(a[:, 0])
