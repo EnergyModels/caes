@@ -14,12 +14,12 @@ def parameter_sweep(sweep_input, debug=True):
     start = time.time()
 
     # convert inputs to model units
-    kW_in = sweep_input['capacity_MW'] * 1e3
-    kWh_in = sweep_input['capacity_MW'] * sweep_input['duration_hr'] * 1e3
+    kW_out = sweep_input['capacity_MW'] * 1e3
+    kWh_out = sweep_input['capacity_MW'] * sweep_input['duration_hr'] * 1e3
     if debug:
         print('\nStarting sizing')
-        print("kW_in (desired)  : " + str(round(kW_in, 3)))
-        print("kWh_in (desired) : " + str(round(kWh_in, 3)))
+        print("kW_out (desired)  : " + str(round(kW_out, 3)))
+        print("kWh_out (desired) : " + str(round(kWh_out, 3)))
         print("\nDepth (m)        : " + str(sweep_input['depth_m']))
         print("Thickness (m)    : " + str(sweep_input['thickness_m']))
         print("Porosity (-)     : " + str(sweep_input['porosity']))
@@ -36,11 +36,11 @@ def parameter_sweep(sweep_input, debug=True):
     r_f = 10.0
 
     # initial results
-    kW_in_actual = 0.0
-    kWh_in_actual = 0.0
+    kW_out_actual = 0.0
+    kWh_out_actual = 0.0
 
     count = 0
-    while abs(kW_in_actual - kW_in) / kW_in + abs(kWh_in_actual - kWh_in) / kWh_in > error:
+    while abs(kW_out_actual - kW_out) / kW_out + abs(kWh_out_actual - kWh_out) / kWh_out > error:
         if debug:
             print("\nIteration : " + str(count))
             print("m_dot       : " + str(round(m_dot, 3)))
@@ -64,21 +64,21 @@ def parameter_sweep(sweep_input, debug=True):
         results = system.analyze_performance()
 
         # extract results of interest
-        kW_in_actual = results['kW_in_avg']
-        kWh_in_actual = results['kWh_in']
+        kW_out_actual = results['kW_out_avg']
+        kWh_out_actual = results['kWh_out']
 
         # update guesses
         tau = 0.5  # solver time constant
-        m_dot = m_dot * (1.0 + tau * (kW_in - kW_in_actual) / kW_in)  # m_dot linearly linked to kW
-        r_f = r_f * (1.0 + tau ** 2 * (kWh_in - kWh_in_actual) / kWh_in_actual)  # r_f exponentially linked to kWh
+        m_dot = m_dot * (1.0 + tau * (kW_out - kW_out_actual) / kW_out)  # m_dot linearly linked to kW
+        r_f = r_f * (1.0 + tau ** 2 * (kWh_out - kWh_out_actual) / kWh_out_actual)  # r_f exponentially linked to kWh
 
         count = count + 1
         if count > count_max:
             break
 
         if debug:
-            print("MW_in_avg   : " + str(round(kW_in_actual / 1e3, 3)))
-            print("MWh_in      : " + str(round(kWh_in_actual / 1e3, 3)))
+            print("MW_out_avg   : " + str(round(kW_out_actual / 1e3, 3)))
+            print("MWh_out      : " + str(round(kWh_out_actual / 1e3, 3)))
 
     end = time.time()
     results['solve_time'] = end - start
