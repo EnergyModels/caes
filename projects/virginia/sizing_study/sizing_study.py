@@ -73,7 +73,8 @@ def parameter_sweep(sweep_input, debug=True):
         r_f = r_f * (1.0 + tau ** 2 * (kWh_out - kWh_out_actual) / kWh_out_actual)  # r_f exponentially linked to kWh
 
         count = count + 1
-        if count > count_max:
+        if count > count_max:  # sizing unsuccessful
+            results['errors'] = True
             break
 
         if debug:

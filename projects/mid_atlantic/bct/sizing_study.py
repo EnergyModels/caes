@@ -81,12 +81,13 @@ def parameter_sweep(sweep_input, MW_out=100.0, MWh_out=1000.0, debug=True):
         r_f = r_f * (1.0 + tau ** 2 * (kWh_out - kWh_out_actual) / kWh_out_actual)  # r_f exponentially linked to kWh
 
         count = count + 1
-        if count > count_max:
+        if count > count_max:  # sizing unsuccessful
+            results['errors'] = True
             break
 
         if debug:
-            print("MW_in_avg   : " + str(round(kW_out_actual / 1e3, 3)))
-            print("MWh_in      : " + str(round(kWh_out_actual / 1e3, 3)))
+            print("MW_out_avg   : " + str(round(kW_out_actual / 1e3, 3)))
+            print("MWh_out      : " + str(round(kWh_out_actual / 1e3, 3)))
 
     end = time.time()
     results['solve_time'] = end - start
