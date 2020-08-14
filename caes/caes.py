@@ -78,6 +78,9 @@ class CAES:
         # operational conditions
         inputs['m_dot'] = 50.0  # mass flow rate [kg/s]
 
+        # operational constraint
+        inputs['mach_limit'] = 0.1  # limited to this mach number
+
         return inputs
 
     def __init__(self, inputs=get_default_inputs()):
@@ -92,6 +95,7 @@ class CAES:
         # constants
         self.g = 9.81  # gravitational constant [m/s^2]
         self.R = 8.314  # universal gas constant [kJ/kmol-K]
+        self.speed_of_sound = 343.0  # speed of sound in air [m/s]
 
         # atmospheric air properties
         self.air = "Air"  # CoolProp fluid name [-]
@@ -189,9 +193,24 @@ class CAES:
         self.calc_pipe_dp(inputs['m_dot'])  # pipe friction and gravitational potential
         self.calc_aquifer_dp(inputs['m_dot'])  # aquifer pressure losses
         self.p_machine_design = self.p_store_max + self.dp_pipe_f + self.dp_pipe_g + self.dp_aquifer
+        self.p_well_design_min = self.p_store_min + self.dp_pipe_g
 
         # store error messages for current state
         self.error_msg = ''
+
+        # check if flow rate exceeds 0.1 mach limit
+        self.mach_limit = inputs['mach_limit']
+        rho = CP.PropsSI('D', 'T', self.T0, 'P', self.p_well_design_min * 1e6, self.air)  # density [kg/m3]
+        U_max = self.speed_of_sound * inputs['mach_limit']  # max velocity [m/s]
+        self.m_dot_max = rho * U_max * pi * self.r_w ** 2.0  # max flow rate [kg/s]
+        if inputs['m_dot'] > self.m_dot_max:
+            self.error_msg = 'Exceeds Mach limit'
+            print('exceeded')
+        if self.debug:
+            print("p_well_design_min MPa   :" + str(self.p_well_design_min))
+            print("rho               kg/m3 :" + str(rho))
+            print("U_max             m/s   : " + str(U_max))
+            print("m_dot_max         kg/s  : " + str(self.m_dot_max))
 
         # dataframe to store data
         self.attributes_time_series = ['time', 'm_dot', 'delta_t', 'm_air', 'm_air_leakage',
@@ -218,14 +237,12 @@ class CAES:
         :return:
         """
 
-        # clear warning messages from previous time step
-        self.error_msg = ''
-
         # create series to hold results from this time step
         s = pd.Series(data=0.0, index=self.attributes_time_series)
         s['m_dot'] = m_dot
         s['delta_t'] = delta_t
         s['m_air'] = m_dot * 3600 * delta_t  # mass injection/release [kg]
+        s['error_msg'] = self.error_msg
 
         # update time
         self.time = self.time + delta_t  # [hr]
@@ -331,6 +348,9 @@ class CAES:
         # finish storing results from current time step
         # -----------------------
         self.data = self.data.append(s, ignore_index=True)
+
+        # clear warning messages for subsequent time step
+        self.error_msg = ''
 
     def single_cycle(self):
         """
@@ -455,6 +475,7 @@ class CAES:
             results['kg_water_per_kWh'] = water_input_total / energy_output_total
             results['kg_CO2_per_kWh'] = CO2_fuel / energy_output_total
             results['kg_fuel_per_kWh'] = fuel_input_total / energy_output_total
+            results['MWh_cushion_gas'] = self.m_store_min / self.m_dot / 3600 * results['kW_in_avg'] / 1000.0
             if len(self.data.error_msg.unique()) > 1:  # errors
                 results['errors'] = 'true'
             else:  # no errors
