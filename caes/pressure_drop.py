@@ -59,7 +59,7 @@ def friction_coeff(Re=1000.0, epsilon=0.002 * 1e-3, d=1.06):
 
 def pipe_fric_dp(epsilon=0.002 * 1.0e-3, d=1.06, depth=950, m_dot=10.0, rho=172, mu=18.37e-6):
     """
-
+    Assumes constant density
     :param epsilon: roughness [m]
     :param d: pipe diameter [m]
     :param depth: well depth / pipe length [m]

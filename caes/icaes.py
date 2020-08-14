@@ -89,7 +89,7 @@ class ICAES(CAES):
         #     self.n_stages_cmp = 1
 
         # equally divide pressure ratio for each stage
-        PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_cmp)
+        PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_cmp)
         self.PR_cmp = []
         for n in range(self.n_stages_cmp):
             self.PR_cmp.append(PR_equal)
@@ -136,7 +136,7 @@ class ICAES(CAES):
         #     self.n_stages_exp = 1
 
         # equally divide pressure ratio for each stage
-        PR_equal = (self.p_store_max / self.p_atm) ** (1. / self.n_stages_exp)
+        PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_exp)
         self.PR_exp = []
         for n in range(self.n_stages_exp):
             self.PR_exp.append(PR_equal)

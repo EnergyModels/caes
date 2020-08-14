@@ -169,6 +169,7 @@ class CAES:
 
         # flow pressure drops
         self.dp_pipe_f = 0.0  # pipe friction [MPa]
+        self.f = 0.0  # pipe friction factor [-]
         self.dp_pipe_g = 0.0  # pipe gravitational potential [MPa]
         self.dp_aquifer = 0.0  # aquifer pressure drop [MPa]
 
@@ -183,6 +184,11 @@ class CAES:
         self.T1 = self.T_atm  # compressor outlet / expander inlet
         self.T2 = self.T_store  # downwell
         self.T3 = self.T_store  # aquifer
+
+        # initialize at design flow rate to calculate machine design outlet pressure
+        self.calc_pipe_dp(inputs['m_dot'])  # pipe friction and gravitational potential
+        self.calc_aquifer_dp(inputs['m_dot'])  # aquifer pressure losses
+        self.p_machine_design = self.p_store_max + self.dp_pipe_f + self.dp_pipe_g + self.dp_aquifer
 
         # store error messages for current state
         self.error_msg = ''
@@ -343,7 +349,7 @@ class CAES:
                 self.R * self.T_store_init)  # maximum [kg]
 
         # mass injection/release per timestep (mass leakage compensated for during injection)
-        m_air_in = (self.m_store_max_actual - self.m_store_min) / self.steps / (1-self.loss_m_air)
+        m_air_in = (self.m_store_max_actual - self.m_store_min) / self.steps / (1 - self.loss_m_air)
         m_air_out = (self.m_store_max_actual - self.m_store_min) / self.steps
 
         # timestep duration
