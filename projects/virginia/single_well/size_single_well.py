@@ -16,12 +16,13 @@ def parameter_sweep(sweep_input, debug=True):
     kWh_out = sweep_input['capacity_MW'] * sweep_input['duration_hr'] * 1e3
     if debug:
         print('\nStarting sizing')
-        print("kW_out (desired)  : " + str(round(kW_out, 3)))
-        print("kWh_out (desired) : " + str(round(kWh_out, 3)))
-        print("\nDepth (m)        : " + str(sweep_input['depth_m']))
+        print("kW_out (desired) : " + str(round(kW_out, 3)))
+        print("kWh_out (desired): " + str(round(kWh_out, 3)))
+        print("\nDepth (m)      : " + str(sweep_input['depth_m']))
         print("Thickness (m)    : " + str(sweep_input['thickness_m']))
         print("Porosity (-)     : " + str(sweep_input['porosity']))
         print("Permeability (mD): " + str(sweep_input['permeability_mD']))
+        print("Well radius (m)  : " + str(sweep_input['r_w']))
 
     # allowable calculation error
     error = 1e-6
@@ -51,6 +52,7 @@ def parameter_sweep(sweep_input, debug=True):
         inputs['h'] = sweep_input['thickness_m']  # porosity thickness [m]
         inputs['phi'] = sweep_input['porosity']  # formation porosity [-]
         inputs['k'] = sweep_input['permeability_mD']  # formation permeability [mD]
+        inputs['r_w'] = sweep_input['r_w']  # well radius [m]
 
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
@@ -110,6 +112,7 @@ if __name__ == '__main__':
     k = 38.33  # [mD]
     capacity = 200  # [MW]
     duration = 10  # [hr]
+    r_w = 0.41/2.0  # [m]
 
     # ------------------
     # create sweep_inputs dataframe
@@ -124,6 +127,7 @@ if __name__ == '__main__':
     s['capacity_MW'] = capacity
     s['duration_hr'] = duration
     s['permeability_mD'] = k
+    s['r_w'] = r_w
     sweep_inputs = sweep_inputs.append(s, ignore_index=True)
 
     # reset index (appending messes up indices)

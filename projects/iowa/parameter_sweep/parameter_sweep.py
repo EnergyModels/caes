@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # sweep parameters (nparray)
     m_dot = np.arange(1, 26, 1)  # [kg/s]
     r_f = np.arange(50, 201, 50)  # [m]
-    r_w = np.arange(0.05, 0.51, 0.05)  # [m]
+    r_w = np.arange(0.05, 0.41, 0.05)  # [m]
 
     # ------------------
     # create sweep_inputs dataframe

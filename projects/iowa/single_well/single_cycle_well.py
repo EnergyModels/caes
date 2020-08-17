@@ -8,7 +8,6 @@ phi = 0.165  # [-] average of 16 and 17
 k = 3.0  # permeability [mD] - to accentuate pressure drop
 m_dot = 24.0  # mass flow rate [kg/s]
 r_f = 200.0  # formation radius [m]
-r_w = 0.25  # well radius [m]
 
 # create system
 inputs = ICAES.get_default_inputs()
@@ -17,7 +16,6 @@ inputs['h'] = h
 inputs['phi'] = phi
 inputs['k'] = k
 inputs['r_f'] = r_f
-inputs['r_w'] = r_w
 inputs['m_dot'] = m_dot
 
 inputs['p_frac_grad'] = 20.0

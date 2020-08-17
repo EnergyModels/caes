@@ -52,7 +52,7 @@ class CAES:
         inputs['loss_gen'] = 1.0 - 0.975  # [-]
 
         # wellbore
-        inputs['r_w'] = 0.5 / 2.0  # wellbore radius [m]
+        inputs['r_w'] = 0.41 / 2.0  # wellbore radius [m]
         inputs['epsilon'] = 0.002 * 1e-3  # pipe roughness [m]
         inputs['depth'] = 1402.35  # depth [m]
 
