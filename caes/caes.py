@@ -66,7 +66,7 @@ class CAES:
         inputs['T_grad_b'] = 7.412436  # b, intercept [deg C], Battelle 2019
 
         # storage geomechanical properties
-        inputs['r_f'] = 500.0  # formation radius [m]
+        inputs['r_f'] = 200.0  # formation radius [m]
         inputs['h'] = 62.44  # thickness [m]
         inputs['phi'] = 0.2292  # porosity [-]
         inputs['Slr'] = 0.0  # liquid residual fraction [-]

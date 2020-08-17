@@ -6,24 +6,28 @@ import CoolProp.CoolProp as CP  # http://www.coolprop.org/coolprop/HighLevelAPI.
 class ICAES(CAES):
     def get_default_inputs():
         inputs = CAES.get_default_inputs()
+
         # general
         inputs['eta_pump'] = 0.75
+
         # machinery
         inputs['PR_type'] = 'free'  # 'fixed' or 'free' pressure ratios
-        # compression
-        # inputs['n_stages_cmp'] = 3
-        inputs['nozzles_cmp1'] = 1
-        inputs['nozzles_cmp2'] = 5
-        inputs['nozzles_cmp3'] = 15
-        inputs['nozzles_cmp4'] = -1  # <0 - unused
-        inputs['nozzles_cmp5'] = -1  # <0 - unused
-        # expansion
-        # inputs['n_stages_exp'] = 3
-        inputs['nozzles_exp1'] = 15
-        inputs['nozzles_exp2'] = 5
-        inputs['nozzles_exp3'] = 1
-        inputs['nozzles_exp4'] = -1 # <0 - unused
-        inputs['nozzles_exp5'] = -1  # <0 - unused
+        inputs['PR_cmp'] = []  # leave empty for equal pressure ratios, otherwise specify per stage
+        inputs['PR_exp'] = []
+
+        # compression - mass load per stage (ratio of water to air by mass)
+        inputs['ML_cmp1'] = 1.0
+        inputs['ML_cmp2'] = 1.0
+        inputs['ML_cmp3'] = 1.0
+        inputs['ML_cmp4'] = -1  # <0 - unused
+        inputs['ML_cmp5'] = -1  # <0 - unused
+
+        # expansion - mass loading per stage
+        inputs['ML_exp1'] = 1.0
+        inputs['ML_exp2'] = 1.0
+        inputs['ML_exp3'] = 1.0
+        inputs['ML_exp4'] = -1  # <0 - unused
+        inputs['ML_exp5'] = -1  # <0 - unused
 
         return inputs
 
@@ -55,100 +59,78 @@ class ICAES(CAES):
         # -------------------
         # compression
         # -------------------
-        # number of compression stages, stops at first 0, negative or non-integer entry for nozzles
-        # need to make sure the number of nozzles entries matches the number of stages
-        if inputs['nozzles_cmp1'] < 0:
+        # number of compression stages, stops at first 0, negative or non-integer entry for ML
+        # need to make sure the number of ML entries matches the number of stages
+        if inputs['ML_cmp1'] < 0:
             self.n_stages_cmp = 1
-            self.nozzles_cmp = [1]
+            self.ML_cmp = [1]
 
-        elif inputs['nozzles_cmp2'] < 0:
+        elif inputs['ML_cmp2'] < 0:
             self.n_stages_cmp = 1
-            self.nozzles_cmp = [inputs['nozzles_cmp1']]
+            self.ML_cmp = [inputs['ML_cmp1']]
 
-        elif inputs['nozzles_cmp3'] < 0:
+        elif inputs['ML_cmp3'] < 0:
             self.n_stages_cmp = 2
-            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2']]
+            self.ML_cmp = [inputs['ML_cmp1'], inputs['ML_cmp2']]
 
-        elif inputs['nozzles_cmp4'] < 0:
+        elif inputs['ML_cmp4'] < 0:
             self.n_stages_cmp = 3
-            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2'], inputs['nozzles_cmp3']]
+            self.ML_cmp = [inputs['ML_cmp1'], inputs['ML_cmp2'], inputs['ML_cmp3']]
 
-        elif inputs['nozzles_cmp5'] < 0:
+        elif inputs['ML_cmp5'] < 0:
             self.n_stages_cmp = 4
-            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2'], inputs['nozzles_cmp3'],
-                                inputs['nozzles_cmp4']]
+            self.ML_cmp = [inputs['ML_cmp1'], inputs['ML_cmp2'], inputs['ML_cmp3'],
+                           inputs['ML_cmp4']]
         else:
             self.n_stages_cmp = 5
-            self.nozzles_cmp = [inputs['nozzles_cmp1'], inputs['nozzles_cmp2'], inputs['nozzles_cmp3'],
-                                inputs['nozzles_cmp4'], inputs['nozzles_cmp5']]
+            self.ML_cmp = [inputs['ML_cmp1'], inputs['ML_cmp2'], inputs['ML_cmp3'],
+                           inputs['ML_cmp4'], inputs['ML_cmp5']]
 
-        # # inputs['n_stages_cmp'] = 3
-        # if inputs['n_stages_cmp'] >= 1:
-        #     self.n_stages_cmp = inputs['n_stages_cmp']
-        # else:
-        #     self.n_stages_cmp = 1
-
-        # equally divide pressure ratio for each stage
-        PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_cmp)
-        self.PR_cmp = []
-        for n in range(self.n_stages_cmp):
-            self.PR_cmp.append(PR_equal)
-
-        # if not, make an assumption about PR per stage
-        # if len(inputs['nozzles_cmp']) == self.n_stages_cmp:
-        #     self.nozzles_cmp = inputs['nozzles_cmp']
-        # else:
-        #     self.nozzles_cmp = []
-        #     for n in range(self.n_stages_cmp):
-        #         self.nozzles_cmp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
+        # equally divide pressure ratio for each stage, if pressure ratios are unspecified
+        if len(inputs['PR_cmp'])==self.n_stages_cmp:
+            self.PR_cmp = inputs['PR_cmp']
+        else:
+            self.PR_cmp = []
+            PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_cmp)
+            for n in range(self.n_stages_cmp):
+                self.PR_cmp.append(PR_equal)
 
         # -------------------
         # expansion
         # -------------------
-        if inputs['nozzles_exp1'] < 0:
+        if inputs['ML_exp1'] < 0:
             self.n_stages_exp = 1
-            self.nozzles_exp = [1]
+            self.ML_exp = [1]
 
-        elif inputs['nozzles_exp2'] < 0:
+        elif inputs['ML_exp2'] < 0:
             self.n_stages_exp = 1
-            self.nozzles_exp = [inputs['nozzles_exp1']]
+            self.ML_exp = [inputs['ML_exp1']]
 
-        elif inputs['nozzles_exp3'] < 0:
+        elif inputs['ML_exp3'] < 0:
             self.n_stages_exp = 2
-            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2']]
+            self.ML_exp = [inputs['ML_exp1'], inputs['ML_exp2']]
 
-        elif inputs['nozzles_exp4'] < 0:
+        elif inputs['ML_exp4'] < 0:
             self.n_stages_exp = 3
-            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2'], inputs['nozzles_exp3']]
+            self.ML_exp = [inputs['ML_exp1'], inputs['ML_exp2'], inputs['ML_exp3']]
 
-        elif inputs['nozzles_exp5'] < 0:
+        elif inputs['ML_exp5'] < 0:
             self.n_stages_exp = 4
-            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2'], inputs['nozzles_exp3'],
-                                inputs['nozzles_exp4']]
+            self.ML_exp = [inputs['ML_exp1'], inputs['ML_exp2'], inputs['ML_exp3'],
+                           inputs['ML_exp4']]
         else:
             self.n_stages_exp = 5
-            self.nozzles_exp = [inputs['nozzles_exp1'], inputs['nozzles_exp2'], inputs['nozzles_exp3'],
-                                inputs['nozzles_exp4'], inputs['nozzles_exp5']]
-        # # inputs['n_stages_exp'] = 3
-        # if inputs['n_stages_exp'] >= 1:
-        #     self.n_stages_exp = inputs['n_stages_exp']
-        # else:
-        #     self.n_stages_exp = 1
+            self.ML_exp = [inputs['ML_exp1'], inputs['ML_exp2'], inputs['ML_exp3'],
+                           inputs['ML_exp4'], inputs['ML_exp5']]
 
-        # equally divide pressure ratio for each stage
-        PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_exp)
-        self.PR_exp = []
-        for n in range(self.n_stages_exp):
-            self.PR_exp.append(PR_equal)
-
-        # # need to make sure the number of nozzles entries matches the number of stages
-        # # if not, make an assumption about PR per stage
-        # if len(inputs['nozzles_exp']) == self.n_stages_exp:
-        #     self.nozzles_exp = inputs['nozzles_exp']
-        # else:
-        #     self.nozzles_exp = []
-        #     for n in range(self.n_stages_exp):
-        #         self.nozzles_exp.append(1.0)  # default value of 1 nozzle per stage if not correctly initialized
+        # equally divide pressure ratio for each stage, if pressure ratios are unspecified
+        if len(inputs['PR_exp']) == self.n_stages_exp:
+            self.PR_exp = inputs['PR_exp']
+        else:
+            self.PR_exp = []
+            PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_exp)
+            for n in range(self.n_stages_exp):
+                self.PR_exp.append(PR_equal)
 
         # -------------------
         # recreate dataframe to store data (with additional entries)
@@ -220,9 +202,8 @@ class ICAES(CAES):
         # --------------
         # calculate performance for each stage
         # --------------
-        for n_stg, nozzles, PR in zip(range(self.n_stages_cmp), self.nozzles_cmp, PRs):
+        for n_stg, ML, PR in zip(range(self.n_stages_cmp), self.ML_cmp, PRs):
             p_out = p_in * PR
-            ML = nozzles * (1.65 / p_out - 0.05)  # mass loading (based on higher pressure)
             n = gamma * (1 + ML * (cd / cp)) / (1 + gamma * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
@@ -300,7 +281,7 @@ class ICAES(CAES):
             p_in = s['p0']
             for PR_design in self.PR_exp:
                 p_in = p_in * PR_design  # back-calculate throttle pressure
-            if p_in > self.p_store:
+            if p_in/1000.0 > self.p_store:
                 print('expander inlet pressure > storage pressure')
         T_in = self.T_store
         s['exp_p_in'] = p_in
@@ -309,9 +290,8 @@ class ICAES(CAES):
         # --------------
         # calculate performance for each stage
         # --------------
-        for n_stg, nozzles, PR in zip(range(self.n_stages_exp), self.nozzles_exp, PRs):
+        for n_stg, ML, PR in zip(range(self.n_stages_exp), self.ML_exp, PRs):
             p_out = p_in / PR
-            ML = nozzles * (1.65 / p_in - 0.05)  # mass loading (based on higher pressure)
             n = gamma * (1 + ML * (cd / cp)) / (1 + gamma * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
