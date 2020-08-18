@@ -112,8 +112,10 @@ if __name__ == '__main__':
     phi = 0.2292  # [-]
 
     # scenario inputs (length must match)
-    k_type = ['divideBy10', 'expected', 'times10']
-    k = [3.833, 38.33, 383.3]  # [mD]
+    # k_type = ['divideBy10', 'expected', 'times10']
+    # k = [3.833, 38.33, 383.3]  # [mD]
+    k_type = ['expected']
+    k = [38.33]  # [mD]
 
     # sweep parameters (nparray)
     capacities = np.arange(10, 501, 10)  # [MW]

@@ -146,7 +146,11 @@ class CAES:
             'T_grad_b']  # storage temperature [K]
 
         # storage geomechanical properties
-        self.r_f = inputs['r_f']  # radius [m]
+        if inputs['r_f']>inputs['r_w']:
+            self.r_f = inputs['r_f']  # radius [m]
+        else:
+            print('Warning: r_f must by => than r_w, r_f set to r_w')
+            self.r_f = inputs['r_w']  # radius [m]
         self.h = inputs['h']  # thickness [m]
         self.phi = inputs['phi']  # porosity [-]
         self.Slr = inputs['Slr']  # residual liquid fraction [-]
