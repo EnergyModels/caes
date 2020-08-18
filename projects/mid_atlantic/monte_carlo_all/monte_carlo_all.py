@@ -79,7 +79,7 @@ if __name__ == '__main__':
     run_time = (end - start) / 3600.0
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    f = open("run_time_history.txt", "a")
+    f = open("history_runtime.txt", "a")
     f.write('\n')
     f.write('Last run : ' + dt_string + '\n')
     f.write('Total run time [h]: ' + str(round(run_time, 3)) + '\n')

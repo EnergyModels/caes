@@ -66,7 +66,7 @@ class CAES:
         inputs['T_grad_b'] = 7.412436  # b, intercept [deg C], Battelle 2019
 
         # storage geomechanical properties
-        inputs['r_f'] = 200.0  # formation radius [m]
+        inputs['r_f'] = 117.0645423  # formation radius [m] (Default: 2000 MWh)
         inputs['h'] = 62.44  # thickness [m]
         inputs['phi'] = 0.2292  # porosity [-]
         inputs['Slr'] = 0.0  # liquid residual fraction [-]
@@ -76,7 +76,7 @@ class CAES:
         inputs['loss_m_air'] = 3.5 / 100.0  # fraction of air lost in aquifer [-] #
 
         # operational conditions
-        inputs['m_dot'] = 50.0  # mass flow rate [kg/s]
+        inputs['m_dot'] = 574.3625466  # mass flow rate [kg/s] (Default 200 MW)
 
         # operational constraint
         inputs['mach_limit'] = 0.1  # limited to this mach number
