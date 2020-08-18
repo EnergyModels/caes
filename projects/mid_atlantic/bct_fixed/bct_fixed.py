@@ -135,7 +135,7 @@ if __name__ == '__main__':
     n_cases = sweep_inputs.shape[0]
 
     # save inputs
-    sweep_inputs.to_csv('sizing_study_inputs.csv')
+    sweep_inputs.to_csv('study_inputs.csv')
 
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(output)
 
     # save results
-    df.to_csv('sizing_study_results.csv')
+    df.to_csv('study_results.csv')
 
     # save total study time
     end = time.time()
