@@ -35,14 +35,16 @@ sens_var_rename = {'steps': 'Solver steps',
                    'h': 'Thickness',
                    'phi': 'Porosity',
                    'k': 'Permeability',
+                   'loss_m_air': 'Air leakage',
                    'm_dot': 'Mass flow rate',
+                   'mach_limit': 'Mach limit',
                    'eta_pump': 'Pump efficiency',
-                   'nozzles_cmp1': 'Compressor Stage 1 Nozzles',
-                   'nozzles_cmp2': 'Compressor Stage 2 Nozzles',
-                   'nozzles_cmp3': 'Compressor Stage 3 Nozzles',
-                   'nozzles_exp1': 'Expander Stage 1 Nozzles',
-                   'nozzles_exp2': 'Expander Stage 2 Nozzles',
-                   'nozzles_exp3': 'Expander Stage 3 Nozzles'}
+                   'ML_cmp1': 'Compressor Stage 1 Nozzles',
+                   'ML_cmp2': 'Compressor Stage 2 Nozzles',
+                   'ML_cmp3': 'Compressor Stage 3 Nozzles',
+                   'ML_exp1': 'Expander Stage 1 Nozzles',
+                   'ML_exp2': 'Expander Stage 2 Nozzles',
+                   'ML_exp3': 'Expander Stage 3 Nozzles'}
 
 # ------------------------
 # Begin program

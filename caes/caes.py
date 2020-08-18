@@ -605,7 +605,7 @@ class CAES:
         # gravity
         self.dp_pipe_g = pipe_grav_dp(m_dot=m_dot, rho=rho, z=self.depth)  # [MPa]
 
-    def plot_overview(self):
+    def plot_overview(self, casename=''):
         df = self.data
         df.loc[:, 'step'] = df.index
 
@@ -618,10 +618,10 @@ class CAES:
         y_converts = [1.0e-6, 1.0, 1.0, 1.0e-3]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
-        plt.savefig('overview.png', dpi=600)
+        plt.savefig(casename + 'overview.png', dpi=600)
         plt.close()
 
-    def plot_pressures(self):
+    def plot_pressures(self, casename=''):
         df = self.data
         df.loc[:, 'step'] = df.index
 
@@ -635,10 +635,10 @@ class CAES:
         y_converts = [1.0, 1.0, 1.0, 1.0, 1.0]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
-        plt.savefig('pressures.png', dpi=600)
+        plt.savefig(casename + 'pressures.png', dpi=600)
         plt.close()
 
-    def plot_pressure_losses(self):
+    def plot_pressure_losses(self, casename=''):
         df = self.data
         df.loc[:, 'step'] = df.index
 
@@ -652,5 +652,5 @@ class CAES:
         y_converts = [1.0, 1.0, 1.0, 1.0]
 
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
-        plt.savefig('pressure_losses.png', dpi=600)
+        plt.savefig(casename + 'pressure_losses.png', dpi=600)
         plt.close()
