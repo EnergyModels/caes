@@ -18,12 +18,12 @@ from datetime import datetime
 # =====================
 # function to enable sizing for each entry in input file (XLSX_filename)
 # =====================
-def parameter_sweep(sweep_input, MW_out=100.0, MWh_out=1000.0, debug=True):
+def parameter_sweep(sweep_input, debug=True):
     start = time.time()
 
     # convert inputs to model units
-    kW_out = MW_out * 1e3
-    kWh_out = MWh_out * 1e3
+    kW_out = sweep_input['capacity_MW'] * 1e3
+    kWh_out = sweep_input['capacity_MW'] * sweep_input['duration_hr'] * 1e3
     if debug:
         print('\nStarting sizing')
         print("kW_out (desired)  : " + str(round(kW_out, 3)))
@@ -95,6 +95,9 @@ def parameter_sweep(sweep_input, MW_out=100.0, MWh_out=1000.0, debug=True):
     results['m_dot'] = m_dot
     results['r_f'] = r_f
 
+    # print out RTE
+    print(results['RTE'])
+
     # combine inputs and results to return in single series
     single_output = pd.concat([sweep_input, results])
     return single_output
@@ -108,12 +111,12 @@ if __name__ == '__main__':
     # ==============
     # user inputs
     # ==============
-    # xlsx_filename = 'user_inputs_sample.xlsx'  # Excel file with inputs
-    xlsx_filename = 'Battelle_data.xlsx'  # Excel file with inputs
+    location_data = 'Battelle_data.xlsx'  # Excel file with inputs
+    general_data = 'general_data.xlsx'  # Excel file with inputs
     sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
-    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
-    pwr_rating = 100  # [MW]
-    energy_rating = 10 * pwr_rating  # [MWh]
+    ncpus = 6  # number of cpus to use
+    capacity = 100  # [MW]
+    duration = 24  # [hr]
     debug = False
 
     # ------------------
@@ -131,16 +134,24 @@ if __name__ == '__main__':
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
 
+    sweep_inputs.loc[:, 'capacity_MW'] = capacity
+    sweep_inputs.loc[:, 'duration_hr'] = duration
+
     # count number of cases
     n_cases = sweep_inputs.shape[0]
 
     # save inputs
     sweep_inputs.to_csv('study_inputs.csv')
 
+    try:
+        ncpus = int(os.getenv('NUM_PROCS'))  # try to use variable defined in sbatch script
+    except:
+        ncpus = ncpus  # otherwise default to this number of cores
+
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):
         output = Parallel(n_jobs=ncpus, verbose=5)(
-            delayed(parameter_sweep)(sweep_inputs.loc[index], MW_out=pwr_rating, MWh_out=energy_rating, debug=debug)
+            delayed(parameter_sweep)(sweep_inputs.loc[index], debug=debug)
             for index in
             range(n_cases))
     df = pd.DataFrame(output)

@@ -14,12 +14,42 @@ def parameter_sweep(sweep_input):
 
     # create system
     inputs = ICAES.get_default_inputs()
+    # primary geophysical parameters
     inputs['depth'] = sweep_input['depth']  # [m]
     inputs['h'] = sweep_input['h']  # [m]
     inputs['phi'] = sweep_input['phi']  # [-]
     inputs['k'] = sweep_input['k']  # [mD]
+
+    # primary design choices
     inputs['m_dot'] = sweep_input['m_dot']  # [kg/s]
     inputs['r_f'] = sweep_input['r_f']  # [m]
+    inputs['r_w'] = sweep_input['r_w']  # [m]
+
+    # additional geophysical parameters
+    inputs['T_atm'] = sweep_input['T_atm']  # [C]
+    inputs['p_atm'] = sweep_input['p_atm']  # [MPa]
+    inputs['T_water'] = sweep_input['T_water']  # [C]
+    inputs['p_water'] = sweep_input['p_water']  # [MPa]
+    inputs['p_hydro_grad'] = sweep_input['p_hydro_grad']  # [MPa/km]
+    inputs['p_frac_grad'] = sweep_input['p_frac_grad']  # [MPa/km]
+    inputs['T_grad_m'] = sweep_input['T_grad_m']  # [C/km]
+    inputs['T_grad_b'] = sweep_input['T_grad_b']  # [C]
+    inputs['loss_m_air'] = sweep_input['loss_m_air']  # [-]
+
+    # design choice
+    inputs['epsilon'] = sweep_input['epsilon']  # [-]
+    inputs['safety_factor'] = sweep_input['safety_factor']  # [-]
+    inputs['loss_mech'] = sweep_input['loss_mech']  # [-]
+    inputs['loss_gen'] = sweep_input['loss_gen']  # [-]
+    inputs['mach_limit'] = sweep_input['mach_limit']  # [-]
+    inputs['eta_pump'] = sweep_input['eta_pump']  # [-]
+    inputs['ML_cmp1'] = sweep_input['ML_cmp1']  # [-]
+    inputs['ML_cmp2'] = sweep_input['ML_cmp2']  # [-]
+    inputs['ML_cmp3'] = sweep_input['ML_cmp3']  # [-]
+    inputs['ML_exp1'] = sweep_input['ML_exp1']  # [-]
+    inputs['ML_exp2'] = sweep_input['ML_exp2']  # [-]
+    inputs['ML_exp3'] = sweep_input['ML_exp3']  # [-]
+
     system = ICAES(inputs=inputs)
 
     # run single cycle and analyze
@@ -41,10 +71,10 @@ if __name__ == '__main__':
     # ==============
     # user inputs
     # ==============
-    xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
-    sheet_names = ['monte_carlo']  # Excel sheet_names
+    xlsx_filename = 'user_inputs_general_monte_carlo.xlsx'  # Excel file with inputs
+    sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
     iterations = 10000  # number of runs per scenario
-    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
+    ncpus = 6  # number of cpus to use
 
     # ------------------
     # create sweep_inputs dataframe
@@ -62,6 +92,11 @@ if __name__ == '__main__':
 
     # save inputs
     sweep_inputs.to_csv('mc_inputs.csv')
+
+    try:
+        ncpus = int(os.getenv('NUM_PROCS'))  # try to use variable defined in sbatch script
+    except:
+        ncpus = ncpus  # otherwise default to this number of cores
 
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):

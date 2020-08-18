@@ -46,10 +46,16 @@ def monteCarloInputs(filename, sheetname, iterations):
             avg = df_xls.loc[param]["Average"]
             df.loc[:][param] = avg
 
-        # Uniform Distributions
+        # Uniform Distributions - specified low and high values
         elif dist_type == "uniform" or dist_type == "Uniform" or dist_type == "U":
             low = df_xls.loc[param]["Low"]
             high = df_xls.loc[param]["High"]
+            df.loc[:][param] = np.random.uniform(low=low, high=high, size=iterations)
+
+        # Uniform Distributions - (+/-) 10 % perturbation from average
+        elif dist_type == "uniform_perturb10" or dist_type == "Uniform_perturb10":
+            low = 0.9 * df_xls.loc[param]["Average"]
+            high = 1.1 * df_xls.loc[param]["Average"]
             df.loc[:][param] = np.random.uniform(low=low, high=high, size=iterations)
 
         # Normal Distributions
