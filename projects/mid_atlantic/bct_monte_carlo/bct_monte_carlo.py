@@ -1,8 +1,9 @@
-from caes import ICAES
+from caes import ICAES, monteCarloInputs
 import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
 import os
+import numpy as np
 from datetime import datetime
 
 
@@ -57,10 +58,39 @@ def parameter_sweep(sweep_input, debug=True):
         # create system
         inputs = ICAES.get_default_inputs()
         # user inputs
-        inputs['depth'] = sweep_input['depth_m']  # porosity depth [m]
-        inputs['h'] = sweep_input['thickness_m']  # porosity thickness [m]
-        inputs['phi'] = sweep_input['porosity']  # formation porosity [-]
-        inputs['k'] = sweep_input['permeability_mD']  # formation permeability [mD]
+        # primary geophysical parameters
+        inputs['depth'] = sweep_input['depth']  # [m]
+        inputs['h'] = sweep_input['h']  # [m]
+        inputs['phi'] = sweep_input['phi']  # [-]
+        inputs['k'] = sweep_input['k']  # [mD]
+
+        # primary design choices
+        inputs['r_w'] = sweep_input['r_w']  # [m]
+
+        # additional geophysical parameters
+        inputs['T_atm'] = sweep_input['T_atm']  # [C]
+        inputs['p_atm'] = sweep_input['p_atm']  # [MPa]
+        inputs['T_water'] = sweep_input['T_water']  # [C]
+        inputs['p_water'] = sweep_input['p_water']  # [MPa]
+        inputs['p_hydro_grad'] = sweep_input['p_hydro_grad']  # [MPa/km]
+        inputs['p_frac_grad'] = sweep_input['p_frac_grad']  # [MPa/km]
+        inputs['T_grad_m'] = sweep_input['T_grad_m']  # [C/km]
+        inputs['T_grad_b'] = sweep_input['T_grad_b']  # [C]
+        inputs['loss_m_air'] = sweep_input['loss_m_air']  # [-]
+
+        # design choice
+        inputs['epsilon'] = sweep_input['epsilon']  # [-]
+        inputs['safety_factor'] = sweep_input['safety_factor']  # [-]
+        inputs['loss_mech'] = sweep_input['loss_mech']  # [-]
+        inputs['loss_gen'] = sweep_input['loss_gen']  # [-]
+        inputs['mach_limit'] = sweep_input['mach_limit']  # [-]
+        inputs['eta_pump'] = sweep_input['eta_pump']  # [-]
+        inputs['ML_cmp1'] = sweep_input['ML_cmp1']  # [-]
+        inputs['ML_cmp2'] = sweep_input['ML_cmp2']  # [-]
+        inputs['ML_cmp3'] = sweep_input['ML_cmp3']  # [-]
+        inputs['ML_exp1'] = sweep_input['ML_exp1']  # [-]
+        inputs['ML_exp2'] = sweep_input['ML_exp2']  # [-]
+        inputs['ML_exp3'] = sweep_input['ML_exp3']  # [-]
 
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
@@ -111,25 +141,68 @@ if __name__ == '__main__':
     # ==============
     # user inputs
     # ==============
+    # general data
+    general_data = 'user_inputs_general.xlsx'  # CSv file with inputs
+    general_sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
+
+    # location data
     location_data = 'Battelle_data.xlsx'  # Excel file with inputs
-    general_data = 'general_data.xlsx'  # Excel file with inputs
-    sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
-    ncpus = 6  # number of cpus to use
+    location_sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
+
     capacity = 100  # [MW]
     duration = 24  # [hr]
     debug = False
+    iterations = 10  # number of runs per data point
+    ncpus = 6  # number of cpus to use
+
+    # key - variable name in location data
+    # value[0] - variable name required by caes model
+    # value[1] - perturbation, 0.1 = +/-10%, 0.5=+/-50%
+    params = {'thickness_m': ['h', 0.1], 'depth_m': ['depth', 0.1],
+              'porosity': ['phi', 0.1], 'permeability_mD': ['k', 0.5]}
 
     # ------------------
-    # create sweep_inputs dataframe
+    # create dataframe to hold all of simulations to be run
     # ------------------
     sweep_inputs = pd.DataFrame()
-    for sheet_name in sheet_names:
-        # read in specified sheet of XLSX file
-        df_scenario = pd.read_excel(xlsx_filename, sheet_name=sheet_name)
-        # save sheet_name
-        df_scenario.loc[:, 'sheet_name'] = sheet_name
-        # append to collective dataframe
-        sweep_inputs = sweep_inputs.append(df_scenario)
+
+    # -----
+    # iterate through general data
+    # -----
+    for general_sheet_name in general_sheet_names:
+        # create monte carlo inputs with general data
+        df_gen = monteCarloInputs(general_data, general_sheet_name, iterations)
+
+        # -----
+        # iterate through location data sheet
+        # -----
+        for location_sheet_name in location_sheet_names:
+            # read in specified sheet of location file
+            df_loc = pd.read_excel(location_data, sheet_name=location_sheet_name)
+
+            # save location_sheet_name
+            df_loc.loc[:, 'location_sheet_name'] = location_sheet_name
+
+            # -----
+            # iterate through each point within location data
+            # -----
+            rows = range(iterations)
+            for i in range(len(df_loc)):
+                # create dataframe with a copy of general data
+                df_point = df_gen.__deepcopy__()
+
+                # Save location_data for given point
+                for key in df_loc.keys():
+                    df_point.loc[:, key] = df_loc.loc[i, key]
+
+                # Apply monte carlo to location specific inputs
+                for k in params.keys():
+                    low = (1.0 - params[k][1]) * df_loc.loc[i, k]
+                    high = (1.0 + params[k][1]) * df_loc.loc[i, k]
+                    df_point.loc[:, params[k][0]] = np.random.uniform(low=low, high=high, size=iterations)
+
+                # append to collective dataframe
+                sweep_inputs = sweep_inputs.append(df_point)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()

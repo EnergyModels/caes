@@ -19,5 +19,5 @@ sbatch run_sizing_monte_carlo.sh
 cd ../bct_fixed || exit
 sbatch run_bct_fixed.sh
 
-#cd ../bct_monte_carlo || exit
-#sbatch run_bct_monte_carlo.sh
+cd ../bct_monte_carlo || exit
+sbatch run_bct_monte_carlo.sh
