@@ -103,8 +103,8 @@ if __name__ == '__main__':
 
     # constant parameters
     duration = 24  # [hr]
-    h = 50.0
-    phi = 0.25
+    h = 506.4534957 * 0.3048 # [m], average for LK1
+    phi = 0.255528 # [-], average for LK1
 
     # varied parameters
     depths = np.arange(1000.0, 5601.0, 100.0) # [m]
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                 s = pd.Series(index=['depth', 'k', 'capacity'], dtype='float64')
                 s['depth'] = depth
                 s['k'] = k
-                s['capacity'] = capacity
+                s['capacity_MW'] = capacity
                 sweep_inputs = sweep_inputs.append(s, ignore_index=True)
 
     # reset index (appending messes up indices)
@@ -129,7 +129,6 @@ if __name__ == '__main__':
 
     sweep_inputs.loc[:, 'h'] = h
     sweep_inputs.loc[:, 'phi'] = phi
-    sweep_inputs.loc[:, 'capacity_MW'] = capacity
     sweep_inputs.loc[:, 'duration_hr'] = duration
 
     # count number of cases

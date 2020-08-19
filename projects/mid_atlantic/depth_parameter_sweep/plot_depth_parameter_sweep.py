@@ -9,18 +9,18 @@ import matplotlib.lines as mlines
 # user inputs
 # =====================================
 # data input
-results_filename = "sizing_study_results.csv"
+results_filename = "sweep_results.csv"
 
 # figure output
 DPI = 300  # Set resolution for saving figures
 
-series_var = 'duration_hr'
-series_dict = {10: '10 hr (0.4 days)', 24: '24 hr (1 day)', 48: '48 hr (2 days)',
-               72: '72 hr (3 days)', 168: '168 hr (1 week)'}
+series_var = 'k'
+series_dict = {0.01: '0.01 mD', 0.1: '0.1 mD', 1: '1 mD',
+               10: '10 mD', 100: '100 mD', 1000: '1000 mD'}
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")
-colors = [colors[0], colors[1], colors[2], colors[3], colors[5]]
+colors = [colors[0], colors[1], colors[2], colors[3], colors[5], colors[4]]
 # re-order palette to match series_dict.keys()
 # colors = [colors[3], colors[1], (0, 0, 0), colors[9], colors[0]]
 
@@ -34,9 +34,6 @@ df = pd.read_csv(results_filename)
 # Filter Results with errors
 df = df[df.errors == False]
 
-# Filter Results with efficiencies less than 10% - not worth considering
-# df = df[df.RTE >= 0.1]
-
 # get list of unique series
 series = series_dict.keys()
 
@@ -49,35 +46,36 @@ series = series_dict.keys()
 # 1.5 column: 140 mm = 5.51 in
 # 2 column: 190 mm = 7.48 i
 width = 7.48  # inches
-height = 5.5  # inches
+height = 7.5  # inches
 
-x_vars = ["kW_in_avg"]
-x_labels = ["Power Rating\n(MW)", ]
-x_converts = [1e-3]
+x_vars = ["depth"]
+x_labels = ["Depth (m)", ]
+x_converts = [1.0]
 x_limits = [[]]
 
-y_vars = ["m_dot", "r_f", "RTE"]
-y_labels = ["Mass flow\n(kg/s)", "Formation radius\n(m)", "Efficiency\n(%)", ]
-y_converts = [1.0, 1.0, 100.0]
-y_limits = [[], [], []]
+y_vars = ["RTE", "m_dot", "r_f", "dp_well_avg", "dp_pipe_f_avg"]
+y_labels = ["Round Trip\nEfficiency\n(%)", "Mass flow\n(kg/s)", "Bubble\nRadius\n(m)", "Aquifer\nPressure Drop\n(MPa)",
+            "Pipe\n Pressure Loss\n(MPa)", ]
+y_converts = [100.0, 1.0, 1.0, 1.0, 1.0]
+y_limits = [[], [], [], [], []]
 
-for ix in range(3):
+for ix in range(2):
 
     if ix == 0:
-        savename = "Fig_Perf_Results_expected.png"
-        df_ix = df[df.loc[:, 'k_type'] == 'expected']
+        savename = "Fig_Depth_Parameter_sweep_100MW.png"
+        df_ix = df[df.loc[:, 'capacity_MW'] == 100]
     elif ix == 1:
-        savename = "Fig_Perf_Results_all.png"
-        # df_ix = df[df.loc[:, 'k_type'] == 'expected']
-        df_ix = df
-
-    elif ix == 2:
-        savename = "Fig_Perf_Results_expected2.png"
-        df_ix = df[df.loc[:, 'k_type'] == 'expected']
-        y_vars = [y_vars[2]]
-        y_labels = [y_labels[2]]
-        y_converts = [y_converts[2]]
-        y_limits = [y_limits[2]]
+        savename = "Fig_Depth_Parameter_sweep_200MW.png"
+        df_ix = df[df.loc[:, 'capacity_MW'] == 200]
+    #
+    #
+    # elif ix == 2:
+    #     savename = "Fig_Perf_Results_expected2.png"
+    #     df_ix = df[df.loc[:, 'k_type'] == 'expected']
+    #     y_vars = [y_vars[2]]
+    #     y_labels = [y_labels[2]]
+    #     y_converts = [y_converts[2]]
+    #     y_limits = [y_limits[2]]
 
     # Create plot
     f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
@@ -159,8 +157,8 @@ for ix in range(3):
     # y_pos = j / 2 + 0.5
     # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
     x_pos = -0.1
-    leg = a[j, i].legend(handles=symbols, bbox_to_anchor=(x_pos, -0.5), ncol=5, loc='upper left',
-                         title='Duration)')
+    leg = a[j, i].legend(handles=symbols, bbox_to_anchor=(x_pos, -0.5), ncol=6, loc='upper left',
+                         title='Permeability')
 
     # Adjust layout
     plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)
