@@ -122,7 +122,7 @@ if __name__ == '__main__':
     # ------------------
     sweep_inputs = pd.DataFrame()
 
-    entries = ['capacity_MW', 'duration_hr', 'depth_m', 'thickness_m', 'porosity','permeability_mD', 'k_type']
+    entries = ['capacity_MW', 'duration_hr', 'depth_m', 'thickness_m', 'porosity','permeability_mD']
     for capacity in capacities:
         for duration in durations:
             for scenario_i, depth_i, h_i, phi_i, k_i in zip(scenario, depth, h, phi, k):

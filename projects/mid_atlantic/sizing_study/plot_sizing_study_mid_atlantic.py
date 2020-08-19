@@ -13,13 +13,12 @@ results_filename = "sizing_study_results.csv"
 # figure output
 DPI = 300  # Set resolution for saving figures
 
-series_var = 'duration_hr'
-series_dict = {10: '10 hr (0.4 days)', 24: '24 hr (1 day)', 48: '48 hr (2 days)',
-               72: '72 hr (3 days)', 168: '168 hr (1 week)'}
+series_var = 'scenario'
+series_dict = {'PJM': 'PJM', 'NYISO': 'NYISO', 'ISONE': 'ISO New England)'}
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")
-colors = [colors[0],colors[1],colors[2],colors[3],colors[5]]
+colors = [colors[0],colors[1],colors[2]]
 # re-order palette to match series_dict.keys()
 # colors = [colors[3], colors[1], (0, 0, 0), colors[9], colors[0]]
 
@@ -50,7 +49,7 @@ series = series_dict.keys()
 width = 7.48  # inches
 height = 5.5  # inches
 
-x_vars = ["kW_in_avg"]
+x_vars = ["kW_out_avg"]
 x_labels = ["Power Rating\n(MW)", ]
 x_converts = [1e-3]
 x_limits = [[]]
@@ -63,20 +62,11 @@ y_limits = [[], [], []]
 for ix in range(3):
 
     if ix == 0:
-        savename = "Fig_Perf_Results_expected.png"
-        df_ix = df[df.loc[:, 'k_type'] == 'expected']
+        savename = "Fig_Perf_Results_10hr.png"
+        df_ix = df[df.loc[:, 'duration_hr'] == 10]
     elif ix == 1:
-        savename = "Fig_Perf_Results_all.png"
-        # df_ix = df[df.loc[:, 'k_type'] == 'expected']
-        df_ix = df
-
-    elif ix == 2:
-        savename = "Fig_Perf_Results_expected2.png"
-        df_ix = df[df.loc[:, 'k_type'] == 'expected']
-        y_vars = [y_vars[2]]
-        y_labels = [y_labels[2]]
-        y_converts = [y_converts[2]]
-        y_limits = [y_limits[2]]
+        savename = "Fig_Perf_Results_24hr.png"
+        df_ix = df[df.loc[:, 'duration_hr'] == 24]
 
     # Create plot
     f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', squeeze=False)
