@@ -146,7 +146,7 @@ class CAES:
             'T_grad_b']  # storage temperature [K]
 
         # storage geomechanical properties
-        if inputs['r_f']>inputs['r_w']:
+        if inputs['r_f'] > inputs['r_w']:
             self.r_f = inputs['r_f']  # radius [m]
         else:
             print('Warning: r_f must by => than r_w, r_f set to r_w')
@@ -452,7 +452,8 @@ class CAES:
         """
         # create series to hold results
         entries = ['RTE', 'kWh_in', 'kWh_out', 'kW_in_avg', 'kW_out_avg',
-                   'kg_water_per_kWh', 'kg_CO2_per_kWh', 'kg_fuel_per_kWh', 'errors']
+                   'kg_water_per_kWh', 'kg_CO2_per_kWh', 'kg_fuel_per_kWh',
+                   'dp_well_avg', 'dp_pipe_f_avg', 'errors']
         results = pd.Series(index=entries)
 
         if len(self.data) > 1:
@@ -469,6 +470,7 @@ class CAES:
             # power in/out indices
             ind_pwr_in = self.data.loc[:, 'm_air'] > 0.0
             ind_pwr_out = self.data.loc[:, 'm_air'] < 0.0
+            ind_pwr = self.data.loc[:, 'm_air'] != 0.0
 
             # store results
             results['RTE'] = RTE
@@ -480,6 +482,9 @@ class CAES:
             results['kg_CO2_per_kWh'] = CO2_fuel / energy_output_total
             results['kg_fuel_per_kWh'] = fuel_input_total / energy_output_total
             results['MWh_cushion_gas'] = self.m_store_min / self.m_dot / 3600 * results['kW_in_avg'] / 1000.0
+            results['dp_well_avg'] = self.data.loc[ind_pwr, 'dp_well'].mean()
+            results['dp_pipe_f_avg'] = self.data.loc[ind_pwr, 'dp_pipe_f'].mean()
+
             if len(self.data.error_msg.unique()) > 1:  # errors
                 results['errors'] = 'true'
             else:  # no errors

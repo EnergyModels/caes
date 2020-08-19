@@ -143,16 +143,18 @@ if __name__ == '__main__':
     # ==============
     # general data
     general_data = 'user_inputs_general.xlsx'  # CSv file with inputs
-    general_sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
+    # general_sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
+    general_sheet_names = ['geophysical']  # Excel sheet_names
 
     # location data
     location_data = 'Battelle_data.xlsx'  # Excel file with inputs
-    location_sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
+    # location_sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
+    location_sheet_names = ['LK1']  # Excel sheet_names
 
     capacity = 100  # [MW]
     duration = 24  # [hr]
     debug = False
-    iterations = 10  # number of runs per data point
+    iterations = 1  # number of runs per data point
     ncpus = 6  # number of cpus to use
 
     # key - variable name in location data
@@ -220,6 +222,8 @@ if __name__ == '__main__':
         ncpus = int(os.getenv('NUM_PROCS'))  # try to use variable defined in sbatch script
     except:
         ncpus = ncpus  # otherwise default to this number of cores
+
+    print('Using ' + str(ncpus) + ' processor(s)')
 
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):

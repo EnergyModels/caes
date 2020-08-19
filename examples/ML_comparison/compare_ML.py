@@ -11,7 +11,7 @@ m_dot = 200.0  # mass flow rate [kg/s]
 r_f = 112.9995514  # formation radius [m]
 r_w = 0.41 / 2.0  # well radius [m]
 
-for i in range(2):
+for i in range(3):
 
     inputs = ICAES.get_default_inputs()
     inputs['depth'] = depth
@@ -39,7 +39,7 @@ for i in range(2):
     # ===========================
     # original ML
     # ===========================
-    else:  # i == 1
+    elif i==1:  # i == 1
         casename = 'ML_original_'
         inputs['ML_cmp1'] = 3.009
         inputs['ML_cmp2'] = 2.622
@@ -48,6 +48,22 @@ for i in range(2):
         inputs['ML_exp1'] = 0.963
         inputs['ML_exp2'] = 2.791
         inputs['ML_exp3'] = 3.188
+
+    # ===========================
+    # original ML
+    # ===========================
+    else:  # i == 2
+        casename = 'ML1_singleStg_'
+        inputs['ML_cmp1'] = 1.0
+        inputs['ML_cmp2'] = -1
+        inputs['ML_cmp3'] = -1
+
+        inputs['ML_exp1'] = 1.0
+        inputs['ML_exp2'] = -1
+        inputs['ML_exp3'] = -1
+
+    # Turn-off leakage
+    inputs['loss_m_air'] = 0.0
 
     # ===========================
     # create system and run

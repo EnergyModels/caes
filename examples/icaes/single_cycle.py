@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 # create system
 inputs = ICAES.get_default_inputs()
+inputs['depth'] = 5550.0
 system = ICAES(inputs=inputs)
 
 # system.debug_perf()
