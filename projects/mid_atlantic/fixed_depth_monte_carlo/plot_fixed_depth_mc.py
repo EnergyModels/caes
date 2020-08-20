@@ -8,16 +8,16 @@ import seaborn as sns
 # data input
 results_filename = "mc_results.csv"
 sheetnames = ['fixed_diameter', 'geophysical']
-savenames = ["Fig_general_MC_fixed_diameter.png", "Fig_general_MC_geophysical.png"]
+savenames = ["Fig_fixed_depth_MC_fixed_diameter.png", "Fig_fixed_depth_MC_geophysical.png"]
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
 
-x_vars = ["phi", "k", "depth", "h", "m_dot", "r_f"]
-x_labels = ["Porosity\n(-)", "Permeability\n(mD)", "Depth\n(m)", "Thickness\n(m)",
+x_vars = ["phi", "k", "h", "m_dot", "r_f"]
+x_labels = ["Porosity\n(-)", "Permeability\n(mD)", "Thickness\n(m)",
             "Mass flow rate\n(kg/s)", "Formation radius\n(m)"]
-x_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-x_limits = [[], [], [], [], [], []]
+x_converts = [1.0, 1.0, 1.0, 1.0, 1.0]
+x_limits = [[], [], [], [], []]
 
 y_vars = ["RTE", "kW_out_avg", "duration"]
 y_labels = ["Efficiency\n(%)", "Power\n(MW)", "Storage Duration\n(hr)"]

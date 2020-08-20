@@ -139,7 +139,7 @@ for ix in range(2):
 
             # Caption labels
             caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-            plt.text(-0.1, 1.00, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+            plt.text(-0.15, 1.00, caption_labels[count], horizontalalignment='center', verticalalignment='center',
                      transform=ax.transAxes, fontsize='medium', fontweight='bold')
             count = count + 1
 
