@@ -51,14 +51,14 @@ series = series_dict.keys()
 width = 7.48  # inches
 height = 5.5  # inches
 
-x_vars = ["kW_in_avg"]
+x_vars = ["kW_out_avg"]
 x_labels = ["Power Rating\n(MW)", ]
 x_converts = [1e-3]
 x_limits = [[]]
 
-y_vars = ["m_dot", "r_f", "RTE"]
-y_labels = ["Mass flow\n(kg/s)", "Formation radius\n(m)", "Efficiency\n(%)", ]
-y_converts = [1.0, 1.0, 100.0]
+y_vars = ["RTE", "m_dot", "r_f"]
+y_labels = ["Efficiency\n(%)", "Mass flow\n(kg/s)", "Bubble radius\n(m)",  ]
+y_converts = [100.0, 1.0, 1.0]
 y_limits = [[], [], []]
 
 for ix in range(3):
