@@ -79,7 +79,7 @@ class CAES:
         inputs['m_dot'] = 574.3625466  # mass flow rate [kg/s] (Default 200 MW)
 
         # operational constraint
-        inputs['mach_limit'] = 0.1  # limited to this mach number
+        inputs['mach_limit'] = 0.3  # limited to this mach number
 
         return inputs
 

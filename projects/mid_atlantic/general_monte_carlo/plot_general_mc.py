@@ -7,8 +7,8 @@ import seaborn as sns
 # =====================================
 # data input
 results_filename = "mc_results.csv"
-sheetnames = ['fixed_diameter', 'geophysical']
-savenames = ["Fig_general_MC_fixed_diameter.png", "Fig_general_MC_geophysical.png"]
+sheetnames = ['geophysical']
+savenames = ["Fig_general_MC_geophysical.png"]
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
