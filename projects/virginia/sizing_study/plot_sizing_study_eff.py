@@ -16,12 +16,14 @@ savename = "Fig_Sizing_study_efficiency.png"
 DPI = 400  # Set resolution for saving figures
 
 series_var = 'duration_hr'
-series_dict = {10: '10 hr (0.4 days)', 24: '24 hr (1 day)', 48: '48 hr (2 days)',
-               72: '72 hr (3 days)', 168: '168 hr (1 week)'}
+# series_dict = {10: '10 hr (0.4 days)', 24: '24 hr (1 day)', 48: '48 hr (2 days)',
+#                72: '72 hr (3 days)', 168: '168 hr (1 week)'}
+
+series_dict = {10: '10 hr (0.4 days)', 24: '24 hr (1 day)', 168: '168 hr (1 week)'}
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")
-colors = [colors[0], colors[1], colors[2], colors[3], colors[5]]
+colors = [colors[2], colors[1], colors[3], colors[3], colors[5]]
 # re-order palette to match series_dict.keys()
 # colors = [colors[3], colors[1], (0, 0, 0), colors[9], colors[0]]
 
@@ -81,7 +83,7 @@ sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 
 # Set marker shapes and sizes
 # markers = ['.', '.', '.', '.', '.']
-markers = ['o', 's', 'd', '^', 'v', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
+markers = ['^', '.', 'v', '^', 'v', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
 marker_size = 3.0
 markeredgewidth = 2.0
 

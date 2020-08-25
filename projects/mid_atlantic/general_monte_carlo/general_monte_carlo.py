@@ -72,7 +72,7 @@ if __name__ == '__main__':
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs_general_monte_carlo.xlsx'  # Excel file with inputs
-    sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
+    sheet_names = ['geophysical']  # Excel sheet_names
     iterations = 10000  # number of runs per scenario
     ncpus = 6  # number of cpus to use
 
