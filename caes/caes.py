@@ -26,16 +26,28 @@ import matplotlib.pyplot as plt
 class CAES:
 
     def get_default_inputs():
-        attributes = ['debug', 'steps', 'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2',
-                      'eta_mech', 'eta_gen',
+        attributes = ['debug', 'steps',
+                      'include_air_leakage', 'include_aquifer_dp',
+                      'include_thermal_gradient', 'include_pipe_dp_gravity',
+                      'include_pipe_dp_friction', 'include_pipe_heat_transfer',
+                      'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2',
+                      'loss_mech', 'loss_gen',
                       'r_w', 'epsilon', 'depth',
                       'p_hydro_grad', 'p_frac_grad', 'safety_factor',
                       'T_grad_m', 'T_grad_b',
-                      'r_f', 'h', 'phi', 'Slr', 'k', 'loss_m_air', 'm_dot']
+                      'r_f', 'h', 'phi', 'Slr', 'k', 'loss_m_air', 'm_dot', 'mach_limit']
         inputs = pd.Series(index=attributes)
 
         inputs['debug'] = False  # debug
         inputs['steps'] = 100.0  # number of steps to use in single cycle simulation
+
+        # options to include/exclude various loss mechanisms
+        inputs['include_air_leakage'] = True
+        inputs['include_aquifer_dp'] = True
+        inputs['include_thermal_gradient'] = True
+        inputs['include_pipe_dp_gravity'] = True
+        inputs['include_pipe_dp_friction'] = True
+        inputs['include_pipe_heat_transfer'] = False
 
         inputs['T_atm'] = 16.85  # [deg C] 290 K, yearly average for Virginia coast
         inputs['p_atm'] = 101.325 * 1e-3  # 1 atm [kPa]
@@ -92,6 +104,14 @@ class CAES:
         # number of timesteps to use in single cycle simulations
         self.steps = inputs['steps']  # (-)
 
+        # options to include/exclude various loss mechanisms
+        self.include_air_leakage = inputs['include_air_leakage']
+        self.include_aquifer_dp = inputs['include_aquifer_dp']
+        self.include_thermal_gradient = inputs['include_thermal_gradient']
+        self.include_pipe_dp_gravity = inputs['include_pipe_dp_gravity']
+        self.include_pipe_dp_friction = inputs['include_pipe_dp_friction']
+        self.include_pipe_heat_transfer = inputs['include_pipe_heat_transfer']
+
         # constants
         self.g = 9.81  # gravitational constant [m/s^2]
         self.R = 8.314  # universal gas constant [kJ/kmol-K]
@@ -138,12 +158,15 @@ class CAES:
         self.p_store_max_actual = self.p_store_max  # actual depends on mass flow rate [MPa]
 
         # aquifer thermal gradient
-        self.T_grad_m = inputs['T_grad_m']  # m, slope [deg C/m]
-        self.T_grad_b = inputs['T_grad_b']  # b, intercept [deg C]
+        if self.include_thermal_gradient:
+            self.T_grad_m = inputs['T_grad_m']  # m, slope [deg C/m]
+            self.T_grad_b = inputs['T_grad_b']  # b, intercept [deg C]
+        else:
+            self.T_grad_m = 0.0
+            self.T_grad_b = self.T_atm
 
         # calculated aquifer temperature
-        self.T_store_init = 273.15 + inputs['T_grad_m'] * inputs['depth'] + inputs[
-            'T_grad_b']  # storage temperature [K]
+        self.T_store_init = 273.15 + self.T_grad_m * inputs['depth'] + self.T_grad_b  # storage temperature [K]
 
         # storage geomechanical properties
         if inputs['r_f'] > inputs['r_w']:
@@ -157,7 +180,10 @@ class CAES:
         self.k = inputs['k']  # permeability [mD]
 
         # aquifer mass losses
-        self.loss_m_air = inputs['loss_m_air']  # fraction of air lost in aquifer [-] #
+        if self.include_air_leakage:
+            self.loss_m_air = inputs['loss_m_air']  # fraction of air lost in aquifer [-] #
+        else:
+            self.loss_m_air = 0.0
 
         # operational
         self.m_dot = inputs['m_dot']
@@ -421,7 +447,6 @@ class CAES:
     def debug_perf(self, delta_t=1.0):
         """
         runs several charge and discharge steps to debug calculations
-        :param m_dot: mass flow rate [kg/s]
         :param delta_t: time step [hr]
         :return:
         """
@@ -580,19 +605,23 @@ class CAES:
         return s
 
     def calc_aquifer_dp(self, m_dot):
-        # fluid properties, inputs are degrees K and Pa
-        rho = CP.PropsSI('D', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # density, [kg/m3]
-        mu = CP.PropsSI('V', 'T', self.T_store, 'P', self.p_store * 1e6,
-                        self.air) * 1000  # Viscosity, convert Pa*s (output) to cP
-        Z = CP.PropsSI('Z', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # gas deviation factor [-]
+        if self.include_aquifer_dp:
+            # fluid properties, inputs are degrees K and Pa
+            rho = CP.PropsSI('D', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # density, [kg/m3]
+            mu = CP.PropsSI('V', 'T', self.T_store, 'P', self.p_store * 1e6,
+                            self.air) * 1000  # Viscosity, convert Pa*s (output) to cP
+            Z = CP.PropsSI('Z', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # gas deviation factor [-]
 
-        Q = m_dot / rho  # radial flow rate [m3/s]
+            Q = m_dot / rho  # radial flow rate [m3/s]
 
-        # aquifer pressure drop function
-        dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=self.p_store, T=self.T_store,
-                        Z=Z)  # [MPa]
+            # aquifer pressure drop function
+            dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=self.p_store,
+                            T=self.T_store,
+                            Z=Z)  # [MPa]
 
-        self.dp_aquifer = abs(dp)  # [MPa]
+            self.dp_aquifer = abs(dp)  # [MPa]
+        else:
+            self.dp_aquifer = 0.0  # [MPa]
 
     def calc_pipe_dp(self, m_dot):
         # determine thermodynamic state to use
@@ -611,11 +640,18 @@ class CAES:
         d = 2 * self.r_w
 
         # friction
-        self.dp_pipe_f, self.f = pipe_fric_dp(epsilon=self.epsilon, d=d, depth=self.depth, m_dot=m_dot, rho=rho,
-                                              mu=mu)  # [MPa]
+        if self.include_pipe_dp_friction:
+            self.dp_pipe_f, self.f = pipe_fric_dp(epsilon=self.epsilon, d=d, depth=self.depth, m_dot=m_dot, rho=rho,
+                                                  mu=mu)  # [MPa]
+        else:
+            self.dp_pipe_f = 0.0
+            self.f = 0.0
 
         # gravity
-        self.dp_pipe_g = pipe_grav_dp(m_dot=m_dot, rho=rho, z=self.depth)  # [MPa]
+        if self.include_pipe_dp_gravity:
+            self.dp_pipe_g = pipe_grav_dp(m_dot=m_dot, rho=rho, z=self.depth)  # [MPa]
+        else:
+            self.dp_pipe_g = 0.0
 
     def plot_overview(self, casename=''):
         df = self.data
