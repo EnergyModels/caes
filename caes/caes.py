@@ -485,7 +485,10 @@ class CAES:
             results['dp_well_avg'] = self.data.loc[ind_pwr, 'dp_well'].mean()
             results['dp_pipe_f_avg'] = self.data.loc[ind_pwr, 'dp_pipe_f'].mean()
 
+            # check for errors
             if len(self.data.error_msg.unique()) > 1:  # errors
+                results['errors'] = 'true'
+            elif energy_input_total == 0 or energy_output_total == 0 or RTE <= 0:
                 results['errors'] = 'true'
             else:  # no errors
                 results['errors'] = 'false'
