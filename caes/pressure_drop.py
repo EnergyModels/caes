@@ -112,6 +112,6 @@ def pipe_grav_dp(m_dot=10.0, rho=115.0, z=950.0):
     elif m_dot < 0.0:  # withdrawl
         delta_p = rho * g * z
     else:  # no activity
-        delta_p = 0.0
+        delta_p = -rho * g * z
 
     return delta_p * 1.0e-6  # convert from Pa to MPa

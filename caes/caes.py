@@ -203,10 +203,11 @@ class CAES:
         self.p_store = self.p_store_min  # storage pressure [MPa]
         self.m_store = self.m_store_min  # mass stored [kg]
 
-        # flow pressure drops
+        # flow pressure drops and heat transfer
         self.dp_pipe_f = 0.0  # pipe friction [MPa]
         self.f = 0.0  # pipe friction factor [-]
         self.dp_pipe_g = 0.0  # pipe gravitational potential [MPa]
+        self.dT_pipe = 0.0  # pipe temperature change [K]
         self.dp_aquifer = 0.0  # aquifer pressure drop [MPa]
 
         # pressure states [MPa]
@@ -223,6 +224,7 @@ class CAES:
 
         # initialize at design flow rate to calculate machine design outlet pressure
         self.calc_pipe_dp(inputs['m_dot'])  # pipe friction and gravitational potential
+        self.calc_pipe_dT(inputs['m_dot'])  # pipe heat transfer
         self.calc_aquifer_dp(inputs['m_dot'])  # aquifer pressure losses
         self.p_machine_design = self.p_store_max + self.dp_pipe_f + self.dp_pipe_g + self.dp_aquifer
         self.p_well_design_min = self.p_store_min + self.dp_pipe_g
@@ -230,7 +232,7 @@ class CAES:
         # store error messages for current state
         self.error_msg = ''
 
-        # check if flow rate exceeds 0.1 mach limit
+        # check if flow rate exceeds Mach limit
         self.mach_limit = inputs['mach_limit']
         rho = CP.PropsSI('D', 'T', self.T0, 'P', self.p_well_design_min * 1e6, self.air)  # density [kg/m3]
         U_max = self.speed_of_sound * inputs['mach_limit']  # max velocity [m/s]
@@ -281,13 +283,13 @@ class CAES:
         s['time'] = self.time
 
         # update flow pressure losses
-        if abs(s['m_dot']) > 0:
-            self.calc_pipe_dp(m_dot)  # pipe friction and gravitational potential
-            self.calc_aquifer_dp(m_dot)  # aquifer pressure losses
-
-            s['dp_pipe_f'] = self.dp_pipe_f
-            s['dp_pipe_g'] = self.dp_pipe_g
-            s['dp_well'] = self.dp_aquifer
+        self.calc_pipe_dp(m_dot)  # pipe friction and gravitational potential
+        self.calc_pipe_dT(m_dot)  # pipe heat transfer
+        self.calc_aquifer_dp(m_dot)  # aquifer pressure losses
+        s['dp_pipe_f'] = self.dp_pipe_f
+        s['dp_pipe_g'] = self.dp_pipe_g
+        s['dT_pipe'] = self.dT_pipe
+        s['dp_well'] = self.dp_aquifer
 
         # charge/discharge
         if s['m_air'] > 0.0:  # (charge)
@@ -303,12 +305,14 @@ class CAES:
 
             # temperature states
             s['T0'] = self.T_atm  # atmospheric pressure, compressor inlet
-            s['T1'] = self.T_atm  # compressor outlet, pipe inlet # not updated
-            s['T2'] = self.T_store  # pipe outlet # not updated
             s['T3'] = self.T_store  # storage pressure
 
             # calculate compressor performance
             s = self.charge_perf(s)
+
+            # finish updating temperature states
+            # s['T1']  compressor outlet - calculated by charge_perf
+            s['T2'] = s['T1'] - self.dT_pipe  # pipe outlet
 
             # apply mechanical, generator and storage efficienies
             s['total_work_per_kg'] = s['work_per_kg'] / self.eta_mech / self.eta_gen
@@ -327,11 +331,13 @@ class CAES:
             # temperature states
             s['T3'] = self.T_store  # aquifer
             s['T2'] = self.T_store  # pipe inlet
-            s['T1'] = self.T_atm  # pipe outlet, expander inlet # not updated
-            s['T0'] = self.T_atm  # expander outlet # not updated
+            s['T1'] = self.T_store - self.dT_pipe  # pipe outlet, expander inlet # not updated
 
             # calculate expander performance
             s = self.discharge_perf(s)
+
+            # finish updating temperature states
+            # s['T0'] - expander outlet, calculated by discharge_perf
 
             # apply mechanical, generator and storage efficienies
             s['total_work_per_kg'] = s['work_per_kg'] * self.eta_mech * self.eta_gen
@@ -339,7 +345,7 @@ class CAES:
         else:  # no flow
             # pressure states
             s['p0'] = self.p_atm
-            s['p1'] = self.p_store
+            s['p1'] = self.p_store + self.dp_pipe_g
             s['p2'] = self.p_store
             s['p3'] = self.p_store
 
@@ -578,10 +584,10 @@ class CAES:
         """
 
         # idealized isothermal process
-        s['work_per_kg'] = self.R / self.M * self.T_atm * log(s['p0'] / s['p1'])  # [kJ/kg]
+        s['work_per_kg'] = self.R / self.M * s['T0'] * log(s['p0'] / s['p1'])
         s['water_per_kg'] = 0.0  # idealized process - no cooling water [kg/kg air]
         s['fuel_per_kg'] = 0.0  # isothermal - no heat input [kg/kg air]
-
+        s['T1'] = s['T0']
         return s
 
     def discharge_perf(self, s):
@@ -600,25 +606,32 @@ class CAES:
         """
 
         # idealized isothermal process
-        s['work_per_kg'] = self.R / self.M * self.T_atm * log(s['p1'] / s['p0'])  # [kJ/kg]
+        s['work_per_kg'] = self.R / self.M * s['T1'] * log(s['p1'] / s['p0'])  # [kJ/kg]
         s['water_per_kg'] = 0.0  # idealized process - no cooling water [kg/kg air]
         s['fuel_per_kg'] = 0.0  # isothermal - no heat input [kg/kg air]
-
+        s['T0'] = s['T1']
         return s
 
     def calc_aquifer_dp(self, m_dot):
-        if self.include_aquifer_dp:
+        if self.include_aquifer_dp  and abs(m_dot) > 0.0:
+            if m_dot > 0.0:  # injection
+                T = self.T2
+                p = self.p2
+            else:  # withdrawl / no movement
+                T = self.T3
+                p = self.p3
+
             # fluid properties, inputs are degrees K and Pa
-            rho = CP.PropsSI('D', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # density, [kg/m3]
-            mu = CP.PropsSI('V', 'T', self.T_store, 'P', self.p_store * 1e6,
+            rho = CP.PropsSI('D', 'T', T, 'P', p * 1e6, self.air)  # density, [kg/m3]
+            mu = CP.PropsSI('V', 'T', T, 'P', p * 1e6,
                             self.air) * 1000  # Viscosity, convert Pa*s (output) to cP
-            Z = CP.PropsSI('Z', 'T', self.T_store, 'P', self.p_store * 1e6, self.air)  # gas deviation factor [-]
+            Z = CP.PropsSI('Z', 'T', T, 'P', p * 1e6, self.air)  # gas deviation factor [-]
 
             Q = m_dot / rho  # radial flow rate [m3/s]
 
             # aquifer pressure drop function
-            dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=self.p_store,
-                            T=self.T_store,
+            dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=p,
+                            T=T,
                             Z=Z)  # [MPa]
 
             self.dp_aquifer = abs(dp)  # [MPa]
@@ -642,7 +655,7 @@ class CAES:
         d = 2 * self.r_w
 
         # friction
-        if self.include_pipe_dp_friction:
+        if self.include_pipe_dp_friction and abs(m_dot) > 0.0:
             self.dp_pipe_f, self.f = pipe_fric_dp(epsilon=self.epsilon, d=d, depth=self.depth, m_dot=m_dot, rho=rho,
                                                   mu=mu)  # [MPa]
         else:
@@ -654,6 +667,12 @@ class CAES:
             self.dp_pipe_g = pipe_grav_dp(m_dot=m_dot, rho=rho, z=self.depth)  # [MPa]
         else:
             self.dp_pipe_g = 0.0
+
+    def calc_pipe_dT(self, m_dot): # air temperature change (dT) due to pipe heat transfer)
+        if self.include_pipe_dp_friction and abs(m_dot) > 0.0:
+            self.dT_pipe = 0.0
+        else:
+            self.dT_pipe = 0.0
 
     def plot_overview(self, casename=''):
         df = self.data

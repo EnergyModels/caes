@@ -245,7 +245,7 @@ class ICAES(CAES):
         # inlet
         # --------------
         p_in = s['p0']
-        T_in = self.T_atm
+        T_in = s['T0']
         s['cmp_p_in'] = p_in
         s['cmp_T_in'] = T_in
 
@@ -282,6 +282,7 @@ class ICAES(CAES):
             p_in = p_out * (1.0 - delta_p)
             T_in = T_out
 
+        s['T1'] = T_out
         return s
 
     def discharge_perf(self, s):
@@ -335,7 +336,7 @@ class ICAES(CAES):
                 p_in = p_in * PR_design  # back-calculate throttle pressure
             if p_in / 1000.0 > self.p_store:
                 print('expander inlet pressure > storage pressure')
-        T_in = self.T_store
+        T_in = s['T1']
         s['exp_p_in'] = p_in
         s['exp_T_in'] = T_in
 
@@ -372,4 +373,5 @@ class ICAES(CAES):
             p_in = p_out * (1.0 - delta_p)
             T_in = T_out
 
+        s['T0'] = T_out
         return s
