@@ -14,6 +14,7 @@ from .pressure_drop import pipe_grav_dp
 from .pressure_drop import friction_coeff
 from .monte_carlo_inputs import monteCarloInputs
 from .monte_carlo_inputs import baselineInputs
+from .heat_transfer import pipe_heat_transfer
 
 # storing where resources folder is
 resource_path = os.path.join(os.path.split(__file__)[0], "resources")

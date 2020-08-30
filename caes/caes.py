@@ -4,6 +4,7 @@ from math import log, pi
 from .pressure_drop import aquifer_dp, pipe_fric_dp, pipe_grav_dp
 from .plot_functions import plot_series
 import matplotlib.pyplot as plt
+from .heat_transfer import pipe_heat_transfer
 
 
 # references
@@ -30,7 +31,8 @@ class CAES:
                       'include_air_leakage', 'include_aquifer_dp',
                       'include_thermal_gradient', 'include_pipe_dp_gravity',
                       'include_pipe_dp_friction', 'include_pipe_heat_transfer', 'include_interstage_dp'
-                      'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2',
+                                                                                'T_atm', 'p_atm', 'T_water', 'p_water',
+                      'fuel_HHV', 'fuel_CO2',
                       'loss_mech', 'loss_gen',
                       'r_w', 'epsilon', 'depth',
                       'p_hydro_grad', 'p_frac_grad', 'safety_factor',
@@ -47,7 +49,7 @@ class CAES:
         inputs['include_thermal_gradient'] = True
         inputs['include_pipe_dp_gravity'] = True
         inputs['include_pipe_dp_friction'] = True
-        inputs['include_pipe_heat_transfer'] = False
+        inputs['include_pipe_heat_transfer'] = True
         inputs['include_interstage_dp'] = True  # only applies to ICAES
 
         inputs['T_atm'] = 16.85  # [deg C] 290 K, yearly average for Virginia coast
@@ -163,7 +165,7 @@ class CAES:
         if self.include_thermal_gradient:
             self.T_grad_m = inputs['T_grad_m']  # m, slope [deg C/m]
             self.T_grad_b = inputs['T_grad_b']  # b, intercept [deg C]
-        else: # otherwise, 'well' is the same temperature as the atmosphere
+        else:  # otherwise, 'well' is the same temperature as the atmosphere
             self.T_grad_m = 0.0
             self.T_grad_b = self.T_atm - 273.15
 
@@ -613,7 +615,7 @@ class CAES:
         return s
 
     def calc_aquifer_dp(self, m_dot):
-        if self.include_aquifer_dp  and abs(m_dot) > 0.0:
+        if self.include_aquifer_dp and abs(m_dot) > 0.0:
             if m_dot > 0.0:  # injection
                 T = self.T2
                 p = self.p2
@@ -668,9 +670,34 @@ class CAES:
         else:
             self.dp_pipe_g = 0.0
 
-    def calc_pipe_dT(self, m_dot): # air temperature change (dT) due to pipe heat transfer)
+    def calc_pipe_dT(self, m_dot):  # air temperature change (dT) due to pipe heat transfer)
         if self.include_pipe_dp_friction and abs(m_dot) > 0.0:
-            self.dT_pipe = 0.0
+
+            # determine thermodynamic state to use
+            if m_dot > 0.0:  # injection
+                T = self.T1
+                p = self.p1
+            else:  # withdrawl
+                T = self.T2
+                p = self.p2
+
+            # fluid properties, inputs are degrees K and Pa
+            rho = CP.PropsSI('D', 'T', T, 'P', p * 1e6, self.air)  # density [kg/m3]
+            mu = CP.PropsSI('V', 'T', T, 'P', p * 1e6, self.air)  # viscosity [Pa*s]
+            Pr = CP.PropsSI('PRANDTL', 'T', T, 'P', p * 1e6, self.air)  # viscosity [Pa*s]
+            k = CP.PropsSI('CONDUCTIVITY', 'T', T, 'P', p * 1e6, self.air)  # thermal conductivity [W/m/K]
+            cp = CP.PropsSI('CPMASS', 'T', T, 'P', p * 1e6, self.air)  # thermal conductivity [W/m/K]
+
+            # pipe diameter
+            d = 2 * self.r_w
+
+            # average pipe surface temperature
+            avg_depth = self.depth / 2.0
+            Ts = 273.15 + self.T_grad_m * avg_depth + self.T_grad_b
+
+            self.dT_pipe = pipe_heat_transfer(d=d, m_dot=m_dot, rho=rho, mu=mu, Pr=Pr, k=k, cp=cp, depth=self.depth,
+                                              Tm=T, Ts=Ts)
+
         else:
             self.dT_pipe = 0.0
 
