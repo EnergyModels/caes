@@ -29,7 +29,7 @@ class CAES:
         attributes = ['debug', 'steps',
                       'include_air_leakage', 'include_aquifer_dp',
                       'include_thermal_gradient', 'include_pipe_dp_gravity',
-                      'include_pipe_dp_friction', 'include_pipe_heat_transfer',
+                      'include_pipe_dp_friction', 'include_pipe_heat_transfer', 'include_interstage_dp'
                       'T_atm', 'p_atm', 'T_water', 'p_water', 'fuel_HHV', 'fuel_CO2',
                       'loss_mech', 'loss_gen',
                       'r_w', 'epsilon', 'depth',
@@ -48,6 +48,7 @@ class CAES:
         inputs['include_pipe_dp_gravity'] = True
         inputs['include_pipe_dp_friction'] = True
         inputs['include_pipe_heat_transfer'] = False
+        inputs['include_interstage_dp'] = True  # only applies to ICAES
 
         inputs['T_atm'] = 16.85  # [deg C] 290 K, yearly average for Virginia coast
         inputs['p_atm'] = 101.325 * 1e-3  # 1 atm [kPa]
@@ -111,6 +112,7 @@ class CAES:
         self.include_pipe_dp_gravity = inputs['include_pipe_dp_gravity']
         self.include_pipe_dp_friction = inputs['include_pipe_dp_friction']
         self.include_pipe_heat_transfer = inputs['include_pipe_heat_transfer']
+        self.include_interstage_dp = inputs['include_interstage_dp']
 
         # constants
         self.g = 9.81  # gravitational constant [m/s^2]
@@ -161,9 +163,9 @@ class CAES:
         if self.include_thermal_gradient:
             self.T_grad_m = inputs['T_grad_m']  # m, slope [deg C/m]
             self.T_grad_b = inputs['T_grad_b']  # b, intercept [deg C]
-        else:
+        else: # otherwise, 'well' is the same temperature as the atmosphere
             self.T_grad_m = 0.0
-            self.T_grad_b = self.T_atm
+            self.T_grad_b = self.T_atm - 273.15
 
         # calculated aquifer temperature
         self.T_store_init = 273.15 + self.T_grad_m * inputs['depth'] + self.T_grad_b  # storage temperature [K]

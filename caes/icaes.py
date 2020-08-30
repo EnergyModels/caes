@@ -16,18 +16,30 @@ class ICAES(CAES):
         inputs['PR_exp'] = []
 
         # compression - mass load per stage (ratio of water to air by mass)
-        inputs['ML_cmp1'] = 1.0
-        inputs['ML_cmp2'] = 1.0
-        inputs['ML_cmp3'] = 1.0
+        inputs['ML_cmp1'] = 3.0
+        inputs['ML_cmp2'] = 2.5
+        inputs['ML_cmp3'] = 2.0
         inputs['ML_cmp4'] = -1  # <0 - unused
         inputs['ML_cmp5'] = -1  # <0 - unused
 
         # expansion - mass loading per stage
-        inputs['ML_exp1'] = 1.0
-        inputs['ML_exp2'] = 1.0
-        inputs['ML_exp3'] = 1.0
+        inputs['ML_exp1'] = 2.0
+        inputs['ML_exp2'] = 2.5
+        inputs['ML_exp3'] = 3.0
         inputs['ML_exp4'] = -1  # <0 - unused
         inputs['ML_exp5'] = -1  # <0 - unused
+
+        # compression - pressure drop inbetween stages (fraction)
+        inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
+        inputs['delta_p_cmp23'] = 0.02
+        inputs['delta_p_cmp34'] = -1  # <0 - unused
+        inputs['delta_p_cmp45'] = -1  # <0 - unused
+
+        # compression - pressure drop inbetween stages (fraction)
+        inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
+        inputs['delta_p_exp23'] = 0.0
+        inputs['delta_p_exp34'] = -1  # <0 - unused
+        inputs['delta_p_exp45'] = -1  # <0 - unused
 
         return inputs
 
@@ -86,12 +98,31 @@ class ICAES(CAES):
             self.ML_cmp = [inputs['ML_cmp1'], inputs['ML_cmp2'], inputs['ML_cmp3'],
                            inputs['ML_cmp4'], inputs['ML_cmp5']]
 
+        # interstage pressure drop
+        self.delta_p_cmp = []
+        for i in range(self.n_stages_cmp):
+            if i == 0 and inputs['delta_p_cmp12'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_cmp.append(inputs['delta_p_cmp12'])
+            elif i == 1 and inputs['delta_p_cmp23'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_cmp.append(inputs['delta_p_cmp23'])
+            elif i == 2 and inputs['delta_p_cmp34'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_cmp.append(inputs['delta_p_cmp34'])
+            elif i == 3 and inputs['delta_p_cmp45'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_cmp.append(inputs['delta_p_cmp45'])
+            else:
+                self.delta_p_cmp.append(0.0)
+
+        # multiplier for total pressure ratio to account for interstage pressure drops
+        PR_delta_p_cmp = 1.0
+        for delta_p in self.delta_p_cmp:
+            PR_delta_p_cmp = PR_delta_p_cmp * (1.0 + delta_p)
+
         # equally divide pressure ratio for each stage, if pressure ratios are unspecified
-        if len(inputs['PR_cmp'])==self.n_stages_cmp:
+        if len(inputs['PR_cmp']) == self.n_stages_cmp:
             self.PR_cmp = inputs['PR_cmp']
         else:
             self.PR_cmp = []
-            PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_cmp)
+            PR_equal = (self.p_machine_design / self.p_atm * PR_delta_p_cmp) ** (1. / self.n_stages_cmp)
             for n in range(self.n_stages_cmp):
                 self.PR_cmp.append(PR_equal)
 
@@ -123,12 +154,31 @@ class ICAES(CAES):
             self.ML_exp = [inputs['ML_exp1'], inputs['ML_exp2'], inputs['ML_exp3'],
                            inputs['ML_exp4'], inputs['ML_exp5']]
 
+        # interstage pressure drop
+        self.delta_p_exp = []
+        for i in range(self.n_stages_exp):
+            if i == 0 and inputs['delta_p_exp12'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_exp.append(inputs['delta_p_exp12'])
+            elif i == 1 and inputs['delta_p_exp23'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_exp.append(inputs['delta_p_exp23'])
+            elif i == 2 and inputs['delta_p_exp34'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_exp.append(inputs['delta_p_exp34'])
+            elif i == 3 and inputs['delta_p_exp45'] > 0.0 and self.include_interstage_dp:
+                self.delta_p_exp.append(inputs['delta_p_exp45'])
+            else:
+                self.delta_p_exp.append(0.0)
+
+        # multiplier for total pressure ratio to account for interstage pressure drops
+        PR_delta_p_exp = 1.0
+        for delta_p in self.delta_p_exp:
+            PR_delta_p_exp = PR_delta_p_exp * (1.0 + delta_p)
+
         # equally divide pressure ratio for each stage, if pressure ratios are unspecified
         if len(inputs['PR_exp']) == self.n_stages_exp:
             self.PR_exp = inputs['PR_exp']
         else:
             self.PR_exp = []
-            PR_equal = (self.p_machine_design / self.p_atm) ** (1. / self.n_stages_exp)
+            PR_equal = (self.p_machine_design / self.p_atm * PR_delta_p_exp) ** (1. / self.n_stages_exp)
             for n in range(self.n_stages_exp):
                 self.PR_exp.append(PR_equal)
 
@@ -137,7 +187,7 @@ class ICAES(CAES):
         # -------------------
         additional_time_series = ['cmp_p_in', 'cmp_T_in', 'exp_p_in', 'exp_T_in']
         stage_entries = ['ML', 'n', 'w_stg', 'w_pmp']
-        state_entries = ['p_out', 'T_out']
+        state_entries = ['p_in', 'T_in', 'p_out', 'T_out']
         for n in range(self.n_stages_cmp):
             for entry in stage_entries:
                 additional_time_series.append('cmp_' + entry + str(n))
@@ -202,18 +252,12 @@ class ICAES(CAES):
         # --------------
         # calculate performance for each stage
         # --------------
-        for n_stg, ML, PR in zip(range(self.n_stages_cmp), self.ML_cmp, PRs):
+        for n_stg, ML, PR, delta_p in zip(range(self.n_stages_cmp), self.ML_cmp, PRs, self.delta_p_cmp):
             p_out = p_in * PR
             n = gamma * (1 + ML * (cd / cp)) / (1 + gamma * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
             T_out = T_in * (p_out / p_in) ** ((n - 1.0) / n)  # outlet temperature
-
-            # -------------
-            # inlet state for next stage
-            # -------------
-            p_in = p_out
-            T_in = T_out
 
             # -------------
             # store results
@@ -223,12 +267,20 @@ class ICAES(CAES):
             s['water_per_kg'] = s['water_per_kg'] + ML  # [kg/kg air]
             s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input [kg/kg air]
             # additional
+            s['cmp_p_in' + str(n_stg)] = p_in
+            s['cmp_T_in' + str(n_stg)] = T_in
             s['cmp_ML' + str(n_stg)] = ML
             s['cmp_n' + str(n_stg)] = n
             s['cmp_w_stg' + str(n_stg)] = w_stg
             s['cmp_w_pmp' + str(n_stg)] = w_pmp
             s['cmp_p_out' + str(n_stg)] = p_out
             s['cmp_T_out' + str(n_stg)] = T_out
+
+            # -------------
+            # inlet state for next stage
+            # -------------
+            p_in = p_out * (1.0 - delta_p)
+            T_in = T_out
 
         return s
 
@@ -281,7 +333,7 @@ class ICAES(CAES):
             p_in = s['p0']
             for PR_design in self.PR_exp:
                 p_in = p_in * PR_design  # back-calculate throttle pressure
-            if p_in/1000.0 > self.p_store:
+            if p_in / 1000.0 > self.p_store:
                 print('expander inlet pressure > storage pressure')
         T_in = self.T_store
         s['exp_p_in'] = p_in
@@ -290,18 +342,12 @@ class ICAES(CAES):
         # --------------
         # calculate performance for each stage
         # --------------
-        for n_stg, ML, PR in zip(range(self.n_stages_exp), self.ML_exp, PRs):
+        for n_stg, ML, PR, delta_p in zip(range(self.n_stages_exp), self.ML_exp, PRs, self.delta_p_exp):
             p_out = p_in / PR
             n = gamma * (1 + ML * (cd / cp)) / (1 + gamma * ML * (cd / cp))  # polytropic exponent
             w_stg = n * self.R / self.M * T_in / (n - 1.0) * (1.0 - (p_out / p_in) ** ((n - 1) / n))  # [kJ/kg]
             w_pmp = - ML * self.v_water * (p_out - self.p_water) / self.eta_pump / 1000.0  # [kJ/kg]
             T_out = T_in * (p_out / p_in) ** ((n - 1.0) / n)  # outlet temperature
-
-            # -------------
-            # inlet state for next stage
-            # -------------
-            p_in = p_out
-            T_in = T_out
 
             # -------------
             # store results
@@ -311,11 +357,19 @@ class ICAES(CAES):
             s['water_per_kg'] = s['water_per_kg'] + ML  # [kg/kg air]
             s['fuel_per_kg'] = 0.0  # near-isothermal - no heat input [kg/kg air]
             # additional
+            s['exp_p_in' + str(n_stg)] = p_in
+            s['exp_T_in' + str(n_stg)] = T_in
             s['exp_ML' + str(n_stg)] = ML
             s['exp_n' + str(n_stg)] = n
             s['exp_w_stg' + str(n_stg)] = w_stg
             s['exp_w_pmp' + str(n_stg)] = w_pmp
             s['exp_p_out' + str(n_stg)] = p_out
             s['exp_T_out' + str(n_stg)] = T_out
+
+            # -------------
+            # inlet state for next stage
+            # -------------
+            p_in = p_out * (1.0 - delta_p)
+            T_in = T_out
 
         return s

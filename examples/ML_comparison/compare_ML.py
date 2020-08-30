@@ -36,6 +36,14 @@ for i in range(3):
         inputs['ML_exp2'] = ML
         inputs['ML_exp3'] = ML
 
+        inputs['delta_p_cmp12'] = 0.0
+        inputs['delta_p_cmp23'] = 0.0
+        inputs['delta_p_cmp34'] = 0.0
+
+        inputs['delta_p_exp12'] = 0.0
+        inputs['delta_p_exp23'] = 0.0
+        inputs['delta_p_exp34'] = 0.0
+
     # ===========================
     # original ML
     # ===========================
@@ -49,11 +57,19 @@ for i in range(3):
         inputs['ML_exp2'] = 2.791
         inputs['ML_exp3'] = 3.188
 
+        inputs['delta_p_cmp12'] = 0.0
+        inputs['delta_p_cmp23'] = 0.0
+        inputs['delta_p_cmp34'] = 0.0
+
+        inputs['delta_p_exp12'] = 0.0
+        inputs['delta_p_exp23'] = 0.0
+        inputs['delta_p_exp34'] = 0.0
+
     # ===========================
     # original ML
     # ===========================
     else:  # i == 2
-        casename = 'ML1_singleStg_'
+        casename = 'ML_new_DP'
         inputs['ML_cmp1'] = 1.0
         inputs['ML_cmp2'] = -1
         inputs['ML_cmp3'] = -1
@@ -62,8 +78,16 @@ for i in range(3):
         inputs['ML_exp2'] = -1
         inputs['ML_exp3'] = -1
 
+        inputs['delta_p_cmp12'] = 0.0
+        inputs['delta_p_cmp23'] = 0.02
+        inputs['delta_p_cmp34'] = 0.0
+
+        inputs['delta_p_exp12'] = 0.0
+        inputs['delta_p_exp23'] = 0.02
+        inputs['delta_p_exp34'] = 0.0
+
     # Turn-off leakage
-    inputs['loss_m_air'] = 0.0
+    # inputs['loss_m_air'] = 0.0
 
     # ===========================
     # create system and run
