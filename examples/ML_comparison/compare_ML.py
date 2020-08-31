@@ -70,13 +70,13 @@ for i in range(3):
     # ===========================
     else:  # i == 2
         casename = 'ML_new_DP'
-        inputs['ML_cmp1'] = 1.0
-        inputs['ML_cmp2'] = -1
-        inputs['ML_cmp3'] = -1
+        inputs['ML_cmp1'] = 3.0
+        inputs['ML_cmp2'] = 2.5
+        inputs['ML_cmp3'] = 2.0
 
-        inputs['ML_exp1'] = 1.0
-        inputs['ML_exp2'] = -1
-        inputs['ML_exp3'] = -1
+        inputs['ML_exp1'] = 2.0
+        inputs['ML_exp2'] = 2.5
+        inputs['ML_exp3'] = 3.0
 
         inputs['delta_p_cmp12'] = 0.0
         inputs['delta_p_cmp23'] = 0.02

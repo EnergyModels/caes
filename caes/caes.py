@@ -4,7 +4,7 @@ from math import log, pi
 from .pressure_drop import aquifer_dp, pipe_fric_dp, pipe_grav_dp
 from .plot_functions import plot_series
 import matplotlib.pyplot as plt
-from .heat_transfer import pipe_heat_transfer
+from .heat_transfer import pipe_heat_transfer_subsurface, pipe_heat_transfer_ocean
 
 
 # references
@@ -96,6 +96,17 @@ class CAES:
         # operational constraint
         inputs['mach_limit'] = 0.3  # limited to this mach number
 
+
+        # heat transfer properties
+        inputs['t_pipe'] = 0.01  # pipe wall thickness [m]
+        inputs['t_cement'] = 0.0347  # concrete thickness [m]
+        inputs['r_rock'] = 100.0  # distance to "infinity" where formation temperature, Ts, is fixed [m]
+        inputs['k_cement'] = 0.72  # thermal conductivity of cement [W/m-K], default Incropera Table A.3 for Cement mortar p 935
+        inputs['k_pipe'] = 56.7  # thermal conductivity of pipe [W/m-K], default Incropera Table A.1 for Carbon Steel p 930
+        inputs['k_rock'] = 2.90  # thermal conductivity of rock/formation [W/m-K], default Incropera Table A.3 for Sandstone,Berea p 940
+        inputs['depth_ocean'] = 25.0  # [m]
+        inputs['T_ocean'] = 290.0  # [K]
+
         return inputs
 
     def __init__(self, inputs=get_default_inputs()):
@@ -183,6 +194,16 @@ class CAES:
         self.Slr = inputs['Slr']  # residual liquid fraction [-]
         self.k = inputs['k']  # permeability [mD]
 
+        # heat transfer properties in wellbore
+        self.t_pipe = inputs['t_pipe']  # pipe wall thickness [m]
+        self.t_cement = inputs['t_cement']  # concrete thickness [m]
+        self.r_rock = inputs['r_rock']  # distance to "infinity" where formation temperature is fixed
+        self.k_cement = inputs['k_cement']  # thermal conductivity of cement [W/m-K]
+        self.k_pipe = inputs['k_pipe']  # thermal conductivity of pipe [W/m-K]
+        self.k_rock = inputs['k_rock']  # thermal conductivity of rock/formation [W/m-K]
+        self.depth_ocean = inputs['depth_ocean']  # [m]
+        self.T_ocean = inputs['T_ocean']  # [K]
+
         # aquifer mass losses
         if self.include_air_leakage:
             self.loss_m_air = inputs['loss_m_air']  # fraction of air lost in aquifer [-] #
@@ -209,7 +230,8 @@ class CAES:
         self.dp_pipe_f = 0.0  # pipe friction [MPa]
         self.f = 0.0  # pipe friction factor [-]
         self.dp_pipe_g = 0.0  # pipe gravitational potential [MPa]
-        self.dT_pipe = 0.0  # pipe temperature change [K]
+        self.dT_pipe_ocean = 0.0  # pipe temperature change - ocean [K]
+        self.dT_pipe_sub = 0.0  # pipe temperature change - subsurface [K]
         self.dp_aquifer = 0.0  # aquifer pressure drop [MPa]
 
         # pressure states [MPa]
@@ -290,7 +312,9 @@ class CAES:
         self.calc_aquifer_dp(m_dot)  # aquifer pressure losses
         s['dp_pipe_f'] = self.dp_pipe_f
         s['dp_pipe_g'] = self.dp_pipe_g
-        s['dT_pipe'] = self.dT_pipe
+        s['dT_pipe_ocean'] = self.dT_pipe_ocean
+        s['dT_pipe_sub'] = self.dT_pipe_sub
+        s['dT_pipe'] = s['dT_pipe_ocean'] + s['dT_pipe_sub']
         s['dp_well'] = self.dp_aquifer
 
         # charge/discharge
@@ -314,7 +338,7 @@ class CAES:
 
             # finish updating temperature states
             # s['T1']  compressor outlet - calculated by charge_perf
-            s['T2'] = s['T1'] - self.dT_pipe  # pipe outlet
+            s['T2'] = s['T1'] - self.dT_pipe_ocean - self.dT_pipe_sub  # pipe outlet
 
             # apply mechanical, generator and storage efficienies
             s['total_work_per_kg'] = s['work_per_kg'] / self.eta_mech / self.eta_gen
@@ -333,7 +357,7 @@ class CAES:
             # temperature states
             s['T3'] = self.T_store  # aquifer
             s['T2'] = self.T_store  # pipe inlet
-            s['T1'] = self.T_store - self.dT_pipe  # pipe outlet, expander inlet # not updated
+            s['T1'] = self.T_store - self.dT_pipe_sub - self.dT_pipe_ocean  # pipe outlet, expander inlet # not updated
 
             # calculate expander performance
             s = self.discharge_perf(s)
@@ -671,7 +695,7 @@ class CAES:
             self.dp_pipe_g = 0.0
 
     def calc_pipe_dT(self, m_dot):  # air temperature change (dT) due to pipe heat transfer)
-        if self.include_pipe_dp_friction and abs(m_dot) > 0.0:
+        if self.include_pipe_heat_transfer and abs(m_dot) > 0.0:
 
             # determine thermodynamic state to use
             if m_dot > 0.0:  # injection
@@ -688,18 +712,31 @@ class CAES:
             k = CP.PropsSI('CONDUCTIVITY', 'T', T, 'P', p * 1e6, self.air)  # thermal conductivity [W/m/K]
             cp = CP.PropsSI('CPMASS', 'T', T, 'P', p * 1e6, self.air)  # thermal conductivity [W/m/K]
 
-            # pipe diameter
-            d = 2 * self.r_w
-
             # average pipe surface temperature
             avg_depth = self.depth / 2.0
             Ts = 273.15 + self.T_grad_m * avg_depth + self.T_grad_b
 
-            self.dT_pipe = pipe_heat_transfer(d=d, m_dot=m_dot, rho=rho, mu=mu, Pr=Pr, k=k, cp=cp, depth=self.depth,
-                                              Tm=T, Ts=Ts)
+            for i in range(2):
+                if (i == 0 and m_dot > 0.0) or (i == 1 and m_dot < 0.0):
+                    self.dT_pipe_ocean = pipe_heat_transfer_ocean(r_pipe=self.r_w, depth=self.depth_ocean,
+                                                                  Tm=T, Ts=self.T_ocean, m_dot=m_dot, k_air=k,
+                                                                  rho=rho, mu=mu, Pr=Pr, cp=cp,
+                                                                  debug=False)
+                    T = T - self.dT_pipe_ocean
+                else:
+                    self.dT_pipe_sub = pipe_heat_transfer_subsurface(r_pipe=self.r_w, t_pipe=self.t_pipe,
+                                                                     t_cement=self.t_cement,
+                                                                     r_rock=self.r_rock, depth=self.depth,
+                                                                     Tm=T, Ts=Ts, m_dot=m_dot,
+                                                                     k_pipe=self.k_pipe, k_cement=self.k_cement,
+                                                                     k_rock=self.k_rock, k_air=k,
+                                                                     rho=rho, mu=mu, Pr=Pr, cp=cp, debug=False)
+                    T = T - self.dT_pipe_sub
 
         else:
-            self.dT_pipe = 0.0
+            self.dT_pipe_ocean = 0.0
+            self.dT_pipe_sub = 0.0
+
 
     def plot_overview(self, casename=''):
         df = self.data
@@ -717,6 +754,7 @@ class CAES:
         plt.savefig(casename + 'overview.png', dpi=600)
         plt.close()
 
+
     def plot_pressures(self, casename=''):
         df = self.data
         df.loc[:, 'step'] = df.index
@@ -733,6 +771,7 @@ class CAES:
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
         plt.savefig(casename + 'pressures.png', dpi=600)
         plt.close()
+
 
     def plot_pressure_losses(self, casename=''):
         df = self.data
