@@ -38,8 +38,8 @@ if __name__ == '__main__':
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
-    sheet_names = 'sensitivity_variables'  # Excel sheet_names
-    ncpus = int(os.getenv('NUM_PROCS'))  # number of cpus to use
+    sheet_name = 'sensitivity_variables'  # Excel sheet_names
+    ncpus = 6  # number of cpus to use
     float_perm = 0.1  # permutation of float inputs (0.1 = +/-10%)
     int_perm = 1  # permutation of integer inputs ( 1 = +/-1)
 
@@ -97,6 +97,11 @@ if __name__ == '__main__':
 
     # save inputs
     inputs.to_csv('sensitivity_inputs.csv')
+
+    try:
+        ncpus = int(os.getenv('NUM_PROCS'))  # try to use variable defined in sbatch script
+    except:
+        ncpus = ncpus  # otherwise default to this number of cores
 
     # run each case using parallelization
     with parallel_backend('multiprocessing', n_jobs=ncpus):
