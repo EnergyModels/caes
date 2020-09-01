@@ -84,8 +84,8 @@ def pipe_heat_transfer_subsurface(r_pipe=0.205, t_pipe=0.01, t_cement=0.0347, r_
     return delta_T
 
 
-def pipe_heat_transfer_ocean(r_pipe=0.205, depth=1402.35,
-                             Tm=325.0, Ts=295.0, m_dot=325.0, k_air=0.033242,
+def pipe_heat_transfer_ocean(r_pipe=0.205, depth=25.0,
+                             Tm=325.0, Ts=290.0, m_dot=325.0, k_air=0.033242,
                              rho=169.11, mu=21.492e-6, Pr=0.79960, cp=1236.8,
                              debug=False):
     """
