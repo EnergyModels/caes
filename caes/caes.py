@@ -96,15 +96,20 @@ class CAES:
         # operational constraint
         inputs['mach_limit'] = 0.3  # limited to this mach number
 
-
         # heat transfer properties
         inputs['t_pipe'] = 0.01  # pipe wall thickness [m]
-        inputs['t_cement'] = 0.0347  # concrete thickness [m]
-        inputs['r_rock'] = 100.0  # distance to "infinity" where formation temperature, Ts, is fixed [m]
-        inputs['k_cement'] = 0.72  # thermal conductivity of cement [W/m-K], default Incropera Table A.3 for Cement mortar p 935
-        inputs['k_pipe'] = 56.7  # thermal conductivity of pipe [W/m-K], default Incropera Table A.1 for Carbon Steel p 930
-        inputs['k_rock'] = 2.90  # thermal conductivity of rock/formation [W/m-K], default Incropera Table A.3 for Sandstone,Berea p 940
+        inputs['t_cement'] = 0.0347  # concrete thickness (covers pipe in subsurface) [m]
+        inputs['t_insul'] = 0.02  # insulation thickness (covers pipe in ocean) [m]
+        inputs['r_rock'] = 10.0  # distance to "infinity" where formation temperature, Ts, is fixed [m]
+        inputs[
+            'k_cement'] = 0.72  # thermal conductivity of cement [W/m-K], default Incropera Table A.3 for Cement mortar p 935
+        inputs[
+            'k_pipe'] = 56.7  # thermal conductivity of pipe [W/m-K], default Incropera Table A.1 for Carbon Steel p 930
+        inputs['k_insul'] = 0.46  # thermal conductivity of insulation [W/m-K], Li 2017
+        inputs[
+            'k_rock'] = 2.90  # thermal conductivity of rock/formation [W/m-K], default Incropera Table A.3 for Sandstone,Berea p 940
         inputs['depth_ocean'] = 25.0  # [m]
+        inputs['h_ocean'] = 3000.0  # free convection of ocean water [W/m^2-K], Engineering Toolbox upper limit
         inputs['T_ocean'] = 290.0  # [K]
 
         return inputs
@@ -197,11 +202,14 @@ class CAES:
         # heat transfer properties in wellbore
         self.t_pipe = inputs['t_pipe']  # pipe wall thickness [m]
         self.t_cement = inputs['t_cement']  # concrete thickness [m]
+        self.t_insul = inputs['t_insul']  # insulation thickness [m]
         self.r_rock = inputs['r_rock']  # distance to "infinity" where formation temperature is fixed
         self.k_cement = inputs['k_cement']  # thermal conductivity of cement [W/m-K]
         self.k_pipe = inputs['k_pipe']  # thermal conductivity of pipe [W/m-K]
+        self.k_insul = inputs['k_insul']  # thermal conductivity of insulation [W/m-K]
         self.k_rock = inputs['k_rock']  # thermal conductivity of rock/formation [W/m-K]
         self.depth_ocean = inputs['depth_ocean']  # [m]
+        self.h_ocean = inputs['h_ocean']  # [W/m^2-K]
         self.T_ocean = inputs['T_ocean']  # [K]
 
         # aquifer mass losses
@@ -718,9 +726,13 @@ class CAES:
 
             for i in range(2):
                 if (i == 0 and m_dot > 0.0) or (i == 1 and m_dot < 0.0):
+
                     self.dT_pipe_ocean = pipe_heat_transfer_ocean(r_pipe=self.r_w, depth=self.depth_ocean,
-                                                                  Tm=T, Ts=self.T_ocean, m_dot=m_dot, k_air=k,
+                                                                  t_pipe=self.t_pipe, t_insul=self.t_insul,
+                                                                  Tm=T, Ts=self.T_ocean, m_dot=m_dot,
+                                                                  k_pipe=self.k_pipe, k_air=k, k_insul=self.k_insul,
                                                                   rho=rho, mu=mu, Pr=Pr, cp=cp,
+                                                                  h_ocean=self.h_ocean,
                                                                   debug=False)
                     T = T - self.dT_pipe_ocean
                 else:
@@ -736,7 +748,6 @@ class CAES:
         else:
             self.dT_pipe_ocean = 0.0
             self.dT_pipe_sub = 0.0
-
 
     def plot_overview(self, casename=''):
         df = self.data
@@ -754,7 +765,6 @@ class CAES:
         plt.savefig(casename + 'overview.png', dpi=600)
         plt.close()
 
-
     def plot_pressures(self, casename=''):
         df = self.data
         df.loc[:, 'step'] = df.index
@@ -771,7 +781,6 @@ class CAES:
         plot_series(df, x_var, x_label, x_convert, y_vars, y_labels, y_converts)
         plt.savefig(casename + 'pressures.png', dpi=600)
         plt.close()
-
 
     def plot_pressure_losses(self, casename=''):
         df = self.data
