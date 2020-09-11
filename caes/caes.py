@@ -46,10 +46,11 @@ class CAES:
         # options to include/exclude various loss mechanisms
         inputs['include_air_leakage'] = True
         inputs['include_aquifer_dp'] = True
+        inputs['include_aquifer_heat_transfer'] = False
         inputs['include_thermal_gradient'] = True
         inputs['include_pipe_dp_gravity'] = True
         inputs['include_pipe_dp_friction'] = True
-        inputs['include_pipe_heat_transfer'] = True
+        inputs['include_pipe_heat_transfer'] = False
         inputs['include_interstage_dp'] = True  # only applies to ICAES
 
         inputs['T_atm'] = 16.85  # [deg C] 290 K, yearly average for Virginia coast
@@ -126,6 +127,7 @@ class CAES:
         # options to include/exclude various loss mechanisms
         self.include_air_leakage = inputs['include_air_leakage']
         self.include_aquifer_dp = inputs['include_aquifer_dp']
+        self.include_aquifer_heat_transfer = inputs['include_aquifer_heat_transfer']
         self.include_thermal_gradient = inputs['include_thermal_gradient']
         self.include_pipe_dp_gravity = inputs['include_pipe_dp_gravity']
         self.include_pipe_dp_friction = inputs['include_pipe_dp_friction']
@@ -580,6 +582,8 @@ class CAES:
         # update storage mass and pressure
         self.m_store = self.m_store + s['m_air'] - s['m_air_leakage']
         self.p_store = self.m_store * self.R * self.T_store / (self.V * self.M) * 1e-3  # storage pressure
+        if self.include_aquifer_heat_transfer:
+            self.T_store = self.T_store
 
         # check storage pressure against limits, p2 (downwell)
         if self.p2 > self.p_store_max + self.buffer:

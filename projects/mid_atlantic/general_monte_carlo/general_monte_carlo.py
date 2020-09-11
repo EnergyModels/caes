@@ -23,25 +23,36 @@ def parameter_sweep(sweep_input):
     # primary design choices
     inputs['m_dot'] = sweep_input['m_dot']  # [kg/s]
     inputs['r_f'] = sweep_input['r_f']  # [m]
-    inputs['r_w'] = sweep_input['r_w']  # [m]
 
-    # additional geophysical parameters
+    # additional parameters
     inputs['T_atm'] = sweep_input['T_atm']  # [C]
     inputs['p_atm'] = sweep_input['p_atm']  # [MPa]
     inputs['T_water'] = sweep_input['T_water']  # [C]
     inputs['p_water'] = sweep_input['p_water']  # [MPa]
+    inputs['loss_mech'] = sweep_input['loss_mech']  # [-]
+    inputs['loss_gen'] = sweep_input['loss_gen']  # [-]
+    inputs['r_w'] = sweep_input['r_w']  # [m]
+    inputs['epsilon'] = sweep_input['epsilon']  # [-]
     inputs['p_hydro_grad'] = sweep_input['p_hydro_grad']  # [MPa/km]
     inputs['p_frac_grad'] = sweep_input['p_frac_grad']  # [MPa/km]
+    inputs['safety_factor'] = sweep_input['safety_factor']  # [-]
     inputs['T_grad_m'] = sweep_input['T_grad_m']  # [C/km]
     inputs['T_grad_b'] = sweep_input['T_grad_b']  # [C]
     inputs['loss_m_air'] = sweep_input['loss_m_air']  # [-]
-
-    # design choice
-    inputs['epsilon'] = sweep_input['epsilon']  # [-]
-    inputs['safety_factor'] = sweep_input['safety_factor']  # [-]
-    inputs['loss_mech'] = sweep_input['loss_mech']  # [-]
-    inputs['loss_gen'] = sweep_input['loss_gen']  # [-]
     inputs['mach_limit'] = sweep_input['mach_limit']  # [-]
+    inputs['t_pipe'] = sweep_input['t_pipe']  # [-]
+    inputs['t_cement'] = sweep_input['t_cement']  # [-]
+    inputs['t_insul'] = sweep_input['t_insul']  # [-]
+    inputs['r_rock'] = sweep_input['r_rock']  # [-]
+    inputs['k_cement'] = sweep_input['k_cement']  # [-]
+    inputs['k_pipe'] = sweep_input['k_pipe']  # [-]
+    inputs['k_insul'] = sweep_input['k_insul']  # [-]
+    inputs['k_rock'] = sweep_input['k_rock']  # [-]
+    inputs['depth_ocean'] = sweep_input['depth_ocean']  # [-]
+    inputs['h_ocean'] = sweep_input['h_ocean']  # [-]
+    inputs['T_ocean'] = sweep_input['T_ocean']  # [-]
+
+    # ICAES parameters
     inputs['eta_pump'] = sweep_input['eta_pump']  # [-]
     inputs['ML_cmp1'] = sweep_input['ML_cmp1']  # [-]
     inputs['ML_cmp2'] = sweep_input['ML_cmp2']  # [-]
@@ -49,6 +60,8 @@ def parameter_sweep(sweep_input):
     inputs['ML_exp1'] = sweep_input['ML_exp1']  # [-]
     inputs['ML_exp2'] = sweep_input['ML_exp2']  # [-]
     inputs['ML_exp3'] = sweep_input['ML_exp3']  # [-]
+    inputs['delta_p_cmp23'] = sweep_input['delta_p_cmp23']  # [-]
+    inputs['delta_p_exp12'] = sweep_input['delta_p_exp12']  # [-]
 
     system = ICAES(inputs=inputs)
 

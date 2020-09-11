@@ -12,10 +12,10 @@ T = 298.15  # [K]
 Z = 1.0  # [-]
 
 # variables
-m_dots = np.arange(1, 300, 1)  # [kg/s]
-p_fs = [14.02, 17.34]  # [MPa]
-ks = [50, 100, 200, 300, 500]  # [mD] (range based on Sopher et al. 2019)
-r_fs = [250, 500]  # [m]
+m_dots = np.arange(1, 400, 1)  # [kg/s]
+p_fs = [15.0]  # [MPa]
+ks = [2.0,5.0,10.0,50.0,100.0]  # [mD] (range based on Sopher et al. 2019)
+r_fs = [200]  # [m]
 
 attributes = ['Q', 'p_f', 'r_f', 'r_w', 'k', 'h', 'mu', 'T', 'Z', 'm_dot', 'delta_p', 'rho']
 df = pd.DataFrame(columns=attributes)
@@ -60,7 +60,7 @@ df.to_csv('results.csv')
 
 sns.set_context('talk')
 ax = sns.relplot(x='Mass flow [kg/s]', y='Pressure drop [MPa]', hue='Permeability [mD]', data=df,
-                 row='Air radius [m]', col='Air pressure, p3 [MPa]', legend='full',
+                  legend='full',
                  palette='colorblind', kind='line')
 # ax.set_xlabel('Flow rate [kg/s]')
 # ax.set_ylabel('Pressure drop [MPa]')
