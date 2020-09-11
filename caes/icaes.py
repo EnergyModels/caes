@@ -16,16 +16,16 @@ class ICAES(CAES):
         inputs['PR_exp'] = []
 
         # compression - mass load per stage (ratio of water to air by mass)
-        inputs['ML_cmp1'] = 3.0
-        inputs['ML_cmp2'] = 2.5
-        inputs['ML_cmp3'] = 2.0
+        inputs['ML_cmp1'] = 2.0
+        inputs['ML_cmp2'] = 1.5
+        inputs['ML_cmp3'] = 1.0
         inputs['ML_cmp4'] = -1  # <0 - unused
         inputs['ML_cmp5'] = -1  # <0 - unused
 
         # expansion - mass loading per stage
-        inputs['ML_exp1'] = 2.0
-        inputs['ML_exp2'] = 2.5
-        inputs['ML_exp3'] = 3.0
+        inputs['ML_exp1'] = 1.0
+        inputs['ML_exp2'] = 1.5
+        inputs['ML_exp3'] = 2.0
         inputs['ML_exp4'] = -1  # <0 - unused
         inputs['ML_exp5'] = -1  # <0 - unused
 
