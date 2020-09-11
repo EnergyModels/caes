@@ -6,8 +6,8 @@ depth = 1402.35  # depth [m]
 h = 62.44  # thickness [m]
 phi = 0.2292  # porosity
 k = 38.33  # permeability [mD]
-m_dot = 367.8379287  # mass flow rate [kg/s]
-r_f = 142.8336629  # formation radius [m]
+m_dot = 565.0428614  # mass flow rate [kg/s]
+r_f = 180.3177957  # formation radius [m]
 r_w = 0.41/2.0  # well radius [m]
 
 # create system

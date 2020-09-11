@@ -131,7 +131,7 @@ if __name__ == '__main__':
     sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
     iterations = 1000  # number of runs per scenario
     ncpus = 6  # number of cpus to use
-    capacity = 100  # [MW]
+    capacity = 200  # [MW]
     duration = 24  # [hr]
 
     # ------------------
