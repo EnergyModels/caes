@@ -57,12 +57,12 @@ height = 4.0  # inches
 x_var = "kW_out_avg"
 x_label = "Power Rating (MW)"
 x_convert = 1e-3
-x_limit = []
+x_limit = [0.0,500.0]
 
 y_var = "RTE"
 y_label = "Efficiency (%)"
 y_convert = 100.0
-y_limit = []
+y_limit = [50.0,80.0]
 
 # Create plot
 f, a = plt.subplots(1, 1, sharex='col', sharey='row', squeeze=False)
@@ -123,6 +123,12 @@ for k, entry in enumerate(series_dict.values()):
 x_pos = -0.1
 leg = ax.legend(handles=symbols, bbox_to_anchor=(0.05, 0.05), ncol=1, loc='lower left',
                 title='Storage Duration)')
+
+if len(y_limit) == 2:
+    ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
+
+if len(x_limit) == 2:
+    ax.set_xlim(left=x_limit[0], right=x_limit[1])
 
 # Adjust layout
 # plt.subplots_adjust(hspace=0.2, wspace=0.2, bottom=0.2)

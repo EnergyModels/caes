@@ -7,14 +7,14 @@ import seaborn as sns
 from math import pi
 
 # fixed inputs
-T = 290  # [K]
+T = 340  # [K]
 epsilon = 0.002 * 1.0e-3  # roughness [m]
 depth = 1420  # depth [m]
-d = 0.53  # diameter [m]
+d = 0.41  # diameter [m]
 
 # parameters to sweep
-m_dots = np.arange(-400, 420, 20)  # flow rates [kg/s]
-pressures = np.arange(10.0, 15.0, 1.0)  # pressures [MPa]
+m_dots = np.arange(-500, 520, 20)  # flow rates [kg/s]
+pressures = np.arange(15.0, 20.0, 1.0)  # pressures [MPa]
 
 # dataframe to store results
 attributes = ['T', 'p', 'epsilon', 'depth', 'd', 'm_dot', 'rho', 'mu',  # inputs

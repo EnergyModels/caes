@@ -127,8 +127,8 @@ for plt_num in range(2):
         for var in variables:
             s = pd.Series()
             s['variable'] = sens_var_rename[df.loc[i, 'sensitivity_var']]
-            s['low'] = df.loc[i, var]
-            s['high'] = df.loc[i + 1, var]
+            s['high'] = df.loc[i, var]
+            s['low'] = df.loc[i + 1, var]
             s['abs'] = max(abs(df.loc[i, var]), abs(df.loc[i + 1, var]))
             results[var] = results[var].append(s, ignore_index=True)
 

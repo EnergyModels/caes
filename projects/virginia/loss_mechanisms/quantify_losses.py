@@ -7,8 +7,8 @@ depth = 1402.35  # depth [m]
 h = 62.44  # thickness [m]
 phi = 0.2292  # porosity
 k = 38.33  # permeability [mD]
-m_dot = 367.8379287  # mass flow rate [kg/s]
-r_f = 142.8336629  # formation radius [m]
+m_dot = 565.0428614  # mass flow rate [kg/s]
+r_f = 180.3177957  # formation radius [m]
 r_w = 0.41 / 2.0  # well radius [m]
 
 df = pd.DataFrame()
@@ -32,7 +32,7 @@ for i in range(9):
 
     # options to include/exclude various loss mechanisms
     inputs['include_interstage_dp'] = False
-    inputs['include_thermal_gradient'] = False
+    inputs['include_thermal_gradient'] = True
     inputs['include_air_leakage'] = False
     inputs['include_aquifer_dp'] = False
     inputs['include_pipe_dp_gravity'] = False

@@ -49,6 +49,7 @@ f, a = plt.subplots(nrows=nrows, ncols=1, sharex='col', squeeze=False)
 x_var = 'time'
 x_label = 'Time [hr]'
 x_convert = 1.0
+x_lims = [0.0, 50.0]
 
 # array to hold legends
 leg = []
@@ -67,7 +68,7 @@ for i in range(nrows):
         c_list = [colors[7]]
         markers = ['o']
         styles = ['-']
-        y_lims = []
+        y_lims = [200, 300]
 
     elif i == 1:
         # y_label = 'Pressure\n[MPa]'
@@ -85,7 +86,7 @@ for i in range(nrows):
         c_list = [colors[2], colors[0], colors[1]]
         markers = ['s', '>', '<']
         styles = ['-', '-', '-']
-        y_lims = [11.0, 18.0]
+        y_lims = [10.0, 18.0]
 
     else:  # if i == 3:
         y_label = 'Power\n[MW]'
@@ -95,7 +96,7 @@ for i in range(nrows):
         c_list = [colors[0], colors[1]]
         markers = ['^', 'v']
         styles = ['-', '-']
-        y_lims = []
+        y_lims = [0.0, 300.0]
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
@@ -145,6 +146,9 @@ for i in range(nrows):
 
     if len(y_lims) == 2:
         ax.set_ylim(bottom=y_lims[0], top=y_lims[1])
+
+    if len(x_lims) == 2:
+        ax.set_xlim(left=x_lims[0], right=x_lims[1])
 
 # align labels
 f.align_ylabels(a[:, 0])
