@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # varied parameters
     depths = np.arange(1000.0, 5601.0, 100.0) # [m]
     ks = np.array([0.01, 0.1, 1.0, 10.0, 100.0, 1000.0, ]) # [mD]
-    capacities = np.array([100.0, 200.0])  # [MW]
+    capacities = np.array([200.0])  # [MW]
 
     # ------------------
     # create sweep_inputs dataframe
