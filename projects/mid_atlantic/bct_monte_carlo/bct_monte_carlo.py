@@ -148,13 +148,13 @@ if __name__ == '__main__':
 
     # location data
     location_data = 'Battelle_data.xlsx'  # Excel file with inputs
-    # location_sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
-    location_sheet_names = ['LK1']  # Excel sheet_names
+    location_sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
+    # location_sheet_names = ['LK1']  # Excel sheet_names
 
-    capacity = 100  # [MW]
+    capacity = 200  # [MW]
     duration = 24  # [hr]
     debug = False
-    iterations = 1  # number of runs per data point
+    iterations = 100  # number of runs per data point
     ncpus = 6  # number of cpus to use
 
     # key - variable name in location data

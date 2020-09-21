@@ -522,7 +522,9 @@ class CAES:
         # create series to hold results
         entries = ['RTE', 'kWh_in', 'kWh_out', 'kW_in_avg', 'kW_out_avg',
                    'kg_water_per_kWh', 'kg_CO2_per_kWh', 'kg_fuel_per_kWh',
-                   'dp_well_avg', 'dp_pipe_f_avg', 'errors']
+                   'dp_well_avg', 'dp_pipe_f_avg',
+                   'T_aquifer', 'T_cmp_out',
+                   'errors']
         results = pd.Series(index=entries)
 
         if len(self.data) > 1:
@@ -553,6 +555,11 @@ class CAES:
             results['MWh_cushion_gas'] = self.m_store_min / self.m_dot / 3600 * results['kW_in_avg'] / 1000.0
             results['dp_well_avg'] = self.data.loc[ind_pwr, 'dp_well'].mean()
             results['dp_pipe_f_avg'] = self.data.loc[ind_pwr, 'dp_pipe_f'].mean()
+            results['T_store_init'] = self.T_store_init
+            results['T_cmp_out_avg'] = self.data.loc[ind_pwr_in, 'T1'].mean()
+            results['T_exp_out_avg'] = self.data.loc[ind_pwr_out, 'T1'].mean()
+            results['p_store_min'] = self.p_store_min
+            results['p_store_max'] = self.p_store_max
 
             # check for errors
             if len(self.data.error_msg.unique()) > 1:  # errors

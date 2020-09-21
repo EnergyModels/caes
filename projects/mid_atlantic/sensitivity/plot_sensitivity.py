@@ -61,16 +61,16 @@ for plt_num in range(2):
     if plt_num == 0:  # Select
         savename = 'sensitivity_results_select.png'
         variables = ['RTE', 'kWh_out', 'kW_out_avg']
-        varLabels = ['Round Trip Efficiency (%)', 'Energy Out (GWh)', 'Average Power Out (MW)']
-        conversions = [100.0, 1e-6, 1e-3]
+        varLabels = ['Round Trip Efficiency (%)', 'Energy Out (MWh)', 'Average Power Out (MW)']
+        conversions = [100.0, 1e-3, 1e-3]
         ncols = 1
         nrows = 3
     else:  # All
         savename = 'sensitivity_results_all.png'
         variables = ['RTE', 'kg_water_per_kWh', 'kWh_in', 'kWh_out', 'kW_in_avg', 'kW_out_avg']
-        varLabels = ['Round Trip Efficiency (%)', 'Water Use (kg/kWh)', 'Energy In (GWh)', 'Energy Out (GWh)',
+        varLabels = ['Round Trip Efficiency (%)', 'Water Use (kg/kWh)', 'Energy In (MWh)', 'Energy Out (MWh)',
                      'Average Power In (MW)', 'Average Power Out (MW)']
-        conversions = [100.0, 1.0, 1e-6, 1e-6, 1e-3, 1e-3]
+        conversions = [100.0, 1.0, 1e-3, 1e-3, 1e-3, 1e-3]
         ncols = 2
         nrows = 3
 
@@ -182,7 +182,7 @@ for plt_num in range(2):
         sns.barplot(x="low", y="variable", data=results[var].loc[:n_cases], orient="h", label="-10%",
                     color=custom_palette[2], ax=ax)  # Blue
 
-        # Plot the crashes where alcohol was involved
+        # Plot the high side
         sns.barplot(x="high", y="variable", data=results[var].loc[:n_cases], label="+10%",
                     color=custom_palette[1], ax=ax)  # Orange
 
@@ -192,9 +192,11 @@ for plt_num in range(2):
         # Adjust ticks to show perturbation + mean value
         ax.xaxis.set_major_locator(plt.MaxNLocator(3))  # Ensure 3 ticks
 
-        locs, labels = plt.xticks()
-        for i in range(len(locs)):
-            labels[i] = str(round(locs[i] + baseline[var], 2))
+        # locs, labels = plt.xticks()
+        labels = ax.get_xticklabels()
+        for i in range(len(labels)):
+            val = getattr(labels[i], '_x')
+            labels[i].set_text(str(round(val + baseline[var], 2)))
         ax.set_xticklabels(labels)
 
         # Set label
