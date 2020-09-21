@@ -51,7 +51,33 @@ def parameter_sweep(sweep_input, debug=True):
         inputs['k'] = sweep_input['k']  # [mD]
 
         # Update machinery performance
-        if inputs['depth'] > 1500:
+        if inputs['depth'] < 1500:
+            # compression - mass load per stage (ratio of water to air by mass)
+            inputs['ML_cmp1'] = 2.0
+            inputs['ML_cmp2'] = 1.5
+            inputs['ML_cmp3'] = 1.0
+            inputs['ML_cmp4'] = -1  # <0 - unused
+            inputs['ML_cmp5'] = -1  # <0 - unused
+
+            # expansion - mass loading per stage
+            inputs['ML_exp1'] = 1.0
+            inputs['ML_exp2'] = 1.5
+            inputs['ML_exp3'] = 2.0
+            inputs['ML_exp4'] = -1  # <0 - unused
+            inputs['ML_exp5'] = -1  # <0 - unused
+
+            # compression - pressure drop inbetween stages (fraction)
+            inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
+            inputs['delta_p_cmp23'] = 0.02
+            inputs['delta_p_cmp34'] = -1  # <0 - unused
+            inputs['delta_p_cmp45'] = -1  # <0 - unused
+
+            # compression - pressure drop inbetween stages (fraction)
+            inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
+            inputs['delta_p_exp23'] = 0.0
+            inputs['delta_p_exp34'] = -1  # <0 - unused
+            inputs['delta_p_exp45'] = -1  # <0 - unused
+        else:
             # compression - mass load per stage (ratio of water to air by mass)
             inputs['ML_cmp1'] = 2.0
             inputs['ML_cmp2'] = 1.5
@@ -131,15 +157,15 @@ if __name__ == '__main__':
 
     # constant parameters
     duration = 24  # [hr]
-    h = 506.4534957 * 0.3048 # [m], average for LK1
-    phi = 0.255528 # [-], average for LK1
+    h = 50.0  # [m], round # to test
+    phi = 0.255528  # [-], average for LK1
 
     # varied parameters
     # depths = np.arange(1000.0, 5601.0, 100.0)  # [m]
-    depths = np.arange(1000.0, 5601.0, 500.0)  # [m]
-    # ks = np.array([1.0, 10.0, 100.0, 1000.0, ]) # [mD]
-    ks = np.array([10.0, ])  # [mD]
-    capacities = np.array([200.0])  # [MW]
+    depths = np.arange(1000.0, 5601.0, 100.0)  # [m]
+    ks = np.array([1.0, 10.0, 100.0, 1000.0, ]) # [mD]
+    # ks = np.array([10.0, ])  # [mD]
+    capacities = np.array([100.0])  # [MW]
 
     # ------------------
     # create sweep_inputs dataframe

@@ -62,6 +62,60 @@ def parameter_sweep(sweep_input, debug=True):
         inputs['phi'] = sweep_input['porosity']  # formation porosity [-]
         inputs['k'] = sweep_input['permeability_mD']  # formation permeability [mD]
 
+        # Update machinery performance
+        if inputs['depth'] < 1500:
+            # compression - mass load per stage (ratio of water to air by mass)
+            inputs['ML_cmp1'] = 2.0
+            inputs['ML_cmp2'] = 1.5
+            inputs['ML_cmp3'] = 1.0
+            inputs['ML_cmp4'] = -1  # <0 - unused
+            inputs['ML_cmp5'] = -1  # <0 - unused
+
+            # expansion - mass loading per stage
+            inputs['ML_exp1'] = 1.0
+            inputs['ML_exp2'] = 1.5
+            inputs['ML_exp3'] = 2.0
+            inputs['ML_exp4'] = -1  # <0 - unused
+            inputs['ML_exp5'] = -1  # <0 - unused
+
+            # compression - pressure drop inbetween stages (fraction)
+            inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
+            inputs['delta_p_cmp23'] = 0.02
+            inputs['delta_p_cmp34'] = -1  # <0 - unused
+            inputs['delta_p_cmp45'] = -1  # <0 - unused
+
+            # compression - pressure drop inbetween stages (fraction)
+            inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
+            inputs['delta_p_exp23'] = 0.0
+            inputs['delta_p_exp34'] = -1  # <0 - unused
+            inputs['delta_p_exp45'] = -1  # <0 - unused
+        else:
+            # compression - mass load per stage (ratio of water to air by mass)
+            inputs['ML_cmp1'] = 2.0
+            inputs['ML_cmp2'] = 1.5
+            inputs['ML_cmp3'] = 1.0
+            inputs['ML_cmp4'] = 0.5  # <0 - unused
+            inputs['ML_cmp5'] = -1  # <0 - unused
+
+            # expansion - mass loading per stage
+            inputs['ML_exp1'] = 0.5
+            inputs['ML_exp2'] = 1.0
+            inputs['ML_exp3'] = 1.5
+            inputs['ML_exp4'] = 2.0  # <0 - unused
+            inputs['ML_exp5'] = -1  # <0 - unused
+
+            # compression - pressure drop inbetween stages (fraction)
+            inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
+            inputs['delta_p_cmp23'] = 0.02
+            inputs['delta_p_cmp34'] = 0.02  # <0 - unused
+            inputs['delta_p_cmp45'] = -1  # <0 - unused
+
+            # compression - pressure drop inbetween stages (fraction)
+            inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
+            inputs['delta_p_exp23'] = 0.02
+            inputs['delta_p_exp34'] = 0.0  # <0 - unused
+            inputs['delta_p_exp45'] = -1  # <0 - unused
+
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
         inputs['r_f'] = r_f  # [m]
@@ -114,8 +168,8 @@ if __name__ == '__main__':
     # xlsx_filename = 'user_inputs_sample.xlsx'  # Excel file with inputs
     xlsx_filename = 'Battelle_data.xlsx'  # Excel file with inputs
     sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
-    ncpus = 6  # number of cpus to use
-    capacity = 200  # [MW]
+    ncpus = 3  # number of cpus to use
+    capacity = 100  # [MW]
     duration = 24  # [hr]
     debug = False
 

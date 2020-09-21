@@ -50,33 +50,49 @@ def parameter_sweep(sweep_input, debug=True):
         inputs['phi'] = sweep_input['phi']  # [-]
         inputs['k'] = sweep_input['k']  # [mD]
 
-        # primary design choices
-        inputs['r_w'] = sweep_input['r_w']  # [m]
+        # held constant
+        inputs['p_atm'] = sweep_input['p_atm']  # [MPa]
+        inputs['p_water'] = sweep_input['p_water']  # [MPa]
 
         # additional geophysical parameters
         inputs['T_atm'] = sweep_input['T_atm']  # [C]
-        inputs['p_atm'] = sweep_input['p_atm']  # [MPa]
         inputs['T_water'] = sweep_input['T_water']  # [C]
-        inputs['p_water'] = sweep_input['p_water']  # [MPa]
         inputs['p_hydro_grad'] = sweep_input['p_hydro_grad']  # [MPa/km]
         inputs['p_frac_grad'] = sweep_input['p_frac_grad']  # [MPa/km]
         inputs['T_grad_m'] = sweep_input['T_grad_m']  # [C/km]
         inputs['T_grad_b'] = sweep_input['T_grad_b']  # [C]
         inputs['loss_m_air'] = sweep_input['loss_m_air']  # [-]
 
-        # design choice
+        # primary design choices - held constant
+        inputs['r_w'] = sweep_input['r_w']  # [m]
         inputs['epsilon'] = sweep_input['epsilon']  # [-]
         inputs['safety_factor'] = sweep_input['safety_factor']  # [-]
         inputs['loss_mech'] = sweep_input['loss_mech']  # [-]
         inputs['loss_gen'] = sweep_input['loss_gen']  # [-]
         inputs['mach_limit'] = sweep_input['mach_limit']  # [-]
         inputs['eta_pump'] = sweep_input['eta_pump']  # [-]
+
         inputs['ML_cmp1'] = sweep_input['ML_cmp1']  # [-]
         inputs['ML_cmp2'] = sweep_input['ML_cmp2']  # [-]
         inputs['ML_cmp3'] = sweep_input['ML_cmp3']  # [-]
+        inputs['ML_cmp3'] = sweep_input['ML_cmp3']  # [-]
+        inputs['ML_cmp4'] = sweep_input['ML_cmp4']  # [-]
+
         inputs['ML_exp1'] = sweep_input['ML_exp1']  # [-]
         inputs['ML_exp2'] = sweep_input['ML_exp2']  # [-]
         inputs['ML_exp3'] = sweep_input['ML_exp3']  # [-]
+        inputs['ML_exp4'] = sweep_input['ML_exp4']  # [-]
+        inputs['ML_exp5'] = sweep_input['ML_exp5']  # [-]
+
+        inputs['delta_p_cmp12'] = sweep_input['delta_p_cmp12']  # [-]
+        inputs['delta_p_cmp23'] = sweep_input['delta_p_cmp23']  # [-]
+        inputs['delta_p_cmp34'] = sweep_input['delta_p_cmp34']  # [-]
+        inputs['delta_p_cmp45'] = sweep_input['delta_p_cmp45']  # [-]
+
+        inputs['delta_p_exp12'] = sweep_input['delta_p_exp12']  # [-]
+        inputs['delta_p_exp23'] = sweep_input['delta_p_exp23']  # [-]
+        inputs['delta_p_exp34'] = sweep_input['delta_p_exp34']  # [-]
+        inputs['delta_p_exp45'] = sweep_input['delta_p_exp45']  # [-]
 
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
@@ -128,25 +144,26 @@ if __name__ == '__main__':
     # user inputs
     # ==============
     xlsx_filename = 'user_inputs_sizing_monte_carlo.xlsx'  # Excel file with inputs
-    sheet_names = ['fixed_diameter', 'geophysical']  # Excel sheet_names
-    iterations = 1000  # number of runs per scenario
-    ncpus = 6  # number of cpus to use
-    capacity = 200  # [MW]
-    duration = 24  # [hr]
+    sheet_names = ['PJM', 'NYISO', 'ISONE']  # Excel sheet_names
+    iterations = 100  # number of runs per scenario
+    ncpus = 3  # number of cpus to use
+    durations = [10, 24]  # [hr]
+    capacities = [100]  # [MW]
 
     # ------------------
     # create sweep_inputs dataframe
     # ------------------
     sweep_inputs = pd.DataFrame()
     for sheet_name in sheet_names:
-        df_scenario = monteCarloInputs(xlsx_filename, sheet_name, iterations)
-        sweep_inputs = sweep_inputs.append(df_scenario)
+        for duration in durations:
+            for capacity in capacities:
+                df_scenario = monteCarloInputs(xlsx_filename, sheet_name, iterations)
+                df_scenario.loc[:, 'capacity_MW'] = capacity
+                df_scenario.loc[:, 'duration_hr'] = duration
+                sweep_inputs = sweep_inputs.append(df_scenario)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
-
-    sweep_inputs.loc[:, 'capacity_MW'] = capacity
-    sweep_inputs.loc[:, 'duration_hr'] = duration
 
     # count number of cases
     n_cases = sweep_inputs.shape[0]
