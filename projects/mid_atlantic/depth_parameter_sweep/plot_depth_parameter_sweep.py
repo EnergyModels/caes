@@ -15,8 +15,7 @@ results_filename = "sweep_results.csv"
 DPI = 300  # Set resolution for saving figures
 
 series_var = 'k'
-series_dict = {0.01: '0.01 mD', 0.1: '0.1 mD', 1: '1 mD',
-               10: '10 mD', 100: '100 mD', 1000: '1000 mD'}
+series_dict = {1: '1 mD', 10: '10 mD', 100: '100 mD'}
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")
@@ -53,13 +52,18 @@ x_labels = ["Depth (m)", ]
 x_converts = [1.0]
 x_limits = [[]]
 
-y_vars = ["RTE", "m_dot", "r_f", "dp_well_avg", "dp_pipe_f_avg"]
-y_labels = ["Round Trip\nEfficiency\n(%)", "Mass flow\n(kg/s)", "Bubble\nRadius\n(m)", "Aquifer\nPressure Drop\n(MPa)",
-            "Pipe\n Pressure Loss\n(MPa)", ]
-y_converts = [100.0, 1.0, 1.0, 1.0, 1.0]
-y_limits = [[], [], [], [], []]
+y_vars = ["RTE", "m_dot", "r_f", "dp_well_avg"]
+y_labels = ["Round Trip\nEfficiency\n(%)", "Mass flow\nrate\n(kg/s)", "Bubble\nRadius\n(m)", "Aquifer\nPressure Drop\n(MPa)" ]
+y_converts = [100.0, 1.0, 1.0, 1.0]
+y_limits = [[60.0,90.0], [0.0,300.0], [0.0,200.0], [0.0,4.0]]
 
-for ix in range(2):
+# y_vars = ["RTE", "m_dot", "r_f", "dp_well_avg", "dp_pipe_f_avg"]
+# y_labels = ["Round Trip\nEfficiency\n(%)", "Mass flow\n(kg/s)", "Bubble\nRadius\n(m)", "Aquifer\nPressure Drop\n(MPa)",
+#             "Pipe\n Pressure Loss\n(MPa)", ]
+# y_converts = [100.0, 1.0, 1.0, 1.0, 1.0]
+# y_limits = [[60.0,90.0], [0.0,300.0], [0.0,200.0], [0.0,3.0], [0.0,1.0]]
+
+for ix in range(1):
 
     if ix == 0:
         savename = "Fig_Depth_Parameter_sweep_100MW.png"
@@ -114,8 +118,8 @@ for ix in range(2):
                 ind = df_ix.loc[:, series_var] == serie
                 x = x_convert * df_ix.loc[ind, x_var]
                 y = y_convert * df_ix.loc[ind, y_var]
-                ax.plot(x, y, linestyle='-', color=color, marker=marker, markersize=marker_size,
-                        markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
+                ax.plot(x, y, linestyle='None', color=color, marker=marker, markersize=marker_size,
+                        markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor=color,
                         label=series_dict[serie])
 
             # axes labels
@@ -135,6 +139,8 @@ for ix in range(2):
             sns.despine(ax=ax, )
             ax.tick_params(top=False, right=False)
 
+            # ax.yaxis.set_major_locator(plt.MaxNLocator(4))  # Ensure 3 ticks
+
             # Axes limits
 
             # Caption labels
@@ -142,6 +148,16 @@ for ix in range(2):
             plt.text(-0.15, 1.00, caption_labels[count], horizontalalignment='center', verticalalignment='center',
                      transform=ax.transAxes, fontsize='medium', fontweight='bold')
             count = count + 1
+
+            # Add vertical line for depth
+            if len(y_limit) == 2:
+                x = [1500, 1500]
+                ax.plot(x, y_limit, 'k', linestyle='--')
+            if j == 0:
+                dx = 0
+                dy = 2
+                ax.text(x[0] - dx, y_limit[1] - dy, '3 stages   ', horizontalalignment='right')
+                ax.text(x[0] + dx, y_limit[1] - dy, '   4 stages', horizontalalignment='left')
 
     # Legend
     # patches = []
@@ -156,8 +172,8 @@ for ix in range(2):
 
     # y_pos = j / 2 + 0.5
     # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
-    x_pos = -0.1
-    leg = a[j, i].legend(handles=symbols, bbox_to_anchor=(x_pos, -0.5), ncol=6, loc='upper left',
+    x_pos = 0.5
+    leg = a[j, i].legend(handles=symbols, bbox_to_anchor=(x_pos, -0.5), ncol=6, loc='upper center',
                          title='Permeability')
 
     # Adjust layout

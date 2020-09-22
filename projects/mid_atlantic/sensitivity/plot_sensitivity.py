@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 # common inputs
 resolution = 500
@@ -127,8 +128,8 @@ for plt_num in range(2):
         for var in variables:
             s = pd.Series()
             s['variable'] = sens_var_rename[df.loc[i, 'sensitivity_var']]
-            s['high'] = df.loc[i, var]
-            s['low'] = df.loc[i + 1, var]
+            s['high'] = df.loc[i, var]  # + baseline[var]
+            s['low'] = df.loc[i + 1, var]  # + baseline[var]
             s['abs'] = max(abs(df.loc[i, var]), abs(df.loc[i + 1, var]))
             results[var] = results[var].append(s, ignore_index=True)
 
@@ -175,29 +176,47 @@ for plt_num in range(2):
     sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 
     for var, varLabel, ax in zip(variables, varLabels, axes):
-
         n_cases = min(len(results[var]), n_display)
 
         # Plot the low side
-        sns.barplot(x="low", y="variable", data=results[var].loc[:n_cases], orient="h", label="-10%",
-                    color=custom_palette[2], ax=ax)  # Blue
+        # sns.barplot(x="low", y="variable", data=results[var].loc[:n_cases], orient="h", label="-10%",
+        #             color=custom_palette[2], ax=ax)  # Blue
+        ax.barh(y=np.arange(n_cases), width=results[var].loc[:n_cases - 1].low, label="-10%", left=baseline[var],
+                color=custom_palette[2], tick_label=results[var].loc[:n_cases - 1].variable)
 
         # Plot the high side
-        sns.barplot(x="high", y="variable", data=results[var].loc[:n_cases], label="+10%",
-                    color=custom_palette[1], ax=ax)  # Orange
+        # sns.barplot(x="high", y="variable", data=results[var].loc[:n_cases], label="+10%",
+        #             color=custom_palette[1], ax=ax)  # Orange
+
+        ax.barh(y=np.arange(n_cases), width=results[var].loc[:n_cases - 1].high, label="+10%", left=baseline[var],
+                color=custom_palette[1], tick_label=results[var].loc[:n_cases - 1].variable)
+
+        # y_orig = ax.get_yticklabels()
+        # ax.set_yticklabels(results[var].loc[:n_cases - 1].variable)
+        # ax.set_yticklabels(['a', 'b', 'c', 'd', 'e'])
+
+        ax.invert_yaxis()
 
         # Remove spines
         sns.despine(left=True, bottom=True, ax=ax)
 
         # Adjust ticks to show perturbation + mean value
-        ax.xaxis.set_major_locator(plt.MaxNLocator(3))  # Ensure 3 ticks
+        # ax.xaxis.set_major_locator(plt.MaxNLocator(3))  # Ensure 3 ticks
+        # ax.xaxis.set_major_locator(plt.MaxNLocator(n_cases))  # Ensure 3 ticks
 
-        # locs, labels = plt.xticks()
-        labels = ax.get_xticklabels()
-        for i in range(len(labels)):
-            val = getattr(labels[i], '_x')
-            labels[i].set_text(str(round(val + baseline[var], 2)))
-        ax.set_xticklabels(labels)
+        # # locs, labels = plt.xticks()
+        # labels = ax.get_xticklabels()
+        # for i in range(len(labels)):
+        #     a = float(baseline[var])
+        #     b = labels[i]._x
+        #     # b = float(labels[i].get_text())
+        #     c = round(a+b, 2)
+        #     label = str(c)
+        #     labels[i].set_text(label)
+        #     print(i)
+        #     # print(val)
+        #     print(label)
+        # ax.set_xticklabels(labels)
 
         # Set label
         ax.set_xlabel(varLabel, fontweight='bold')

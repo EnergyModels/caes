@@ -7,8 +7,8 @@ import seaborn as sns
 # =====================================
 # data input
 results_filename = "mc_results.csv"
-sheetnames = ['geophysical']
-savenames = ["Fig_general_MC_geophysical_all.png"]
+sheetname = 'geophysical'
+
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
@@ -46,7 +46,22 @@ df_all = df_all[df_all.errors == False]
 # create new entry called duration
 df_all.loc[:, 'duration'] = df_all.loc[:, 'kWh_out'] / df_all.loc[:, 'kW_out_avg']
 
-for sheetname, savename in zip(sheetnames, savenames):
+for i in range(2):
+
+    if i == 0:
+        x_vars = ["depth", "h", "phi", "k", "m_dot", "r_f", "T_atm", "p_atm", ]
+        x_labels = ["depth", "h", "phi", "k", "m_dot", "r_f", "T_atm", "p_atm", ]
+        x_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        x_limits = [[], [], [], [], [], [], [], []]
+        savename = "Fig_general_MC_geophysical_all_pt1.png"
+    else:
+        x_vars = ["T_water", "p_water", "p_hydro_grad",
+                  "p_frac_grad", "safety_factor", "T_grad_m", "T_grad_b", "loss_m_air"]
+        x_labels = ["T_water", "p_water", "p_hydro_grad",
+                    "p_frac_grad", "safety_factor", "T_grad_m", "T_grad_b", "loss_m_air"]
+        x_converts = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        x_limits = [[], [], [], [], [], [], [], []]
+        savename = "Fig_general_MC_geophysical_all_pt2.png"
     # select only data with the specified sheetname
     df = df_all[df_all.sheetname == sheetname]
 

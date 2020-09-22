@@ -110,7 +110,7 @@ if __name__ == '__main__':
     h = 62.44  # [m]
     phi = 0.2292  # [-]
     k = 38.33  # [mD]
-    capacity = 200  # [MW]
+    capacity = 100  # [MW]
     duration = 24  # [hr]
     r_w = 0.41/2.0  # [m]
 
