@@ -114,8 +114,8 @@ if __name__ == '__main__':
     k = [38.33, 236.1424, 132.3264]  # [mD]
 
     # sweep parameters (nparray)
-    capacities = np.arange(10, 501, 10)  # [MW]
-    durations = np.array([10, 24])  # [hr] (168 = 1 week)
+    capacities = np.array([100])  # [MW]
+    durations = np.array([24])  # [hr] (168 = 1 week)
 
     # ------------------
     # create sweep_inputs dataframe

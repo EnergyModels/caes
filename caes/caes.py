@@ -78,8 +78,8 @@ class CAES:
         inputs['safety_factor'] = 0.5  # operating pressure safety factor [-], Allen et al. 1983
 
         # aquifer thermal gradient
-        inputs['T_grad_m'] = 0.007376668 * 3.28084  # m, slope [deg C/m], Battelle 2019
-        inputs['T_grad_b'] = 7.412436  # b, intercept [deg C], Battelle 2019
+        inputs['T_grad_m'] = 0.023  # m, slope [deg C/m], Battelle 2019
+        inputs['T_grad_b'] = 10.61747033  # b, intercept [deg C], Battelle 2019
 
         # storage geomechanical properties
         inputs['r_f'] = 117.0645423  # formation radius [m] (Default: 2000 MWh)

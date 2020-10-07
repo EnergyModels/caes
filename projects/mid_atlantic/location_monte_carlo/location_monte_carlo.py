@@ -31,7 +31,7 @@ def parameter_sweep(sweep_input, debug=True):
 
     # additional geophysical parameters
     inputs['T_atm'] = sweep_input['T_atm']  # [C]
-    inputs['T_water'] = sweep_input['T_water']  # [C]
+    inputs['T_water'] = sweep_input['T_atm']  # [C]
     inputs['p_hydro_grad'] = sweep_input['p_hydro_grad']  # [MPa/km]
     inputs['p_frac_grad'] = sweep_input['p_frac_grad']  # [MPa/km]
     inputs['T_grad_m'] = sweep_input['T_grad_m']  # [C/km]

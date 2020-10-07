@@ -76,6 +76,7 @@ def monteCarloInputs(filename, sheetname, iterations):
             mode = df_xls.loc[param]["Average"]
             right = df_xls.loc[param]["High"]
             df.loc[:][param] = np.random.triangular(left, mode, right, size=iterations)
+
     df.loc[:, 'sheetname'] = sheetname
     return df
 
