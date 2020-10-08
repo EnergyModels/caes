@@ -13,8 +13,8 @@ if __name__ == '__main__':
     xlsx_filenames = ['user_inputs_location_monte_carlo.xlsx',
                       'prev_user_inputs_location_monte_carlo.xlsx']  # Excel file with inputs
     distributions = ['Updated', 'Previous']
-    sheet_names = ['PJM', 'NYISO', 'ISONE']  # Excel sheet_names
-    # sheet_names = ['PJM']  # Excel sheet_names
+    # sheet_names = ['PJM', 'NYISO', 'ISONE']  # Excel sheet_names
+    sheet_names = ['PJM']  # Excel sheet_names
     iterations = 10000  # number of runs per scenario
 
     # ------------------
@@ -85,6 +85,6 @@ if __name__ == '__main__':
         savename = sheet_name + '_distribution.png'
         plt.tight_layout()
         plt.savefig(savename, dpi=DPI)
-        plt.close()
+        # plt.close()
 
 df.to_csv('distribution_comparison.csv')

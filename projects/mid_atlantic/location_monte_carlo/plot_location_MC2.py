@@ -30,15 +30,17 @@ df = pd.read_csv(results_filename)
 df.loc[:, 'duration'] = df.loc[:, 'kWh_out'] / df.loc[:, 'kW_out_avg']
 df.loc[:, 'Analysis Case'] = df.loc[:, 'sheetname']
 
+
+
 f, a = plt.subplots(1, 3, sharey=True)
 a = a.ravel()
 
 # Set size
 f.set_size_inches(width, height)
-legend = [False,True,False]
+legend = [False, True, False]
 for ax, y_var, y_label, y_convert, y_limit, leg in zip(a, y_vars, y_labels, y_converts, y_limits, legend):
     df.loc[:, y_var] = df.loc[:, y_var] * y_convert
-    sns.histplot(data=df, x=y_var, ax=ax, hue='Analysis Case', multiple='dodge',element='step', fill=False, legend=leg)
+    sns.histplot(data=df, x=y_var, ax=ax, hue='Analysis Case', multiple='dodge', element='step', fill=False, legend=leg)
     ax.set_xlabel(y_label)
     # sns.distplot(df[y_var], ax=ax)
 
@@ -48,3 +50,8 @@ a[1].legend(bbox_to_anchor=(0.5, -0.3), ncol=3)
 plt.savefig(savename, dpi=DPI)
 # plt.close()
 
+df = df.fillna(0.0)
+for case in df.loc[:, 'Analysis Case'].unique():
+    ind = (df.loc[:, 'Analysis Case'] == case) & (df.loc[:, 'RTE'] == 0.0)
+    print(case)
+    print(str(sum(ind)))
