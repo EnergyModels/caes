@@ -10,8 +10,9 @@ if __name__ == '__main__':
     # ==============
     # user inputs
     # ==============
-    xlsx_filenames = ['user_inputs_location_monte_carlo.xlsx']  # Excel file with inputs
-    distributions = ['Updated']
+    xlsx_filenames = ['user_inputs_location_monte_carlo.xlsx',
+                      'prev_user_inputs_location_monte_carlo.xlsx']  # Excel file with inputs
+    distributions = ['Updated', 'Previous']
     # sheet_names = ['PJM', 'NYISO', 'ISONE']  # Excel sheet_names
     sheet_names = ['PJM']  # Excel sheet_names
     iterations = 10000  # number of runs per scenario
@@ -46,18 +47,21 @@ if __name__ == '__main__':
     width = 7.48  # inches
     height = 5.5  # inches
 
-    y_vars = ['phi', 'k', 'depth', 'h',
-              'loss_m_air', 'T_grad_m', 'p_hydro_grad', 'p_frac_grad']
-    y_labels = ['Porosity [-]', 'Permeability [mD]', 'Depth [m]', 'Thickness [m]',
-                'Air loss [%]', 'T_grad [C/km]', 'p_hydro_grad [MPa/km]', 'p_frac_grad [MPa/km]']
+    y_vars = ['depth', 'h', 'phi', 'k',
+              'T_atm', 'T_water', 'p_hydro_grad', 'p_frac_grad',
+              'T_grad_m', 'T_grad_b', 'loss_m_air']
+    y_labels = ['Depth [m]', 'Thickness [m]', 'Porosity [-]', 'Permeability [mD]',
+                'T_atm [C]', 'T_water [C]', 'p_hydro_grad [MPa/km]', 'p_frac_grad [MPa/km]',
+                'T_grad [C/km]', 'T_grad0 [C]', 'Air loss [%]']
     y_converts = [1.0, 1.0, 1.0, 1.0,
-                  100.0, 1000.0, 1.0, 1.0]
+                  1.0, 1.0, 1.0, 1.0,
+                  1000.0, 1.0, 100.0]
     legend = [False, False, False, False,
               False, False, False, False,
-              False, False, False]
+              False, False, True]
 
     for sheet_name in sheet_names:
-        f, a = plt.subplots(2, 4, sharey=True)
+        f, a = plt.subplots(3, 4)  # , sharey=True)
         a = a.ravel()
 
         # Set size
@@ -78,9 +82,9 @@ if __name__ == '__main__':
         # a[10].legend(bbox_to_anchor=(1.0, 0.5), ncol=1)
 
         # Save Figure
-        savename = sheet_name + '_distribution.png'
+        savename = sheet_name + '_distribution_comp.png'
         plt.tight_layout()
         plt.savefig(savename, dpi=DPI)
         # plt.close()
 
-df.to_csv('distribution.csv')
+df.to_csv('distribution_comparison.csv')
