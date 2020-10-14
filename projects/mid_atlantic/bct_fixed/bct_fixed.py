@@ -219,7 +219,7 @@ if __name__ == '__main__':
     end = time.time()
     run_time = (end - start) / 3600.0
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")S
     f = open("history_runtime.txt", "a")
     f.write('\n')
     f.write('Last run : ' + dt_string + '\n')
