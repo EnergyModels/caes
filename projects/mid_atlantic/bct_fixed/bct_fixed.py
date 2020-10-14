@@ -169,8 +169,8 @@ if __name__ == '__main__':
     xlsx_filename = 'Battelle_data.xlsx'  # Excel file with inputs
     sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
     ncpus = 3  # number of cpus to use
-    capacity = 100  # [MW]
-    duration = 24  # [hr]
+    capacities = [50,100,150,200,250,300]  # [MW]
+    durations = [24,168]  # [hr]
     debug = False
 
     # ------------------
@@ -178,18 +178,20 @@ if __name__ == '__main__':
     # ------------------
     sweep_inputs = pd.DataFrame()
     for sheet_name in sheet_names:
-        # read in specified sheet of XLSX file
-        df_scenario = pd.read_excel(xlsx_filename, sheet_name=sheet_name)
-        # save sheet_name
-        df_scenario.loc[:, 'sheet_name'] = sheet_name
-        # append to collective dataframe
-        sweep_inputs = sweep_inputs.append(df_scenario)
+        for capacity in capacities:
+            for duration in durations:
+                # read in specified sheet of XLSX file
+                df_scenario = pd.read_excel(xlsx_filename, sheet_name=sheet_name)
+                # save sheet_name
+                df_scenario.loc[:, 'sheet_name'] = sheet_name
+                # add capacity and duration
+                df_scenario.loc[:, 'capacity_MW'] = capacity
+                df_scenario.loc[:, 'duration_hr'] = duration
+                # append to collective dataframe
+                sweep_inputs = sweep_inputs.append(df_scenario)
 
     # reset index (appending messes up indices)
     sweep_inputs = sweep_inputs.reset_index()
-
-    sweep_inputs.loc[:, 'capacity_MW'] = capacity
-    sweep_inputs.loc[:, 'duration_hr'] = duration
 
     # count number of cases
     n_cases = sweep_inputs.shape[0]
