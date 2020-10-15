@@ -7,7 +7,7 @@ import seaborn as sns
 # =====================================
 # data input
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig9_geophysical_parameters.png"
+savename = "Fig9_geophysical_parameters_V1.png"
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures

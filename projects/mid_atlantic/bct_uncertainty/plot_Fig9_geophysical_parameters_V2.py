@@ -7,30 +7,24 @@ import seaborn as sns
 # =====================================
 # data input
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig9_geophysical_parameters.png"
+savename = "Fig9_geophysical_parameters_V2.png"
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
 
-# y_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air", "depth_m", "thickness_m", "porosity",
-#           "permeability_mD"]
-# y_labels = ["Thermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)",
-#             "Air leakage\n(kg/s)", "Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)"]
-# y_converts = [1000.0, 1.0, 1.0, 100.0, 1.0, 1.0, 1.0, 1.0]
-# y_limits = [[], [], [], [], [], [], [], [], ]
+x_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air", "depth_m", "thickness_m", "porosity",
+          "permeability_mD"]
+x_labels = ["Thermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)",
+            "Air leakage\n(kg/s)", "Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)"]
+x_converts = [1000.0, 1.0, 1.0, 100.0, 1.0, 1.0, 1.0, 1.0]
+x_limits = [[], [], [], [], [], [], [], [], ]
+x_scales = ["linear", "linear", "linear", "linear", "linear", "linear", "linear", "log"]
 
-
-x_vars = ["depth_m", "thickness_m", "porosity", "permeability_mD"]
-x_labels = ["Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)"]
-x_converts = [ 1.0, 1.0, 1.0, 1.0]
-x_limits = [[], [], [], [], ]
-x_scales = ['linear','linear','linear','log']
-
-y_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air"]
-y_labels = ["Thermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)", "Air leakage\n(kg/s)"]
-y_converts = [1000.0, 1.0, 1.0, 100.0,]
-y_limits = [[], [], [], [], ]
-y_scales = ['linear','linear','linear','linear']
+y_vars = ["RTE"]
+y_labels = ["Efficiency (%)"]
+y_converts = [100.0, 1.0, 1.0, 100.0, ]
+y_limits = [[]]
+y_scales = ['linear']
 
 series_var = 'RTE'
 series_convert = 100.0
@@ -63,7 +57,7 @@ width = 10.0  # inches
 height = 6.5  # inches
 
 # Create plot
-f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', constrained_layout=True)
+f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', constrained_layout=True, squeeze=False)
 
 # Set size
 f.set_size_inches(width, height)
@@ -78,10 +72,12 @@ colors = sns.color_palette("colorblind")
 
 count = 0
 # iterate through x-variables
-for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(zip(x_vars, x_labels, x_converts, x_limits, x_scales)):
+for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
+        zip(x_vars, x_labels, x_converts, x_limits, x_scales)):
 
     # iterate through y-variables
-    for j, (y_var, y_label, y_convert, y_limit, y_scale) in enumerate(zip(y_vars, y_labels, y_converts, y_limits, y_scales)):
+    for j, (y_var, y_label, y_convert, y_limit, y_scale) in enumerate(
+            zip(y_vars, y_labels, y_converts, y_limits, y_scales)):
 
         # access subplot
         ax = a[j, i]

@@ -7,37 +7,28 @@ import seaborn as sns
 # =====================================
 # data input
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig9_geophysical_parameters.png"
+savename = "Fig9_geophysical_parameters_V3C.png"
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
 
-# y_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air", "depth_m", "thickness_m", "porosity",
-#           "permeability_mD"]
-# y_labels = ["Thermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)",
-#             "Air leakage\n(kg/s)", "Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)"]
-# y_converts = [1000.0, 1.0, 1.0, 100.0, 1.0, 1.0, 1.0, 1.0]
-# y_limits = [[], [], [], [], [], [], [], [], ]
+x_vars = ["permeability_mD"]
+x_labels = ["Permeability\n(mD)"]
+x_converts = [1.0]
+x_limits = [[]]
+x_scales = ['log']
 
-
-x_vars = ["depth_m", "thickness_m", "porosity", "permeability_mD"]
-x_labels = ["Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)"]
-x_converts = [ 1.0, 1.0, 1.0, 1.0]
-x_limits = [[], [], [], [], ]
-x_scales = ['linear','linear','linear','log']
-
-y_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air"]
-y_labels = ["Thermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)", "Air leakage\n(kg/s)"]
-y_converts = [1000.0, 1.0, 1.0, 100.0,]
-y_limits = [[], [], [], [], ]
-y_scales = ['linear','linear','linear','linear']
+y_vars = ["depth_m", "thickness_m", "porosity"]
+y_labels = ["Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)"]
+y_converts = [1.0, 1.0, 1.0]
+y_limits = [[], [], []]
+y_scales = ['linear', 'log', 'linear']
 
 series_var = 'RTE'
 series_convert = 100.0
 series_label = "Efficiency (%)"
 
-markersize = 1
-cmap = 'winter'
+markersize = 5
 # =====================================
 # process data
 # =====================================
@@ -49,7 +40,10 @@ df = pd.read_csv(results_filename)
 df = df.fillna(0.0)
 
 # Set efficiency to 0 for all errors
-df.loc[df.errors == False, 'RTE'] = 0.0
+# df.loc[df.errors == False, 'RTE'] = 0.0
+
+# Not interested in cases with thickness less than 5 m
+# df = df.loc[df.thickness_m > 5.0]
 
 # =====================================
 # create plots
@@ -63,7 +57,7 @@ width = 10.0  # inches
 height = 6.5  # inches
 
 # Create plot
-f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', constrained_layout=True)
+f, a = plt.subplots(len(y_vars), len(x_vars), sharex='col', sharey='row', constrained_layout=True, squeeze=False)
 
 # Set size
 f.set_size_inches(width, height)
@@ -78,19 +72,31 @@ colors = sns.color_palette("colorblind")
 
 count = 0
 # iterate through x-variables
-for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(zip(x_vars, x_labels, x_converts, x_limits, x_scales)):
+for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
+        zip(x_vars, x_labels, x_converts, x_limits, x_scales)):
 
     # iterate through y-variables
-    for j, (y_var, y_label, y_convert, y_limit, y_scale) in enumerate(zip(y_vars, y_labels, y_converts, y_limits, y_scales)):
+    for j, (y_var, y_label, y_convert, y_limit, y_scale) in enumerate(
+            zip(y_vars, y_labels, y_converts, y_limits, y_scales)):
 
         # access subplot
         ax = a[j, i]
 
         # get data and convert
-        x = x_convert * df.loc[:, x_var]
-        y = y_convert * df.loc[:, y_var]
-        c = series_convert * df.loc[:, series_var]
-        im = ax.scatter(x, y, c=c, s=markersize, cmap=cmap)
+        # x = x_convert * df.loc[:, x_var]
+        # y = y_convert * df.loc[:, y_var]
+
+        # plot successful combinations
+        ind = df.loc[:, 'RTE'] > 0.0
+        x = x_convert * df.loc[ind, x_var]
+        y = y_convert * df.loc[ind, y_var]
+        ax.scatter(x, y, c='black', s=markersize, marker='o')
+
+        # plot failures
+        ind = df.loc[:, 'RTE'] <= 0.0
+        x = x_convert * df.loc[ind, x_var]
+        y = y_convert * df.loc[ind, y_var]
+        ax.scatter(x, y, c='red', s=markersize, marker='X')
 
         # axes scales
         ax.set_xscale(x_scale)
@@ -141,11 +147,11 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(zip(x_vars, x_
 
 # Colorbar
 # collect all right hand side axes
-a_cbar = []
-for ax in a:
-    a_cbar.append(ax[-1])
-cbar = f.colorbar(im, ax=a_cbar, location='right', shrink=0.6)
-cbar.ax.set_ylabel(series_label)
+# a_cbar = []
+# for ax in a:
+#     a_cbar.append(ax[-1])
+# cbar = f.colorbar(im, ax=a_cbar, location='right', shrink=0.6)
+# cbar.ax.set_ylabel(series_label)
 
 # Adjust layout
 # plt.tight_layout()
