@@ -62,7 +62,7 @@ x_limit = [0.0,500.0]
 y_var = "RTE"
 y_label = "Efficiency (%)"
 y_convert = 100.0
-y_limit = [50.0,80.0]
+y_limit = [50.0, 90.0]
 
 # Create plot
 f, a = plt.subplots(1, 1, sharex='col', sharey='row', squeeze=False)

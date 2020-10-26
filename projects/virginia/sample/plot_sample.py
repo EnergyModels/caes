@@ -25,6 +25,7 @@ df = df.fillna(0.0)
 # add entries for hydrostatic pressure and MAOP
 df.loc[:, 'hydrostatic'] = 14.0235
 df.loc[:, 'MAOP'] = 17.34005775
+df.loc[:, 'fracture'] = 17.34005775 + (17.34005775 - 14.0235)
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")  # colorblind
@@ -80,7 +81,7 @@ for i in range(nrows):
         c_list = [colors[2], colors[0], colors[1]]
         markers = ['s', '>', '<']
         styles = ['-', '-', '-']
-        y_lims = [0.0, 20.0]
+        y_lims = [0.0, 24.0]
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
@@ -123,11 +124,16 @@ for i in range(nrows):
         vspace = 0.1
         # Hydrostatic
         ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
-        ax.text(df.time.max()/2.0, df.hydrostatic.max() - vspace, 'Hydrostatic Pressure', horizontalalignment='right',
+        ax.text(df.time.max(), df.hydrostatic.max() - 2.0*vspace, 'Hydrostatic Pressure', horizontalalignment='right',
                 verticalalignment='top', fontsize='medium')
         # MAOP
-        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=colors[3], linewidth=1.5, linestyle='--')
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
         ax.text(df.time.max(), df.MAOP.max() + vspace, 'Maximum Operating Pressure', horizontalalignment='right',
+                verticalalignment='bottom', fontsize='medium')
+
+        # Fracture
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'fracture'], c=colors[3], linewidth=1.5, linestyle='--')
+        ax.text(df.time.max(), df.fracture.max() + vspace, 'Fracture Pressure', horizontalalignment='right',
                 verticalalignment='bottom', fontsize='medium')
 
     if len(y_lims) == 2:
