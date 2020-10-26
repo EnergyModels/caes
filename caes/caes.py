@@ -64,8 +64,8 @@ class CAES:
         inputs['fuel_CO2'] = 2.75  # [kg CO2/kg fuel]
 
         # mechanical and generator losses
-        inputs['loss_mech'] = 1.0 - 0.95  # [-]
-        inputs['loss_gen'] = 1.0 - 0.975  # [-]
+        inputs['loss_mech'] = 1.0 - 0.99  # [-] https://doi.org/10.1016/B978-1-85617-793-1.00001-8
+        inputs['loss_gen'] = 1.0 - 0.989  # [-] https://www.siemens-energy.com/global/en/offerings/power-generation/generators/sgen-100a.html
 
         # wellbore
         inputs['r_w'] = 0.41 / 2.0  # wellbore radius [m]
