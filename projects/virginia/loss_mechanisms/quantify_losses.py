@@ -34,7 +34,7 @@ for i in range(9):
 
     # options to include/exclude various loss mechanisms
     inputs['include_interstage_dp'] = False
-    inputs['include_thermal_gradient'] = True
+    inputs['include_thermal_gradient'] = False
     inputs['include_air_leakage'] = False
     inputs['include_aquifer_dp'] = False
     inputs['include_pipe_dp_gravity'] = False
