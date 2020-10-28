@@ -56,9 +56,6 @@ class ICAES2(CAES):
                              'AIR') / 1000.0  # constant volume specific heat [kJ/kg-K]
         self.gamma = self.cp / self.cv  # heat capacity ratio [-]
 
-        # pump
-        self.eta_pump = inputs['eta_pump']
-
         # machinery - general
         if inputs['PR_type'] == 'fixed' or inputs['PR_type'] == 'free':
             self.PR_type = inputs['PR_type']
