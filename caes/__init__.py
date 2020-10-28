@@ -5,6 +5,7 @@ from .help_functions import remove_ext
 from .help_functions import create_dir
 from .caes import CAES
 from .icaes import ICAES
+from .icaes2 import ICAES2
 from .compressor_sizing import size_caes_cmp
 from .turbine_sizing import size_caes_trb
 from .plot_functions import plot_series

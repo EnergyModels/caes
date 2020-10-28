@@ -1,4 +1,4 @@
-from caes import ICAES
+from caes import ICAES2
 import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
@@ -55,71 +55,17 @@ def parameter_sweep(sweep_input, debug=True):
             print("r_f         : " + str(round(r_f, 3)))
 
         # create system
-        inputs = ICAES.get_default_inputs()
+        inputs = ICAES2.get_default_inputs()
         # user inputs
         inputs['depth'] = sweep_input['depth_m']  # porosity depth [m]
         inputs['h'] = sweep_input['thickness_m']  # porosity thickness [m]
         inputs['phi'] = sweep_input['porosity']  # formation porosity [-]
         inputs['k'] = sweep_input['permeability_mD']  # formation permeability [mD]
 
-        # Update machinery performance
-        if inputs['depth'] < 1500:
-            # compression - mass load per stage (ratio of water to air by mass)
-            inputs['ML_cmp1'] = 2.0
-            inputs['ML_cmp2'] = 1.5
-            inputs['ML_cmp3'] = 1.0
-            inputs['ML_cmp4'] = -1  # <0 - unused
-            inputs['ML_cmp5'] = -1  # <0 - unused
-
-            # expansion - mass loading per stage
-            inputs['ML_exp1'] = 1.0
-            inputs['ML_exp2'] = 1.5
-            inputs['ML_exp3'] = 2.0
-            inputs['ML_exp4'] = -1  # <0 - unused
-            inputs['ML_exp5'] = -1  # <0 - unused
-
-            # compression - pressure drop inbetween stages (fraction)
-            inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
-            inputs['delta_p_cmp23'] = 0.02
-            inputs['delta_p_cmp34'] = -1  # <0 - unused
-            inputs['delta_p_cmp45'] = -1  # <0 - unused
-
-            # compression - pressure drop inbetween stages (fraction)
-            inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
-            inputs['delta_p_exp23'] = 0.0
-            inputs['delta_p_exp34'] = -1  # <0 - unused
-            inputs['delta_p_exp45'] = -1  # <0 - unused
-        else:
-            # compression - mass load per stage (ratio of water to air by mass)
-            inputs['ML_cmp1'] = 2.0
-            inputs['ML_cmp2'] = 1.5
-            inputs['ML_cmp3'] = 1.0
-            inputs['ML_cmp4'] = 0.5  # <0 - unused
-            inputs['ML_cmp5'] = -1  # <0 - unused
-
-            # expansion - mass loading per stage
-            inputs['ML_exp1'] = 0.5
-            inputs['ML_exp2'] = 1.0
-            inputs['ML_exp3'] = 1.5
-            inputs['ML_exp4'] = 2.0  # <0 - unused
-            inputs['ML_exp5'] = -1  # <0 - unused
-
-            # compression - pressure drop inbetween stages (fraction)
-            inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
-            inputs['delta_p_cmp23'] = 0.02
-            inputs['delta_p_cmp34'] = 0.02  # <0 - unused
-            inputs['delta_p_cmp45'] = -1  # <0 - unused
-
-            # compression - pressure drop inbetween stages (fraction)
-            inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
-            inputs['delta_p_exp23'] = 0.02
-            inputs['delta_p_exp34'] = 0.0  # <0 - unused
-            inputs['delta_p_exp45'] = -1  # <0 - unused
-
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
         inputs['r_f'] = r_f  # [m]
-        system = ICAES(inputs=inputs)
+        system = ICAES2(inputs=inputs)
 
         # run single cycle and analyze
         system.single_cycle()
@@ -219,7 +165,7 @@ if __name__ == '__main__':
     end = time.time()
     run_time = (end - start) / 3600.0
     now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")S
+    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
     f = open("history_runtime.txt", "a")
     f.write('\n')
     f.write('Last run : ' + dt_string + '\n')

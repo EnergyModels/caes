@@ -1,4 +1,4 @@
-from caes import ICAES
+from caes import ICAES2
 import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
@@ -13,10 +13,10 @@ def parameter_sweep(sensitivity_input):
     start = time.time()
 
     # create system
-    inputs = ICAES.get_default_inputs()
+    inputs = ICAES2.get_default_inputs()
     for variable in sensitivity_input.index:
         inputs[variable] = sensitivity_input[variable]
-    system = ICAES(inputs=inputs)
+    system = ICAES2(inputs=inputs)
 
     # run single cycle and analyze
     system.single_cycle()

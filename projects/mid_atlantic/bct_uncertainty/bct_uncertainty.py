@@ -1,4 +1,4 @@
-from caes import ICAES, monteCarloInputs
+from caes import ICAES2, monteCarloInputs
 import pandas as pd
 import numpy as np
 from joblib import Parallel, delayed, parallel_backend
@@ -14,10 +14,10 @@ from datetime import datetime
 def parameter_sweep(sweep_input, debug=True):
     start = time.time()
 
-    if sweep_input['m_dot'] > 0.0 and sweep_input['r_f']  > 0.0:
+    if sweep_input['m_dot'] > 0.0 and sweep_input['r_f'] > 0.0:
 
         # create system
-        inputs = ICAES.get_default_inputs()
+        inputs = ICAES2.get_default_inputs()
 
         # uncertainty parameters - general
         inputs['T_grad_m'] = sweep_input['T_grad_m']  # [C/km]
@@ -35,32 +35,8 @@ def parameter_sweep(sweep_input, debug=True):
         inputs['m_dot'] = sweep_input['m_dot']  # [kg/s]
         inputs['r_f'] = sweep_input['r_f']  # [m]
 
-        # machine design parameters - modified based on depth
-        inputs['ML_cmp1'] = sweep_input['ML_cmp1']  # [-]
-        inputs['ML_cmp2'] = sweep_input['ML_cmp2']  # [-]
-        inputs['ML_cmp3'] = sweep_input['ML_cmp3']  # [-]
-        inputs['ML_cmp4'] = sweep_input['ML_cmp4']  # [-]
-        inputs['ML_cmp5'] = sweep_input['ML_cmp5']  # [-]
-
-        inputs['ML_exp1'] = sweep_input['ML_exp1']  # [-]
-        inputs['ML_exp2'] = sweep_input['ML_exp2']  # [-]
-        inputs['ML_exp3'] = sweep_input['ML_exp3']  # [-]
-        inputs['ML_exp4'] = sweep_input['ML_exp4']  # [-]
-        inputs['ML_exp5'] = sweep_input['ML_exp5']  # [-]
-
-        inputs['delta_p_cmp12'] = sweep_input['delta_p_cmp12']  # [-]
-        inputs['delta_p_cmp23'] = sweep_input['delta_p_cmp23']  # [-]
-        inputs['delta_p_cmp34'] = sweep_input['delta_p_cmp34']  # [-]
-        inputs['delta_p_cmp45'] = sweep_input['delta_p_cmp45']  # [-]
-
-        inputs['delta_p_exp12'] = sweep_input['delta_p_exp12']  # [-]
-        inputs['delta_p_exp23'] = sweep_input['delta_p_exp23']  # [-]
-        inputs['delta_p_exp34'] = sweep_input['delta_p_exp34']  # [-]
-        inputs['delta_p_exp45'] = sweep_input['delta_p_exp45']  # [-]
-
         # all other parameters - taken as default
-
-        system = ICAES(inputs=inputs)
+        system = ICAES2(inputs=inputs)
 
         # run single cycle and analyze
         system.single_cycle()
@@ -135,9 +111,9 @@ if __name__ == '__main__':
             # ------------------------
 
             # temperature gradient (deg C /km) - Triangle
-            left = 16.0/1000.0 # convert to deg C / ,
-            mode = 23.0/1000.0
-            right = 24.0/1000.0
+            left = 16.0 / 1000.0  # convert to deg C / ,
+            mode = 23.0 / 1000.0
+            right = 24.0 / 1000.0
             df_row.loc[:, 'T_grad_m'] = np.random.triangular(left, mode, right, size=iterations)
 
             # aquifer pressure gradient (MPa / km) - Triangle
@@ -152,9 +128,9 @@ if __name__ == '__main__':
             df_row.loc[:, 'p_frac_grad'] = np.random.uniform(low=low, high=high, size=iterations)
 
             # air leakage - Triangle
-            left = 0.0/100.0 # convert from % to fraction
-            mode = 3.5/100.0
-            right = 20.0/100.0
+            left = 0.0 / 100.0  # convert from % to fraction
+            mode = 3.5 / 100.0
+            right = 20.0 / 100.0
             df_row.loc[:, 'loss_m_air'] = np.random.triangular(left, mode, right, size=iterations)
 
             # depth
