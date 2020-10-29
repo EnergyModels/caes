@@ -45,15 +45,8 @@ sens_var_rename = {'steps': 'Solver steps',
                    'depth_ocean': 'Ocean depth',
                    'h_ocean': 'Ocean convection coefficient',
                    'T_ocean': 'Ocean temperature',
-                   'eta_pump': 'Pump efficiency',
-                   'ML_cmp1': 'Compressor Stage 1 Mass Loading',
-                   'ML_cmp2': 'Compressor Stage 2 Mass Loading',
-                   'ML_cmp3': 'Compressor Stage 3 Mass Loading',
-                   'delta_p_cmp23': 'Compressor interstage pressure drop',
-                   'ML_exp1': 'Expander Stage 1 Mass Loading',
-                   'ML_exp2': 'Expander Stage 2 Mass Loading',
-                   'ML_exp3': 'Expander Stage 3 Mass Loading',
-                   'delta_p_exp12': 'Compressor interstage pressure drop', }
+                   'n_cmp1': 'Compressor Polytropic Index',
+                   'n_exp1': 'Expander Polytropic Index'}
 
 for plt_num in range(2):
     # ------------------------

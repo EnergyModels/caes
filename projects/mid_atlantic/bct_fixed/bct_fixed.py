@@ -115,7 +115,7 @@ if __name__ == '__main__':
     xlsx_filename = 'Battelle_data.xlsx'  # Excel file with inputs
     sheet_names = ['LK1', 'MK1-3', 'UJ1']  # Excel sheet_names
     ncpus = 3  # number of cpus to use
-    capacities = [50, 100, 150, 200, 250]  # [MW]
+    capacities = [100, 150, 200]  # [MW]
     durations = [10, 24, 168]  # [hr]
     debug = False
 

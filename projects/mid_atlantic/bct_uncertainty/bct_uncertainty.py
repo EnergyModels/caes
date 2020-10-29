@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # ==============
     sizing_results = "study_results.csv"
     duration_hr = 24
-    capacity_MW = 150
+    capacity_MW = 200
     formations = ['MK1-3', 'LK1', 'UJ1']  # column name: "sheet_name"
     iterations = 100  # number of runs per location
     ncpus = 3  # default number of cpus to use
