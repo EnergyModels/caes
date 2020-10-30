@@ -29,6 +29,7 @@ df.loc[:, 'fracture'] = 17.34005775 + (17.34005775 - 14.0235)
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")  # colorblind
+colors2 = sns.color_palette("bright")
 
 # set style
 sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
@@ -132,7 +133,7 @@ for i in range(nrows):
                 verticalalignment='bottom', fontsize='medium')
 
         # Fracture
-        ax.plot(df.loc[:, 'time'], df.loc[:, 'fracture'], c=colors[3], linewidth=1.5, linestyle='--')
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'fracture'], c=colors2[3], linewidth=1.5, linestyle='--')
         ax.text(df.time.max(), df.fracture.max() + vspace, 'Fracture Pressure', horizontalalignment='right',
                 verticalalignment='bottom', fontsize='medium')
 
