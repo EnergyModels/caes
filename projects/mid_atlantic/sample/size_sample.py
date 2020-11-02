@@ -1,4 +1,4 @@
-from caes import ICAES
+from caes import ICAES2
 import pandas as pd
 from joblib import Parallel, delayed, parallel_backend
 import time
@@ -46,7 +46,7 @@ def parameter_sweep(sweep_input, debug=True):
             print("r_f         : " + str(round(r_f, 3)))
 
         # create system
-        inputs = ICAES.get_default_inputs()
+        inputs = ICAES2.get_default_inputs()
         # user inputs
         inputs['depth'] = sweep_input['depth_m']  # porosity depth [m]
         inputs['h'] = sweep_input['thickness_m']  # porosity thickness [m]
@@ -57,7 +57,7 @@ def parameter_sweep(sweep_input, debug=True):
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
         inputs['r_f'] = r_f  # [m]
-        system = ICAES(inputs=inputs)
+        system = ICAES2(inputs=inputs)
 
         # run single cycle and analyze
         system.single_cycle()
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     h = 297.50  # [m]
     phi = 0.2820 # [-]
     k = 236.1424  # [mD]
-    capacity = 100  # [MW]
+    capacity = 200  # [MW]
     duration = 24  # [hr]
     r_w = 0.41/2.0  # [m]
 

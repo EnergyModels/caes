@@ -25,9 +25,11 @@ df = df.fillna(0.0)
 # add entries for hydrostatic pressure and MAOP
 df.loc[:, 'hydrostatic'] = 11.2316
 df.loc[:, 'MAOP'] = 13.8879
+df.loc[:, 'fracture'] = 13.8879 + (13.8879 - 11.2316)
 
 # Set Color Palette
 colors = sns.color_palette("colorblind")  # colorblind
+colors2 = sns.color_palette("bright")
 
 # set style
 sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatino", "serif"]})
@@ -62,25 +64,25 @@ for i in range(nrows):
     # indicate y-variables for each subplot(row)
 
     if i == 0:
-        y_label = 'Power\n[MW]'
+        y_label = 'Power [MW]'
         y_convert = 1.0e-3
         y_vars = ['pwr_cmp', 'pwr_exp']
         y_var_labels = ['Compressor', 'Turbine']
-        c_list = [colors[0], colors[1]]
+        c_list = [colors[2], colors[1]]
         markers = ['^', 'v']
         styles = ['-', '-']
-        y_lims = [0.0, 150.0]
+        y_lims = [0.0, 350.0]
 
 
     else:  # elif i == 1:
-        y_label = 'Pressure\n[MPa]'
+        y_label = 'Pressure [MPa]'
         y_convert = 1.0
-        y_vars = ['p3', 'press_cmp', 'press_exp']
-        y_var_labels = ['Aquifer', 'Compressor', 'Turbine']
-        c_list = [colors[2], colors[0], colors[1]]
+        y_vars = ['press_cmp', 'press_exp', 'p3']
+        y_var_labels = ['Compressor', 'Turbine', 'Aquifer', ]
+        c_list = [colors[2], colors[1], colors[0]]
         markers = ['s', '>', '<']
         styles = ['-', '-', '-']
-        y_lims = [5.0, 15.0]
+        y_lims = [0.0, 17.5]
 
     for y_var, y_var_label, c, marker, style in zip(y_vars, y_var_labels, c_list, markers, styles):
         # get data
@@ -112,9 +114,9 @@ for i in range(nrows):
     # leg.append(txt)
 
     # legend
-    if i==1:
-    # if len(y_var_labels) > 1:
-    #     l = ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), fancybox=True, fontsize=12)
+    if i == 1:
+        # if len(y_var_labels) > 1:
+        #     l = ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5), fancybox=True, fontsize=12)
         l = ax.legend(loc='center', bbox_to_anchor=(0.5, -0.3), fancybox=True, fontsize=12, ncol=3)
         leg.append(l)
 
@@ -123,11 +125,16 @@ for i in range(nrows):
         vspace = 0.1
         # Hydrostatic
         ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
-        ax.text(df.time.max()/2.0, df.hydrostatic.max() - vspace, 'Hydrostatic Pressure', horizontalalignment='right',
+        ax.text(df.time.max(), df.hydrostatic.max() - 2.0 * vspace, 'Hydrostatic Pressure', horizontalalignment='right',
                 verticalalignment='top', fontsize='medium')
         # MAOP
-        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=colors[3], linewidth=1.5, linestyle='--')
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
         ax.text(df.time.max(), df.MAOP.max() + vspace, 'Maximum Operating Pressure', horizontalalignment='right',
+                verticalalignment='bottom', fontsize='medium')
+
+        # Fracture
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'fracture'], c=colors2[3], linewidth=1.5, linestyle='--')
+        ax.text(df.time.max(), df.fracture.max() + vspace, 'Fracture Pressure', horizontalalignment='right',
                 verticalalignment='bottom', fontsize='medium')
 
     if len(y_lims) == 2:
