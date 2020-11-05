@@ -197,6 +197,7 @@ class CAES:
             print('Warning: r_f must by => than r_w, r_f set to r_w')
             self.r_f = inputs['r_w']  # radius [m]
         self.h = inputs['h']  # thickness [m]
+        self.h_plume = min(self.r_f, self.h)
         self.phi = inputs['phi']  # porosity [-]
         self.Slr = inputs['Slr']  # residual liquid fraction [-]
         self.k = inputs['k']  # permeability [mD]
@@ -224,7 +225,7 @@ class CAES:
         self.m_dot = inputs['m_dot']
 
         # calculated storage volume and mass storage
-        self.V_res = self.h * pi * self.r_f ** 2  # storage total volume [m^3]
+        self.V_res = self.h_plume * pi * self.r_f ** 2  # storage total volume [m^3]
         self.V = self.V_res * self.phi * (1.0 - self.Slr)  # volume available for air storage [m^3]
         self.m_store_min = self.p_store_min * 1e3 * self.V * self.M / (self.R * self.T_store_init)  # minimum [kg]
         self.m_store_max = self.p_store_max * 1e3 * self.V * self.M / (self.R * self.T_store_init)  # maximum [kg]
@@ -675,7 +676,7 @@ class CAES:
             Q = m_dot / rho  # radial flow rate [m3/s]
 
             # aquifer pressure drop function
-            dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h, p_f=p,
+            dp = aquifer_dp(Q=Q, r_f=self.r_f, r_w=self.r_w, k=self.k, mu=mu, h=self.h_plume, p_f=p,
                             T=T,
                             Z=Z)  # [MPa]
 
