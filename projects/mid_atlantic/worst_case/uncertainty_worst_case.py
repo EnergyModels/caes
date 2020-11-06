@@ -43,17 +43,19 @@ def parameter_sweep(sweep_input, debug=True):
         system = ICAES2(inputs=inputs)
 
         # run single cycle and analyze
-        system.single_cycle()
-        results = system.analyze_performance()
+        try:
+            system.single_cycle()
+            results = system.analyze_performance()
+            end = time.time()
+            results['solve_time'] = end - start
 
-        end = time.time()
-        results['solve_time'] = end - start
+            # print out RTE
+            print(results['RTE'])
 
-        # print out RTE
-        print(results['RTE'])
-
-        # combine inputs and results to return in single series
-        single_output = pd.concat([sweep_input, results])
+            # combine inputs and results to return in single series
+            single_output = pd.concat([sweep_input, results])
+        except:
+            single_output = sweep_input
     else:
         single_output = sweep_input
     return single_output

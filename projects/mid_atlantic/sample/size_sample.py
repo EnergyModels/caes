@@ -54,6 +54,10 @@ def parameter_sweep(sweep_input, debug=True):
         inputs['k'] = sweep_input['permeability_mD']  # formation permeability [mD]
         inputs['r_w'] = sweep_input['r_w']  # well radius [m]
 
+        # machinery polytropic index
+        inputs['n_cmp1'] = sweep_input['n_cmp1']
+        inputs['n_exp1'] = sweep_input['n_exp1']
+
         # current guess/iteration
         inputs['m_dot'] = m_dot  # [kg/s]
         inputs['r_f'] = r_f  # [m]
@@ -109,18 +113,21 @@ if __name__ == '__main__':
     # NY ISO Conditions
     depth = 1123.16  # [m]
     h = 297.50  # [m]
-    phi = 0.2820 # [-]
+    phi = 0.2820  # [-]
     k = 236.1424  # [mD]
     capacity = 200  # [MW]
     duration = 24  # [hr]
-    r_w = 0.41/2.0  # [m]
+    r_w = 0.41 / 2.0  # [m]
+
+    polytropic_index = 1.21
 
     # ------------------
     # create sweep_inputs dataframe
     # ------------------
     sweep_inputs = pd.DataFrame()
 
-    entries = ['depth_m', 'thickness_m', 'porosity', 'capacity_MW', 'duration_hr', 'permeability_mD']
+    entries = ['depth_m', 'thickness_m', 'porosity', 'capacity_MW', 'duration_hr', 'permeability_mD', 'n_cmp1',
+               'n_exp1']]
     s = pd.Series(index=entries)
     s['depth_m'] = depth
     s['thickness_m'] = h
@@ -129,6 +136,8 @@ if __name__ == '__main__':
     s['duration_hr'] = duration
     s['permeability_mD'] = k
     s['r_w'] = r_w
+    s['n_cmp1'] = polytropic_index
+    s['n_exp1'] = polytropic_index
     sweep_inputs = sweep_inputs.append(s, ignore_index=True)
 
     # reset index (appending messes up indices)

@@ -72,8 +72,13 @@ def parameter_sweep(sweep_input, debug=True):
         system = ICAES2(inputs=inputs)
 
         # run single cycle and analyze
-        system.single_cycle()
-        results = system.analyze_performance()
+        try:
+            system.single_cycle()
+            results = system.analyze_performance()
+        except:
+            results = pd.Series()
+            results['RTE'] = 0.0
+            break
 
         # extract results of interest
         kW_out_actual = results['kW_out_avg']
