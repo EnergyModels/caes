@@ -20,7 +20,7 @@ height = 5.5  # inches
 # %%=============================================================================#
 # Figure 6 - LCOE
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig8_ISO_location_results.png"
+savename = "FigSI1_ISO_location_results.png"
 # =============================================================================#
 y_vars = ["RTE", "duration", "kW_out_avg"]
 y_labels = ["Efficiency\n(%)", "Duration\n(hr)", "Power\n(MW)"]

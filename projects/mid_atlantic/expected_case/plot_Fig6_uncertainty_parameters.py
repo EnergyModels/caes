@@ -8,7 +8,7 @@ import matplotlib.patches as mpatches
 # =====================================
 # data input
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig10_geophysical_parameters_V1.png"
+savename = "Fig6_uncertainty_parameters.png"
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
@@ -24,7 +24,7 @@ x_scales = ["linear", "linear", "linear", "linear", "linear", "log", "linear", "
 y_var = "RTE"
 y_label = "Efficiency (%)"
 y_convert = 100.0
-y_limit = [55.0, 80.0]
+y_limit = [40.0, 80.0]
 y_scale = 'linear'
 
 formations = ['MK1-3', 'LK1',  'UJ1']
@@ -114,13 +114,13 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
     count = count + 1
 
     # # Add vertical line for depth
-    if i == 4 and len(y_limit) == 2:
-        x = [1500, 1500]
-        ax.plot(x, y_limit, 'k', linestyle='--')
-        dx = 0
-        dy = 4
-        ax.text(x[0] - dx, y_limit[1] - dy, '3 stg ', horizontalalignment='right')
-        ax.text(x[0] + dx, y_limit[1] - dy, ' 4 stg', horizontalalignment='left')
+    # if i == 4 and len(y_limit) == 2:
+    #     x = [1500, 1500]
+    #     ax.plot(x, y_limit, 'k', linestyle='--')
+    #     dx = 0
+    #     dy = 4
+    #     ax.text(x[0] - dx, y_limit[1] - dy, '3 stg ', horizontalalignment='right')
+    #     ax.text(x[0] + dx, y_limit[1] - dy, ' 4 stg', horizontalalignment='left')
 
 # Legend
 # y_pos = j / 2 + 0.5

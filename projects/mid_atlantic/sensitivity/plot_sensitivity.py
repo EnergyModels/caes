@@ -194,7 +194,7 @@ for plt_num in range(2):
         sns.despine(left=True, bottom=True, ax=ax)
 
         # Adjust ticks to show perturbation + mean value
-        # ax.xaxis.set_major_locator(plt.MaxNLocator(3))  # Ensure 3 ticks
+        ax.xaxis.set_major_locator(plt.MaxNLocator(4))  # Ensure 3 ticks
         # ax.xaxis.set_major_locator(plt.MaxNLocator(n_cases))  # Ensure 3 ticks
 
         # # locs, labels = plt.xticks()

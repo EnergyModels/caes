@@ -111,4 +111,4 @@ plt.subplots_adjust(top=0.95,
                     hspace=0.2,
                     wspace=0.2)
 # save
-plt.savefig('Fig5_Distance_v_Depth.png', dpi=300)
+plt.savefig('Fig7_Distance_v_Depth.png', dpi=300)

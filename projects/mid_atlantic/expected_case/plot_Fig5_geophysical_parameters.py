@@ -8,7 +8,7 @@ import matplotlib.patches as mpatches
 # =====================================
 # data input
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig9_geophysical_parameters_V3D.png"
+savename = "Fig5_geophysical_parameters.png"
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
@@ -19,7 +19,7 @@ x_convert = 1.0
 x_limit = []
 x_scale = 'log'
 
-y_vars = ["porosity", "thickness_m",]
+y_vars = ["porosity", "thickness_m", ]
 y_labels = ["Porosity (-)", "Thickness (m)"]
 y_converts = [1.0, 1.0]
 y_limits = [[], []]
@@ -60,7 +60,8 @@ width = 10.0  # inches
 height = 6.5  # inches
 
 # Create plot
-f, a = plt.subplots(len(y_vars), len(df.sheet_name.unique()), sharex=True, sharey='row', squeeze=False)
+f, a = plt.subplots(len(y_vars), len(df.sheet_name.unique()), sharex=True, sharey='row', squeeze=False,
+                    constrained_layout=True)
 
 # Set size
 f.set_size_inches(width, height)
@@ -70,8 +71,12 @@ sns.set_style("white", {"font.family": "serif", "font.serif": ["Times", "Palatin
 sns.set_context("paper")
 sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 
-# Set Color Palette
-colors = sns.color_palette("colorblind")
+# color map
+cmap = 'RdYlGn'
+
+# access min and max RTE for equal colobars
+vmin = 100 * df.loc[:, 'RTE'].min()
+vmax = 100 * df.loc[:, 'RTE'].max()
 
 count = 0
 # iterate through y-variables
@@ -85,20 +90,25 @@ for j, (y_var, y_label, y_convert, y_limit, y_scale) in enumerate(
         ax = a[j, i]
 
         # get data and convert
-        # x = x_convert * df.loc[:, x_var]
-        # y = y_convert * df.loc[:, y_var]
+        df2 = df[(df.loc[:, 'sheet_name'] == formation)]
+        x = x_convert * df2.loc[:, x_var]
+        y = y_convert * df2.loc[:, y_var]
+        c = 100 * df2.loc[:, 'RTE']
+
+        # plot
+        im = ax.scatter(x, y, c=c, s=markersize, marker='.', cmap=cmap, vmin=vmin, vmax=vmax)
 
         # plot successful combinations
-        df2 = df[(df.loc[:, 'RTE'] > 0.0) & (df.loc[:, 'sheet_name'] == formation)]
-        x = x_convert * df2.loc[:, x_var]
-        y = y_convert * df2.loc[:, y_var]
-        ax.scatter(x, y, c='black', s=markersize, marker='.')
+        # df2 = df[(df.loc[:, 'RTE'] > 0.4) & (df.loc[:, 'sheet_name'] == formation)]
+        # x = x_convert * df2.loc[:, x_var]
+        # y = y_convert * df2.loc[:, y_var]
+        # ax.scatter(x, y, c='black', s=markersize, marker='.')
 
         # plot failures
-        df2 = df[(df.loc[:, 'RTE'] <= 0.0) & (df.loc[:, 'sheet_name'] == formation)]
-        x = x_convert * df2.loc[:, x_var]
-        y = y_convert * df2.loc[:, y_var]
-        ax.scatter(x, y, c='red', s=markersize, marker='.')
+        # df2 = df[(df.loc[:, 'RTE'] <= 0.4) & (df.loc[:, 'sheet_name'] == formation)]
+        # x = x_convert * df2.loc[:, x_var]
+        # y = y_convert * df2.loc[:, y_var]
+        # ax.scatter(x, y, c='red', s=markersize, marker='.')
 
         # axes scales
         ax.set_xscale(x_scale)
@@ -137,17 +147,23 @@ for j, (y_var, y_label, y_convert, y_limit, y_scale) in enumerate(
         count = count + 1
 
 # Legend
-patches = [mpatches.Patch(color='black', label='Feasible'), mpatches.Patch(color='red', label='Infeasible')]
-a[1, 1].legend(handles=patches, bbox_to_anchor=(0.5, -0.275), loc="upper center", ncol=2)
-
+# patches = [mpatches.Patch(color='black', label='RTE > 40%'), mpatches.Patch(color='red', label='RTE <= 40%')]
+# a[1, 1].legend(handles=patches, bbox_to_anchor=(0.5, -0.275), loc="upper center", ncol=2)
+a_cbar = []
+for ax in a:
+    a_cbar.append(ax[-1])
+cbar = f.colorbar(im, ax=a_cbar, location='right', shrink=0.6)
+# cbar = f.colorbar(im, ax=a[1, 1], orientation='horizontal', pad=0.2)
+cbar.ax.set_title('RTE [%]')
+# cbar.set_label('RTE [%]', rotation=0)
 # Adjust layout
 # plt.tight_layout()
-plt.subplots_adjust(top=0.9,
-bottom=0.15,
-left=0.125,
-right=0.9,
-hspace=0.2,
-wspace=0.2)
+plt.subplots_adjust(top=0.848,
+                    bottom=0.13,
+                    left=0.125,
+                    right=0.85,
+                    hspace=0.2,
+                    wspace=0.2)
 f.align_ylabels(a[:, 0])  # align y labels
 
 # Save Figure
