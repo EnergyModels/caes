@@ -20,19 +20,19 @@ height = 5.5  # inches
 # %%=============================================================================#
 # Figure 6 - LCOE
 results_filename = "uncertainty_results_all.csv"
-savename = "FigSI1_ISO_location_results.png"
+savename = "FigSI1_ISO_location_results_eff.png"
 # =============================================================================#
-y_vars = ["RTE", "duration", "kW_out_avg"]
-y_labels = ["RTE\n[%]", "Duration\n(hr)", "Power\n(MW)"]
-y_converts = [100.0, 1.0, 1e-3]
-y_limits = [[], [], []]
+y_vars = ["RTE"]
+y_labels = ["RTE [%]"]
+y_converts = [100.0]
+y_limits = [[]]
 
 pal = 'colorblind'
 
 df_raw = pd.read_csv(results_filename)
 
 # select locations of interest and provide case to label
-cases = ['PJM', ' New England ISO', 'ISO NY']
+cases = ['PJM', 'New England ISO', 'ISO NY']
 sheet_names = ['LK1', 'LK1', 'LK1']
 xs = [-49904.42, 385475.58, 147995.58]
 ys = [4108774.11, 4504574.11, 4464994.11]
@@ -54,36 +54,31 @@ df = df.fillna(0.0)
 # save location results
 df.to_csv('ISO_location_results.csv')
 
-f, a = plt.subplots(1, 3, sharey=True)
+f, a = plt.subplots(1, 1, sharey=True, squeeze=False)
 a = a.ravel()
 
 # Set size
 f.set_size_inches(width, height)
-legend = [False, False, False]
-for ax, y_var, y_label, y_convert, y_limit, leg in zip(a, y_vars, y_labels, y_converts, y_limits, legend):
+# legend = [False, False, False]
+for ax, y_var, y_label, y_convert, y_limit, in zip(a, y_vars, y_labels, y_converts, y_limits):
     df.loc[:, y_var] = df.loc[:, y_var] * y_convert
-    sns.histplot(data=df, x=y_var, ax=ax, hue='Analysis Case', multiple='dodge', element='step', fill=False, legend=leg,
+    sns.histplot(data=df, x=y_var, ax=ax, hue='Analysis Case', multiple='dodge', element='step', fill=False, legend=True,
                  palette=pal,)
     ax.set_xlabel(y_label)
+    ax.set_xlim(left=0.0, right=100.0)
     # sns.distplot(df[y_var], ax=ax)
 
 # a[1].legend(bbox_to_anchor=(0.5, -0.15), ncol=3)
 
-lines = []
-for case, color in zip(cases, sns.color_palette(pal)):
-    lines.append(mlines.Line2D([], [], color=color, linestyle='-', marker='None', markersize=9,
-                               markerfacecolor='None', markeredgewidth=1.5,
-                               label=case))
-a[1].legend(handles=lines, bbox_to_anchor=(0.5, -0.15), loc="upper center", title='Location', ncol=3)
+# lines = []
+# for case, color in zip(cases, sns.color_palette(pal)):
+#     lines.append(mlines.Line2D([], [], color=color, linestyle='-', marker='None', markersize=9,
+#                                markerfacecolor='None', markeredgewidth=1.5,
+#                                label=case))
+# a[1].legend(handles=lines, bbox_to_anchor=(0.5, -0.15), loc="upper center", title='Location', ncol=3)
 
 plt.subplots_adjust(top=0.88, bottom=0.23, left=0.1, right=0.9, hspace=0.205, wspace=0.2)
 
 # Save Figure
 plt.savefig(savename, dpi=DPI)
 # plt.close()
-
-df = df.fillna(0.0)
-for case in df.loc[:, 'Analysis Case'].unique():
-    ind = (df.loc[:, 'Analysis Case'] == case) & (df.loc[:, 'RTE'] == 0.0)
-    print(case)
-    print(str(sum(ind)))
