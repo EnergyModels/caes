@@ -12,9 +12,19 @@ df = pd.DataFrame()
 
 # iterate through directories and store results
 for case in case_dict.keys():
+    # load and save case name
     os.chdir(case)
     df_case = pd.read_csv('uncertainty_results_all.csv')
     df_case.loc[:, 'case'] = case
+
+    # fill nan
+    df = df.fillna(0.0)
+
+    # print out average RTE
+    print(case)
+    print(df_case.loc[:,'RTE'].mean())
+
+    # save
     df = df.append(df_case, ignore_index=True)
     os.chdir(rootdir)
 

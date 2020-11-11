@@ -6,33 +6,32 @@ import numpy as np
 # common inputs
 resolution = 500
 filename = "sensitivity_results.csv"
-n_display = 5  # max number of variables to display
 
 # dictionary to rename sensitivty variables
 sens_var_rename = {'steps': 'Solver steps',
-                   'T_atm': 'Atmospheric temperature',
-                   'p_atm': 'Atmospheric pressure',
+                   'T_atm': 'Atmospheric temperature, $T_{atm}$ ',
+                   'p_atm': 'Atmospheric pressure, $p_{atm}$',
                    'T_water': 'Water temperature',
                    'p_water': 'Water pressure',
                    'fuel_HHV': 'Fuel HHV',
                    'fuel_CO2': 'Fuel Emission Factor',
-                   'loss_mech': 'Mechanical loss',
-                   'loss_gen': 'Generator loss',
-                   'r_w': 'Well radius',
-                   'epsilon': 'Pipe roughness',
-                   'depth': 'Depth',
-                   'p_hydro_grad': 'Aquifer pressure gradient',
-                   'p_frac_grad': 'Fracture pressure gradient',
-                   'safety_factor': 'Safety Factor',
-                   'T_grad_m': 'Geothermal gradient',
-                   'T_grad_b': 'Temperature gradient - intercept',
+                   'loss_mech': 'Mechanical loss, $(1 - \eta_{mech})$ ',
+                   'loss_gen': 'Generator loss, $(1 - \eta_{gen})$',
+                   'r_w': 'Well radius, $r_w$ ',
+                   'epsilon': 'Pipe roughness, $\epsilon$ ',
+                   'depth': 'Depth, $z$ ',
+                   'p_hydro_grad': 'Aquifer pressure gradient, $\partial p_{aq} / \partial z}$',
+                   'p_frac_grad': 'Fracture pressure gradient, $\partial p_f / \partial z}$',
+                   'safety_factor': 'Safety Factor, $SF$',
+                   'T_grad_m': 'Geothermal gradient, $\partial T / \partial z}$',
+                   'T_grad_b': 'Geothermal intercept, $T_0$',
                    'r_f': 'Formation radius',
-                   'h': 'Thickness',
-                   'phi': 'Porosity',
+                   'h': 'Thickness, $h$',
+                   'phi': 'Porosity, $\phi$',
                    'slr': 'Liquid residual fraction',
-                   'k': 'Permeability',
-                   'loss_m_air': 'Air leakage',
-                   'm_dot': 'Mass flow rate',
+                   'k': 'Permeability, $k$',
+                   'loss_m_air': 'Air leakage, $\.{m}_{leak}$',
+                   'm_dot': 'Mass flow rate, $\.{m}$',
                    'mach_limit': 'Mach limit',
                    't_pipe': 'Pipe wall thickness',
                    't_cement': 'Cement thickness',
@@ -48,7 +47,7 @@ sens_var_rename = {'steps': 'Solver steps',
                    'n_cmp1': 'Compressor Polytropic Index',
                    'n_exp1': 'Expander Polytropic Index'}
 
-for plt_num in range(2):
+for plt_num in range(3):
     # ------------------------
     # plot version inputs
     # ------------------------
@@ -59,6 +58,21 @@ for plt_num in range(2):
         conversions = [100.0, 1e-3, 1e-3]
         ncols = 1
         nrows = 3
+        n_display = 5  # max number of variables to display
+
+        width = 4.5  # inches
+        height = 5.5  # inches
+    elif plt_num == 1:  # Select
+        savename = 'sensitivity_results_eff.png'
+        variables = ['RTE']
+        varLabels = ['RTE [%]']
+        conversions = [100.0]
+        ncols = 1
+        nrows = 1
+        n_display = 15
+
+        width = 4.5  # inches
+        height = 4.5  # inches
     else:  # All
         savename = 'sensitivity_results_all.png'
         variables = ['RTE', 'kg_water_per_kWh', 'kWh_in', 'kWh_out', 'kW_in_avg', 'kW_out_avg']
@@ -67,6 +81,10 @@ for plt_num in range(2):
         conversions = [100.0, 1.0, 1e-3, 1e-3, 1e-3, 1e-3]
         ncols = 2
         nrows = 3
+        n_display = 5  # max number of variables to display
+
+        width = 7.48  # inches
+        height = 5.5  # inches
 
     # ------------------------
     # Begin program
@@ -146,7 +164,7 @@ for plt_num in range(2):
                       (0.847, 0.000, 0.067)]  # Custom palette
 
     # Initialize the matplotlib figure
-    f, a = plt.subplots(ncols=ncols, nrows=nrows)
+    f, a = plt.subplots(ncols=ncols, nrows=nrows, squeeze=False)
     axes = a.ravel()
 
     # Set size
@@ -155,12 +173,7 @@ for plt_num in range(2):
     # Single column: 90mm = 3.54 in
     # 1.5 column: 140 mm = 5.51 in
     # 2 column: 190 mm = 7.48 i
-    if plt_num == 0:
-        width = 4.5  # inches
-        height = 5.5  # inches
-    else:
-        width = 7.48  # inches
-        height = 5.5  # inches
+
     f.set_size_inches(width, height)
 
     # Set style and context
@@ -218,6 +231,8 @@ for plt_num in range(2):
     # legend
     if plt_num == 0:
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.4), ncol=2)
+    elif plt_num == 1:
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
     else:
         ax.legend(loc='upper right', bbox_to_anchor=(-0.1, -0.3), ncol=2)
 

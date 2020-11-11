@@ -22,7 +22,7 @@ x_limits = [[], [], [], [], [0.0, 5500.0], [], [], [], ]
 x_scales = ["linear", "linear", "linear", "linear", "linear", "log", "linear", "log"]
 
 y_var = "RTE"
-y_label = "Efficiency (%)"
+y_label = "RTE [%]"
 y_convert = 100.0
 y_limit = [40.0, 80.0]
 y_scale = 'linear'

@@ -25,7 +25,7 @@ savename = "Fig_comparison.png"
 case_dict = {'best_case': 'Best (n=1.04)', 'expected_case': 'Expected (n=1.1)', 'worst_case': 'Worst (n=1.21)'}
 
 y_var = "RTE"
-y_label = "Efficiency (%)"
+y_label = "RTE [%]"
 y_convert = 100.0
 y_limit = []
 

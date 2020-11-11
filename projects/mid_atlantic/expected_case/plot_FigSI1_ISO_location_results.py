@@ -23,7 +23,7 @@ results_filename = "uncertainty_results_all.csv"
 savename = "FigSI1_ISO_location_results.png"
 # =============================================================================#
 y_vars = ["RTE", "duration", "kW_out_avg"]
-y_labels = ["Efficiency\n(%)", "Duration\n(hr)", "Power\n(MW)"]
+y_labels = ["RTE\n[%]", "Duration\n(hr)", "Power\n(MW)"]
 y_converts = [100.0, 1.0, 1e-3]
 y_limits = [[], [], []]
 
