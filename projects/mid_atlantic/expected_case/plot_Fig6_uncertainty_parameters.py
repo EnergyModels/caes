@@ -30,7 +30,7 @@ y_scale = 'linear'
 formations = ['MK1-3', 'LK1',  'UJ1']
 formation_dict = {'LK1': 'Lower Cretaceous', 'MK1-3': 'Middle Cretaceous', 'UJ1': 'Upper Jurassic'}
 colors = sns.color_palette('colorblind')
-markersize = 1
+markersize = 0.25
 
 # =====================================
 # process data
