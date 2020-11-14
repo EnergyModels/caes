@@ -30,14 +30,14 @@ class ICAES(CAES):
         inputs['ML_exp5'] = -1  # <0 - unused
 
         # compression - pressure drop inbetween stages (fraction)
-        inputs['delta_p_cmp12'] = 0.0  # between stages 1 and 2
-        inputs['delta_p_cmp23'] = 0.02
+        inputs['delta_p_cmp12'] = 0.01  # between stages 1 and 2
+        inputs['delta_p_cmp23'] = 0.01
         inputs['delta_p_cmp34'] = -1  # <0 - unused
         inputs['delta_p_cmp45'] = -1  # <0 - unused
 
         # compression - pressure drop inbetween stages (fraction)
-        inputs['delta_p_exp12'] = 0.02  # between stages 1 and 2
-        inputs['delta_p_exp23'] = 0.0
+        inputs['delta_p_exp12'] = 0.01  # between stages 1 and 2
+        inputs['delta_p_exp23'] = 0.01
         inputs['delta_p_exp34'] = -1  # <0 - unused
         inputs['delta_p_exp45'] = -1  # <0 - unused
 
