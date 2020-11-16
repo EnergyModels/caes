@@ -68,7 +68,7 @@ for i in range(nrows):
         y_convert = 1.0e-3
         y_vars = ['pwr_cmp', 'pwr_exp']
         y_var_labels = ['Compressor', 'Turbine']
-        c_list = [colors[0], colors[1]]
+        c_list = [colors2[3], colors[1]]
         markers = ['^', 'v']
         styles = ['-', '-']
         y_lims = [0.0, 300.0]
@@ -79,7 +79,7 @@ for i in range(nrows):
         y_convert = 1.0
         y_vars = ['p3', 'press_cmp', 'press_exp']
         y_var_labels = ['Aquifer', 'Compressor', 'Turbine']
-        c_list = [colors[2], colors[0], colors[1]]
+        c_list = [colors2[4], colors2[3], colors[1]]
         markers = ['s', '>', '<']
         styles = ['-', '-', '-']
         y_lims = [0.0, 24.0]
@@ -124,16 +124,16 @@ for i in range(nrows):
     if i == 1:
         vspace = 0.1
         # Hydrostatic
-        ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'hydrostatic'], c=colors2[7], linewidth=1.5, linestyle='--')
         ax.text(df.time.max(), df.hydrostatic.max() - 2.0*vspace, 'Hydrostatic Pressure', horizontalalignment='right',
                 verticalalignment='top', fontsize='medium')
         # MAOP
-        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=(0, 0, 0), linewidth=1.5, linestyle='--')
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'MAOP'], c=colors2[7], linewidth=1.5, linestyle='--')
         ax.text(df.time.max(), df.MAOP.max() + vspace, 'Maximum Operating Pressure', horizontalalignment='right',
                 verticalalignment='bottom', fontsize='medium')
 
         # Fracture
-        ax.plot(df.loc[:, 'time'], df.loc[:, 'fracture'], c=colors2[3], linewidth=1.5, linestyle='--')
+        ax.plot(df.loc[:, 'time'], df.loc[:, 'fracture'], c=(0,0,0), linewidth=1.5, linestyle='--')
         ax.text(df.time.max(), df.fracture.max() + vspace, 'Fracture Pressure', horizontalalignment='right',
                 verticalalignment='bottom', fontsize='medium')
 
