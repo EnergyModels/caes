@@ -10,7 +10,7 @@ import matplotlib.lines as mlines
 # =====================================
 # data input
 results_filename = "sizing_study_results.csv"
-savename = "Fig_Sizing_study_efficiency.png"
+savename = "Fig_Sizing_study_efficiency_V2.png"
 
 # figure output
 DPI = 400  # Set resolution for saving figures
@@ -57,7 +57,7 @@ height = 4.0  # inches
 x_var = "kW_out_avg"
 x_label = "Power Rating (MW)"
 x_convert = 1e-3
-x_limit = [0.0,500.0]
+x_limit = [0.0, 500.0]
 
 y_var = "RTE"
 y_label = "Efficiency (%)"
@@ -84,17 +84,17 @@ sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 # Set marker shapes and sizes
 # markers = ['.', '.', '.', '.', '.']
 markers = ['^', '.', 'v', '^', 'v', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
+linestyles = ['solid', 'dashed', (0, (5, 5)), (0, (5, 10)), 'dashdot', 'dotted']
 marker_size = 3.0
 markeredgewidth = 2.0
 
 # iterate through series
-for k, (serie, color, marker) in enumerate(zip(series, colors, markers)):
+for k, (serie, color, marker, linestyle) in enumerate(zip(series, colors, markers, linestyles)):
     ind = df_ix.loc[:, series_var] == serie
     x = x_convert * df_ix.loc[ind, x_var]
     y = y_convert * df_ix.loc[ind, y_var]
-    ax.plot(x, y, linestyle='-', color=color, marker=marker, markersize=marker_size,
-            markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
-            label=series_dict[serie])
+    ax.plot(x, y, linestyle=linestyle, color=color, label=series_dict[serie])  # marker=marker, markersize=marker_size,
+    # markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
 
 # axes labels
 # x-axis labels (only bottom)
@@ -114,9 +114,9 @@ ax.tick_params(top=False, right=False)
 #     patches.append(mpatches.Patch(facecolor=colors[k], label=entry))
 symbols = []
 for k, entry in enumerate(series_dict.values()):
-    symbols.append(mlines.Line2D([], [], color=colors[k], linestyle='-', marker=markers[k], markersize=marker_size,
-                                 markerfacecolor=colors[k], markeredgewidth=markeredgewidth,
-                                 label=entry))
+    symbols.append(mlines.Line2D([], [], color=colors[k], linestyle=linestyles[k], label=entry))
+    # marker=markers[k], markersize=marker_size,
+    # markerfacecolor=colors[k], markeredgewidth=markeredgewidth,
 
 # y_pos = j / 2 + 0.5
 # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
