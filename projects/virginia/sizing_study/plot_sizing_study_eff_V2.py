@@ -84,7 +84,8 @@ sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 # Set marker shapes and sizes
 # markers = ['.', '.', '.', '.', '.']
 markers = ['^', '.', 'v', '^', 'v', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'o', 'X']
-linestyles = ['solid', 'dashed', (0, (5, 5)), (0, (5, 10)), 'dashdot', 'dotted']
+linestyles = ['dashed', (0, (5, 5)),
+    (0, (5, 10)),]
 marker_size = 3.0
 markeredgewidth = 2.0
 
@@ -93,7 +94,7 @@ for k, (serie, color, marker, linestyle) in enumerate(zip(series, colors, marker
     ind = df_ix.loc[:, series_var] == serie
     x = x_convert * df_ix.loc[ind, x_var]
     y = y_convert * df_ix.loc[ind, y_var]
-    ax.plot(x, y, linestyle=linestyle, color=color, label=series_dict[serie])  # marker=marker, markersize=marker_size,
+    ax.plot(x, y, linestyle=linestyle, color=color, linewidth=2.0, label=series_dict[serie])  # marker=marker, markersize=marker_size,
     # markeredgewidth=markeredgewidth, markeredgecolor=color, markerfacecolor='None',
 
 # axes labels
@@ -122,7 +123,7 @@ for k, entry in enumerate(series_dict.values()):
 # leg = a[j, i].legend(bbox_to_anchor=(1.2, y_pos), ncol=1, loc='center')
 x_pos = -0.1
 leg = ax.legend(handles=symbols, bbox_to_anchor=(0.05, 0.05), ncol=1, loc='lower left',
-                title='Storage Duration')
+                title='Storage Duration', handlelength=5)
 
 if len(y_limit) == 2:
     ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
