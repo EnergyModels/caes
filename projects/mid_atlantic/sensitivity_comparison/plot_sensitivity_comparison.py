@@ -8,9 +8,11 @@ import os
 resolution = 500
 filename = "sensitivity_results.csv"
 directories = ['PJM', 'NYISO', 'ISONE',
-                   'MK_5', 'MK_10', 'MK_15', 'MK_20',
-                   'LK_10', 'LK_15', 'LK_20', 'LK_25', 'LK_30',
-                   'UJ_20', 'UJ_25', 'UJ_30']  # Excel sheet_names
+               'MK_5', 'MK_10', 'MK_15', 'MK_20',
+               'LK_10', 'LK_15', 'LK_20', 'LK_25', 'LK_30',
+               'UJ_20', 'UJ_25', 'UJ_30']  # Excel sheet_names
+
+directories = ['MK_3', 'LK_1', 'LK_5']  # Excel sheet_names
 
 # dictionary to rename sensitivty variables
 sens_var_rename = {'steps': 'Solver steps',

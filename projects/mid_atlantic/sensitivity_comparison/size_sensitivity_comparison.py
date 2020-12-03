@@ -111,10 +111,12 @@ if __name__ == '__main__':
     debug = False
 
     xlsx_filename = 'user_inputs.xlsx'  # Excel file with inputs
-    sheet_names = ['PJM', 'NYISO', 'ISONE',
-                   'MK_5', 'MK_10', 'MK_15', 'MK_20',
-                   'LK_10', 'LK_15', 'LK_20', 'LK_25', 'LK_30',
-                   'UJ_20', 'UJ_25', 'UJ_30']  # Excel sheet_names
+    # sheet_names = ['PJM', 'NYISO', 'ISONE',
+    #                'MK_5', 'MK_10', 'MK_15', 'MK_20',
+    #                'LK_10', 'LK_15', 'LK_20', 'LK_25', 'LK_30',
+    #                'UJ_20', 'UJ_25', 'UJ_30']  # Excel sheet_names
+
+    sheet_names = ['MK_3']  # Excel sheet_names
 
     capacity = 200  # [MW]
     duration = 24  # [hr]

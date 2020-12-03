@@ -42,6 +42,9 @@ if __name__ == '__main__':
                    'MK_5', 'MK_10', 'MK_15', 'MK_20',
                    'LK_10', 'LK_15', 'LK_20', 'LK_25', 'LK_30',
                    'UJ_20', 'UJ_25', 'UJ_30']  # Excel sheet_names
+
+    sheet_names = ['MK_3',
+                   'LK_1', 'LK_5']  # Excel sheet_names
     ncpus = 3  # number of cpus to use
     float_perm = 0.1  # permutation of float inputs (0.1 = +/-10%)
     int_perm = 1  # permutation of integer inputs ( 1 = +/-1)
