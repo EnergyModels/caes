@@ -14,17 +14,18 @@ savename = "Fig6_uncertainty_parameters.png"
 DPI = 400  # Set resolution for saving figures
 
 x_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air", "depth_m", "thickness_m", "porosity",
-          "permeability_mD"]
+          "permeability_mD", "n_cmp1"]
 x_labels = ["Geothermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)",
-            "Air leakage\n(%)", "Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)"]
-x_converts = [1000.0, 1.0, 1.0, 100.0, 1.0, 1.0, 1.0, 1.0]
-x_limits = [[], [], [], [], [0.0, 5500.0], [], [], [], ]
-x_scales = ["linear", "linear", "linear", "linear", "linear", "log", "linear", "log"]
+            "Air leakage\n(%)", "Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)",
+            "Polytropic index\n(-)"]
+x_converts = [1000.0, 1.0, 1.0, 100.0, 1.0, 1.0, 1.0, 1.0,1.0]
+x_limits = [[], [], [], [], [0.0, 5500.0], [], [], [], []]
+x_scales = ["linear", "linear", "linear", "linear", "linear", "log", "linear", "log", "linear"]
 
 y_var = "RTE"
 y_label = "RTE [%]"
 y_convert = 100.0
-y_limit = [40.0, 80.0]
+y_limit = [30.0, 100.0]
 y_scale = 'linear'
 
 formations = ['MK1-3', 'LK1',  'UJ1']
@@ -54,10 +55,10 @@ df = df[df.loc[:, 'RTE'] > 0.0]
 # 1.5 column: 140 mm = 5.51 in
 # 2 column: 190 mm = 7.48 i
 width = 10.0  # inches
-height = 6.5  # inches
+height = 10.0  # inches
 
 # Create plot
-f, a = plt.subplots(2, 4, sharey=True, squeeze=False)
+f, a = plt.subplots(3, 3, sharey=True, squeeze=False)
 a = a.ravel()
 
 # Set size
@@ -93,7 +94,7 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
     ax.set_xlabel(x_label)
 
     # y-axis labels (only left side)
-    if i == 0 or i == 4:
+    if i == 0 or i == 3 or i == 6:
         ax.set_ylabel(y_label)
 
     # Despine and remove ticks
@@ -132,7 +133,7 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
 patches = [mpatches.Patch(color=colors[0], label=formation_dict[formations[0]]),
            mpatches.Patch(color=colors[1], label=formation_dict[formations[1]]),
            mpatches.Patch(color=colors[2], label=formation_dict[formations[2]])]
-a[5].legend(handles=patches, bbox_to_anchor=(1.0, -0.3), loc="upper center", ncol=3)
+a[7].legend(handles=patches, bbox_to_anchor=(0.5, -0.3), loc="upper center", ncol=3)
 
 # Adjust layout
 plt.tight_layout()
