@@ -61,14 +61,14 @@ sns.scatterplot(data=df, x='Distance to shore (km)', y='Water depth (m)', hue='N
                 style='Formation (-)', ax=a)
 
 a.set_xlim(left=0.0, right=300.0)
-a.set_ylim(top=-8, bottom=-10000.0)
-a.set_yscale('symlog')
+a.set_ylim(top=0, bottom=-400.0)
+# a.set_yscale('symlog')
 
 # Inset
 
 
 x_lims = [0.0, 100.0]
-y_lims = [-9, -60.0]
+y_lims = [0, -60.0]
 
 rect = plt.Rectangle((x_lims[0] + 1, y_lims[0]), x_lims[1] - x_lims[0] + 1, y_lims[1] - y_lims[0], fill=False,
                      facecolor="black",
@@ -81,7 +81,7 @@ sns.scatterplot(data=df, x='Distance to shore (km)', y='Water depth (m)', hue='N
 
 axins.set_xlim(left=x_lims[0], right=x_lims[1])
 axins.set_ylim(top=y_lims[0], bottom=y_lims[1])
-axins.set_yscale('symlog')
+# axins.set_yscale('symlog')
 axins.yaxis.set_major_locator(plt.MaxNLocator(3))
 
 a.legend(bbox_to_anchor=(1.025, 0.0), loc="center left", ncol=1)
