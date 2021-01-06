@@ -119,7 +119,7 @@ if __name__ == '__main__':
     duration = 24  # [hr]
     r_w = 0.41 / 2.0  # [m]
 
-    polytropic_index = 1.21
+    polytropic_index = 1.1
 
     # ------------------
     # create sweep_inputs dataframe
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     sweep_inputs = pd.DataFrame()
 
     entries = ['depth_m', 'thickness_m', 'porosity', 'capacity_MW', 'duration_hr', 'permeability_mD', 'n_cmp1',
-               'n_exp1']]
+               'n_exp1']
     s = pd.Series(index=entries)
     s['depth_m'] = depth
     s['thickness_m'] = h

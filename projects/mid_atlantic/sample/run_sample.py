@@ -9,8 +9,8 @@ k = 236.1424  # [mD]
 capacity = 200  # [MW]
 duration = 24  # [hr]
 r_w = 0.41 / 2.0  # [m]
-m_dot = 619.6078491  # mass flow rate [kg/s]
-r_f = 82.64452305  # formation radius [m]
+m_dot = 619.960576753886  # mass flow rate [kg/s]
+r_f = 127.023986376374  # formation radius [m]
 
 # create system
 inputs = ICAES2.get_default_inputs()
