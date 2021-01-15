@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 from math import pi
+import numpy as np
+import matplotlib.colors as colors
+import matplotlib.patches as mpatches
 
 df = pd.read_csv('all_analysis.csv')
 
@@ -41,94 +44,118 @@ for formation in df.loc[:, 'Formation (-)'].unique():
 # Filter data with mean RTE greater than 0.5
 # df = df[df.loc[:, 'RTE_mean'] >= 0.5]
 
+sns.histplot(df, x='Water depth (m)')
+
 df.loc[:, 'RTE [%]'] = df.loc[:, 'RTE_mean']
 
 df.loc[:, 'Water depth'] = '> 60m'
 df.loc[df.loc[:, 'Water depth (m)'] > -60.0, 'Water depth'] = '30m - 60m'
 df.loc[df.loc[:, 'Water depth (m)'] > -30.0, 'Water depth'] = '<30 m'
 
-sns.histplot(df, x='RTE [%]', hue='Water depth', hue_order=['<30 m', '30m - 60m', '> 60m'])
+# sns.histplot(df, x='RTE [%]', hue='Water depth', hue_order=['<30 m', '30m - 60m', '> 60m'])
 
-
+palette_rgb = np.array([[69, 117, 180],
+                        [145, 191, 219],
+                        [224, 243, 248]])
+palette_hex = []
+for rgb in palette_rgb:
+    palette_hex.append(colors.rgb2hex(rgb / 255))
+# cmap = colors.ListedColormap(palette_hex)
 # Calculate storage potential
-frac = 0.1 # fraction of grid available for storage
+frac = 0.1  # fraction of grid available for storage
 A_grid = 20000 * 20000  # each square is 20 km by 20 km
-well_MWh = 200 * 24 # 200 MW at 24 hour duration
+well_MWh = 200 * 24  # 200 MW at 24 hour duration
 
-df.loc[:, 'A_well'] = pi * df.loc[:, 'r_f']**2
+df.loc[:, 'A_well'] = pi * df.loc[:, 'r_f'] ** 2
 df.loc[:, 'n_wells'] = frac * A_grid / df.loc[:, 'A_well']
 df.loc[:, 'MWh'] = df.loc[:, 'n_wells'] * well_MWh
 
+# entries = ['RTE', 'MWh', 'Depth']
+# RTE_bins = [0.40, 0.45, 0.50, 0.55, 0.60, 0.65]
+# RTE_labels = ['40-45', '45-50', '50-55', '55-60', '60-65']
+# Depth_bins = [0.0, -30.0, -60.0, -90.0, -120.0]
+# # Depth_labels = ['0-30m', '30-60m', '60-90m', '90-120m']
+# df_smry = pd.DataFrame(columns=entries)
+# for i in range(len(RTE_bins) - 1):
+#     for j in range(len(Depth_bins) - 1):
+#         # Select relevant indices
+#         ind = (RTE_bins[i] <= df.loc[:, 'RTE_mean']) & (df.loc[:, 'RTE_mean'] < RTE_bins[i + 1]) \
+#               & (Depth_bins[j + 1] < df.loc[:, 'Water depth (m)']) & (df.loc[:, 'Water depth (m)'] <= Depth_bins[j])
 #
-# # sns.scatterplot(data=df, x='Distance to shore (km)', y='Water depth (m)', hue='Nearest State (-)',
-# #                 size='Feasibility (%)', style='Formation (-)')
-# #
-# # # a[1].set_ylim(top=0.0,bottom=-100.0)
-# #
-# # sns.scatterplot(data=df, x='Distance to shore (km)', y='Water depth (m)', hue='Nearest State (-)',
-# #                 size='Feasibility (%)', style='Formation (-)', ax=a[1])
-# #
-# # a[1].set_xlim(left=0.0,right=100.0)
-# # a[1].set_ylim(top=0.0,bottom=-100.0)
+#         # store result
+#         s = pd.Series(index=entries)
+#         s['RTE'] = RTE_labels[i]
+#         s['Depth'] = Depth_bins[j]
+#         s['MWh'] = df.loc[ind, 'MWh'].sum()
+#         df_smry = df_smry.append(s, ignore_index=True)
+
+# sns.barplot(data=df_smry, x='Depth', y='MWh', hue='RTE')
 #
+# for i, RTE_label in enumerate(RTE_labels):
+#     ind = df_smry.loc[:, 'RTE'] == RTE_label
+#     x = df_smry.loc[ind, 'Depth'] * -1.0
+#     y = df_smry.loc[ind, 'MWh']
+#     if i == 0:
+#         plt.bar(x, y, width=1.0, label=RTE_label)
+#     else:
+#         plt.bar(x, y, bottom=y_prev, width=1.0, label=RTE_label)
 #
-# # create figure
-# f, a = plt.subplots(1, 1)
-# axins = zoomed_inset_axes(a, zoom=2.2, loc='upper center', bbox_to_anchor=(0.5, -0.2), bbox_transform=a.transAxes)
-#
-# # Main plot
-# sns.scatterplot(data=df, x='Distance to shore (km)', y='Water depth (m)', hue='Nearest State (-)',
-#                 style='Formation (-)', ax=a)
-#
-# a.set_xlim(left=0.0, right=300.0)
-# a.set_ylim(top=0, bottom=-400.0)
-# # a.set_yscale('symlog')
-#
-# # Inset
-#
-#
-# x_lims = [0.0, 100.0]
-# y_lims = [0, -60.0]
-#
-# rect = plt.Rectangle((x_lims[0] + 1, y_lims[0]), x_lims[1] - x_lims[0] + 1, y_lims[1] - y_lims[0], fill=False,
-#                      facecolor="black",
-#                      edgecolor='black', linestyle='--')
-#
-# a.add_patch(rect)
-#
-# sns.scatterplot(data=df, x='Distance to shore (km)', y='Water depth (m)', hue='Nearest State (-)',
-#                 style='Formation (-)', legend=False, ax=axins)
-#
-# axins.set_xlim(left=x_lims[0], right=x_lims[1])
-# axins.set_ylim(top=y_lims[0], bottom=y_lims[1])
-# # axins.set_yscale('symlog')
-# axins.yaxis.set_major_locator(plt.MaxNLocator(3))
-#
-# a.legend(bbox_to_anchor=(1.025, 0.0), loc="center left", ncol=1)
-#
-# a.text(-0.1, 1.0, 'A', horizontalalignment='center', verticalalignment='center',
-#        transform=a.transAxes, fontsize='medium', fontweight='bold')
-#
-# axins.text(-0.3, 1.0, 'B', horizontalalignment='center', verticalalignment='center',
-#            transform=axins.transAxes, fontsize='medium', fontweight='bold')
-#
-# # Add rectangle that represents subplot2
-#
-#
-# # Column width guidelines https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing
-# # Single column: 90mm = 3.54 in
-# # 1.5 column: 140 mm = 5.51 in
-# # 2 column: 190 mm = 7.48 i
-# width = 7.48  # inches
-# height = 7.0  # inches
-#
-# # Set size
-# f.set_size_inches(width, height)
-# plt.subplots_adjust(top=0.95,
-#                     bottom=0.5,
-#                     left=0.12,
-#                     right=0.7,
-#                     hspace=0.2,
-#                     wspace=0.2)
-# # save
-# plt.savefig('Fig7_Distance_v_Depth.png', dpi=300)
+#     y_prev = y
+
+entries = ['RTE', 'MWh', 'Depth']
+RTE_bins = [0.40, 0.50, 0.60, 0.65]
+RTE_labels = ['40 - 50%', '50 - 60%', '60 - 70%']
+# Depth_bins = [0.0, -30.0, -60.0, -90.0, -120.0]
+Depth_bins = np.arange(0.0, -600.1, -10.0)
+df_smry = pd.DataFrame(index=RTE_labels, columns=Depth_bins[:-1])
+for i in range(len(RTE_bins) - 1):
+    for j in range(len(Depth_bins) - 1):
+        # Select relevant indices
+        ind = (RTE_bins[i] <= df.loc[:, 'RTE_mean']) & (df.loc[:, 'RTE_mean'] < RTE_bins[i + 1]) \
+              & (Depth_bins[j + 1] < df.loc[:, 'Water depth (m)']) & (df.loc[:, 'Water depth (m)'] <= Depth_bins[j])
+
+        # store result
+        df_smry.loc[RTE_labels[i], Depth_bins[j]] = df.loc[ind, 'MWh'].sum()
+
+# sns.barplot(data=df_smry, x='Depth', y='MWh', hue='RTE')
+
+widths = []
+for j in range(len(Depth_bins) - 1):
+    widths.append(Depth_bins[j] - Depth_bins[j + 1])
+
+for i, index in enumerate(reversed(df_smry.index)):
+    # ind = df_smry.loc[:, 'RTE'] == RTE_label
+    x = df_smry.columns * -1.0
+    height = df_smry.loc[index, :] / 1e6
+    if i == 0:
+        plt.bar(x, height, width=widths, label=index, align='edge', color=palette_hex[i])
+        bottom = height
+    else:
+        plt.bar(x, height, bottom=bottom, width=widths, label=index, align='edge', color=palette_hex[i])
+        bottom = bottom + height
+
+    # Add outline
+    plt.step(x, bottom, 'k', where='post')
+
+# labels
+plt.xlabel('Water depth (m)')
+plt.ylabel('Storage capacity (TWh)')
+
+# limits
+xlims = [0.0, Depth_bins[-1] * -1.0]
+ylims = [0.0, 350]
+plt.xlim(left=xlims[0], right=xlims[1])
+plt.ylim(bottom=ylims[0], top=ylims[1])
+
+# Additional line
+plt.plot([30.0, 30.0], ylims, 'k--')
+
+# set background color
+ax = plt.gca()
+ax.set_facecolor((0.8, 0.8, 0.8))
+
+# create legend
+patches = [mpatches.Patch(edgecolor='black', facecolor=palette_hex[2], label=RTE_labels[0]),
+           mpatches.Patch(edgecolor='black', facecolor=palette_hex[1], label=RTE_labels[1]),
+           mpatches.Patch(edgecolor='black', facecolor=palette_hex[0], label=RTE_labels[2])]
+leg1 = ax.legend(handles=patches, bbox_to_anchor=(1.0, 1.0), loc="upper right", title='Round Trip Efficiency')

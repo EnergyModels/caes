@@ -67,8 +67,11 @@ for formation, ocean_data_file in zip(formations, ocean_data_files):
         df_ocean.loc[i, 'infeasible_fr'] = n_fail / n_entries
 
         # Sizing
-        df_ocean.loc[i, 'm_dot'] = df_sizing.loc[ind2, 'm_dot']
-        df_ocean.loc[i, 'r_f'] = df_sizing.loc[ind2, 'r_f']
+        # df_ocean.loc[i, 'm_dot'] = df_sizing.loc[ind2, 'm_dot']
+        # df_ocean.loc[i, 'r_f'] = df_sizing.loc[ind2, 'r_f']
+
+        df_ocean.loc[i, 'm_dot'] = df_results.loc[ind, 'm_dot'].mean()
+        df_ocean.loc[i, 'r_f'] = df_results.loc[ind, 'r_f'].mean()
 
     # save results to new csv
     savename = formation + '_analysis.csv'
