@@ -159,3 +159,7 @@ patches = [mpatches.Patch(edgecolor='black', facecolor=palette_hex[2], label=RTE
            mpatches.Patch(edgecolor='black', facecolor=palette_hex[1], label=RTE_labels[1]),
            mpatches.Patch(edgecolor='black', facecolor=palette_hex[0], label=RTE_labels[2])]
 leg1 = ax.legend(handles=patches, bbox_to_anchor=(1.0, 1.0), loc="upper right", title='Round Trip Efficiency')
+
+
+savename = "Fig7c_Distance_v_depth.png"
+plt.savefig(savename, dpi=400)
