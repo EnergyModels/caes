@@ -104,9 +104,9 @@ df.loc[:, 'MWh'] = df.loc[:, 'n_wells'] * well_MWh
 
 entries = ['RTE', 'MWh', 'Depth']
 RTE_bins = [0.40, 0.50, 0.60, 0.65]
-RTE_labels = ['40 - 50%', '50 - 60%', '60 - 70%']
+RTE_labels = ['40 - 50%', '50 - 60%', '> 60%']
 # Depth_bins = [0.0, -30.0, -60.0, -90.0, -120.0]
-Depth_bins = np.arange(0.0, -600.1, -10.0)
+Depth_bins = np.arange(0.0, -200.1, -10.0)
 df_smry = pd.DataFrame(index=RTE_labels, columns=Depth_bins[:-1])
 for i in range(len(RTE_bins) - 1):
     for j in range(len(Depth_bins) - 1):
@@ -143,15 +143,15 @@ plt.ylabel('Storage capacity (TWh)')
 
 # limits
 xlims = [0.0, Depth_bins[-1] * -1.0]
-ylims = [0.0, 350]
+ylims = [0.0, 400]
 plt.xlim(left=xlims[0], right=xlims[1])
 plt.ylim(bottom=ylims[0], top=ylims[1])
 
 # Additional line
-plt.plot([30.0, 30.0], ylims, 'k--')
+plt.plot([50.0, 50.0], ylims, 'k--')
 
 # set background color
-ax = plt.gca()
+# ax = plt.gca()
 # ax.set_facecolor((0.95, 0.95, 0.95))
 
 # create legend
@@ -161,6 +161,38 @@ patches = [mpatches.Patch(edgecolor='black', facecolor=palette_hex[2], label=RTE
            mpatches.Patch(edgecolor='black', facecolor=palette_hex[0], label=RTE_labels[2])]
 leg1 = ax.legend(handles=patches, bbox_to_anchor=(1.0, 1.0), loc="upper right", title='Round Trip Efficiency')
 
+# Add text
+plt.text(25, 375, 'Fixed bottom\nwind turbines', horizontalalignment='center', verticalalignment='center',
+         fontsize='medium')
+plt.text(75, 375, 'Floating\nwind turbines', horizontalalignment='center', verticalalignment='center',
+         fontsize='medium')
+# Add arrows
+ax.arrow(x=50 - 5, y=350, dx=-25, dy=0.0, width=2.0, color='black')
+ax.arrow(x=50 + 5, y=350, dx=25, dy=0.0, width=2.0, color='black')
 
-savename = "Fig7c_Distance_v_depth.png"
+# Set size
+# Column width guidelines https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing
+# Single column: 90mm = 3.54 in
+# 1.5 column: 140 mm = 5.51 in
+# 2 column: 190 mm = 7.48 i
+width = 8.0  # inches
+height = 6.5  # inches
+f = plt.gcf()
+f.set_size_inches(width, height)
+#
+savename = "Fig7d_Distance_v_depth.png"
 plt.savefig(savename, dpi=400)
+
+# Sum total TWh in less than 50m for greater than 50% efficiency
+rows = ['50 - 60%', '> 60%']
+cols = [0, -10, -20, -30, -40]
+total_MWh = df_smry.loc[rows, cols].sum().sum()
+total_TWh = total_MWh / (1000 * 1000)
+print('TWh RTE >50% and water depth <50m: ' + str(total_TWh))
+
+# Sum total TWh in less than 50m for greater than 50% efficiency
+rows = ['> 60%']
+cols = [0, -10, -20, -30, -40, -50, -60, -70, -80, -90]
+total_MWh = df_smry.loc[rows, cols].sum().sum()
+total_TWh = total_MWh / (1000 * 1000)
+print('TWh RTE >60% and water depth <100m: ' + str(total_TWh))
