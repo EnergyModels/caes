@@ -21,7 +21,7 @@ x_limits = [[], [], [0.0, 5500.0], ]
 x_scales = ["linear", "linear", "linear", ]
 
 y_var = "RTE"
-y_label = "RTE [%]"
+y_label = "Round-trip efficiency (%)"
 y_convert = 100.0
 y_limit = [0.0, 100.0]
 y_scale = 'linear'

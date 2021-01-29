@@ -55,8 +55,7 @@ df.loc[df.loc[:, 'Water depth (m)'] > -30.0, 'Water depth'] = '<30 m'
 # sns.histplot(df, x='RTE [%]', hue='Water depth', hue_order=['<30 m', '30m - 60m', '> 60m'])
 
 palette_rgb = np.array([[69, 117, 180],
-                        [145, 191, 219],
-                        [224, 243, 248]])
+                        [145, 191, 219]])
 palette_hex = []
 for rgb in palette_rgb:
     palette_hex.append(colors.rgb2hex(rgb / 255))
@@ -72,11 +71,10 @@ df.loc[:, 'MWh'] = df.loc[:, 'n_wells'] * well_MWh
 
 # bin results
 entries = ['RTE', 'MWh', 'Depth']
-RTE_bins = [0.40, 0.50, 0.60, 0.65]
-RTE_labels = ['40 - 50', '50 - 60', '> 60']
+RTE_bins = [ 0.50, 0.60, 0.65]
+RTE_labels = ['50 - 60', '> 60']
 Depth_bins = np.arange(0.0, -200.1, -10.0)
 df_smry = pd.DataFrame(index=RTE_labels, columns=Depth_bins[:-1])
-df_highEff = pd.DataFrame()
 for i in range(len(RTE_bins) - 1):
     for j in range(len(Depth_bins) - 1):
         # Select relevant indices
@@ -86,8 +84,6 @@ for i in range(len(RTE_bins) - 1):
         # store result
         df_smry.loc[RTE_labels[i], Depth_bins[j]] = df.loc[ind, 'MWh'].sum()
 
-        if RTE_bins[i] >= 0.60:
-            df_highEff = df_highEff.append(df.loc[ind, :], ignore_index=True)
 
 # plot
 widths = []
@@ -97,7 +93,7 @@ for j in range(len(Depth_bins) - 1):
 for i, index in enumerate(reversed(df_smry.index)):
     # ind = df_smry.loc[:, 'RTE'] == RTE_label
     x = df_smry.columns * -1.0
-    height = df_smry.loc[index, :] / 1e6  # TWh
+    height = df_smry.loc[index, :] /1000 # GWh
     if i == 0:
         plt.bar(x, height, width=widths, label=index, align='edge', color=palette_hex[i])
         bottom = height
@@ -106,20 +102,34 @@ for i, index in enumerate(reversed(df_smry.index)):
         bottom = bottom + height
 
     # Add outline
-    plt.step(x, bottom, 'k', where='post')
+    # plt.step(x, bottom, 'k', where='post')
 
 # labels
 plt.xlabel('Water depth (m)')
-plt.ylabel('Storage capacity (TWh)')
+plt.ylabel('Storage capacity (GWh)')
 
 # limits
 xlims = [0.0, Depth_bins[-1] * -1.0]
-ylims = [0.0, 400]
+ylims = [0.0, 1e6]
 plt.xlim(left=xlims[0], right=xlims[1])
 plt.ylim(bottom=ylims[0], top=ylims[1])
+plt.yscale('symlog')
 
 # Additional line - Wind turbines
 plt.plot([60.0, 60.0], ylims, 'k--')
+
+
+# Additional line -
+# Additional line
+plt.plot(xlims, [0.124, 0.124], 'k--')
+plt.text(125, 0.124*1.1, '2018 US battery storage', horizontalalignment='center',
+         verticalalignment='bottom', fontsize='medium', fontweight='bold')
+plt.plot(xlims, [56, 56], 'k--')
+plt.text(125, 56*1.1, '2050 US projected battery storage (low)', horizontalalignment='center',
+         verticalalignment='bottom', fontsize='medium', fontweight='bold')
+plt.plot(xlims, [392, 392], 'k--')
+plt.text(125, 392*1.1, '2050 US projected battery storage (high)', horizontalalignment='center',
+         verticalalignment='bottom', fontsize='medium', fontweight='bold')
 
 # set background color
 # ax = plt.gca()
@@ -127,19 +137,28 @@ plt.plot([60.0, 60.0], ylims, 'k--')
 
 # create legend
 ax = plt.gca()
-patches = [mpatches.Patch(edgecolor='black', facecolor=palette_hex[2], label=RTE_labels[0]),
-           mpatches.Patch(edgecolor='black', facecolor=palette_hex[1], label=RTE_labels[1]),
-           mpatches.Patch(edgecolor='black', facecolor=palette_hex[0], label=RTE_labels[2])]
-leg1 = ax.legend(handles=patches, bbox_to_anchor=(1.0, 1.0), loc="upper right", title='Round-trip Efficiency (%)')
+patches = [mpatches.Patch(edgecolor='black', facecolor=palette_hex[1], label=RTE_labels[0]),
+           mpatches.Patch(edgecolor='black', facecolor=palette_hex[0], label=RTE_labels[1])]
+leg1 = ax.legend(handles=patches, bbox_to_anchor=(1.0, 1.0), loc="upper right", title='Round-trip efficiency (%)')
 
 # Add text
-plt.text(35, 375, 'Fixed bottom\nwind turbines', horizontalalignment='center', verticalalignment='center',
-         fontsize='medium')
-plt.text(85, 375, 'Floating\nwind turbines', horizontalalignment='center', verticalalignment='center',
-         fontsize='medium')
+plt.text(60-10, 5.8e5, 'Fixed bottom\nwind turbines', horizontalalignment='right', verticalalignment='center',
+         fontsize='medium', fontweight='bold')
+plt.text(60+10, 5.8e5, 'Floating\nwind turbines', horizontalalignment='left', verticalalignment='center',
+         fontsize='medium', fontweight='bold')
+
+plt.plot([60.0-20, 60.0-2], [3.0e5, 3.0e5], 'k-')
+plt.plot([60.0-20, 60.0-15], [3.0e5, 3.3e5], 'k-')
+plt.plot([60.0-20, 60.0-15], [3.0e5, 2.7e5], 'k-')
+
+
+
+plt.plot([60.0+2, 60.0+20], [3.0e5, 3.0e5], 'k-')
+plt.plot([60.0+15, 60.0+20], [3.3e5, 3.0e5], 'k-')
+plt.plot([60.0+15, 60.0+20], [2.7e5, 3.0e5], 'k-')
 # Add arrows
-ax.arrow(x=60 - 5, y=350, dx=-25, dy=0.0, width=2.0, color='black')
-ax.arrow(x=60 + 5, y=350, dx=25, dy=0.0, width=2.0, color='black')
+# ax.arrow(x=60 - 2, y=5.1e5, dx=-15, dy=0.0, width=10.0, color='black')
+# ax.arrow(x=60 + 2, y=5.1e5, dx=15, dy=0.0, width=10.0, color='black')
 
 # Set size
 # Column width guidelines https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing
@@ -151,7 +170,7 @@ height = 6.5  # inches
 f = plt.gcf()
 f.set_size_inches(width, height)
 #
-savename = "Fig7d_Distance_v_depth.png"
+savename = "Fig7e_Distance_v_depth.png"
 plt.savefig(savename, dpi=400)
 
 # Sum total TWh in less than 60m for greater than 50% efficiency
@@ -167,6 +186,3 @@ cols = [0, -10, -20, -30, -40, -50]
 total_MWh = df_smry.loc[rows, cols].sum().sum()
 total_GWh = total_MWh / 1000
 print('GWh RTE >60% and water depth <60m: ' + str(total_GWh))
-
-# save high efficiency and shallow water sites to csv
-df_highEff.to_csv('high_efficiency_and_shallow_sites.csv')

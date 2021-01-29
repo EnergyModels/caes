@@ -189,7 +189,7 @@ for ax in a:
     a_cbar.append(ax[-1])
 cbar = f.colorbar(im, ax=a_cbar, location='right', shrink=0.6, pad=0.2, extendfrac='auto')
 # cbar = f.colorbar(im, ax=a[1, 1], orientation='horizontal', pad=0.2)
-cbar.ax.set_title('RTE [%]')
+cbar.ax.set_title('Round-trip\nefficiency\n(%)')
 # cbar.set_label('RTE [%]', rotation=0)
 # Adjust layout
 # plt.tight_layout()
