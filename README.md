@@ -2,29 +2,29 @@
 Thermodynamic performance of isothermal offshore compressed air energy storage (OCAES) systems
 
 ## Installation
-Sample linux installion based on Rivanna, the UVA High Performance Computer https://www.rc.virginia.edu/
+Sample Linux installion based on Rivanna, the UVA High Performance Computer https://www.rc.virginia.edu/
   - clone from github
       > git clone https://www.github.com/EnergyModels/caes
   - move to caes directory
       > cd caes
-  - load anaconda (may need to update to latest python version)
+  - load Anaconda (may need to update to latest python version)
       > module load anaconda/2019.10-py3.7
   - create environment
       > conda env create
   - activate environment
       > source activate caes-py3
   - install caes module
-      > cd ~/caes/caes
+      > cd ~/caes
       > pip install .
 
 ## Operation
 To run (from a new terminal) on Rivanna
-- load anaconda (may need to update to latest python vversion)
+- load Anaconda (may need to update to latest python vversion)
     > module load anaconda/2019.10-py3.7
 - activate environment
     > source activate caes-py3
 - move to directory
-    > cd ~/caes/caes/projects/sample
+    > cd ~/caes/projects/sample
 - run file
     > python sample.py
 

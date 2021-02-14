@@ -63,7 +63,7 @@ for plt_num in range(3):
         width = 4.5  # inches
         height = 5.5  # inches
     elif plt_num == 1:  # Select
-        savename = 'sensitivity_results_eff.png'
+        savename = 'FigS4_sensitivity_results_eff.png'
         variables = ['RTE']
         varLabels = ['RTE [%]']
         conversions = [100.0]
