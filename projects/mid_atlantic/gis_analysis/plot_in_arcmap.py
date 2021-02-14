@@ -4,7 +4,7 @@
 import arcpy
 
 # inputs
-directory = 'C:\\Users\\benne\\PycharmProjects\\caes\\projects\\mid_atlantic\\gis_analysis'
+directory = 'C:\\Users\\benne\\PycharmProjects\\caes\\projects\\mid_atlantic\\expected_case_n\\gis_analysis'
 filegeodatabase = 'results.gdb' # Needs to be created ahead of time
 files = ['LK1_analysis.csv','MK1-3_analysis.csv', 'UJ1_analysis.csv']
 variable = 'RTE_mean'

@@ -83,6 +83,6 @@ for entry, color in zip(entries, colors):
 plt.legend(handles=lines, loc="upper left", title='Permeability\n[mD]')
 
 plt.tight_layout()
-plt.savefig('Fig4_aquifer_delta_p.png', dpi=300)
+plt.savefig('FigS1_aquifer_delta_p.png', dpi=300)
 
 # plt.close()

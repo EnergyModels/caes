@@ -76,12 +76,13 @@ for i in range(9):
 # save to csv
 df.to_csv('loss_results.csv')
 
-# isothermal
-# near-isothermal
-# machine pressure losses
-# thermal gradient
-# air leakage
-# aquifer losses
-# gravity potential
-# pipe friction
-# pipe heat transfer
+# order of mechanisms analyzed:
+# 1) isothermal
+# 2) near-isothermal
+# 3) machine pressure losses
+# 4) thermal gradient
+# 5) air leakage
+# 6) aquifer losses
+# 7) gravity potential
+# 8) pipe friction
+# 9) pipe heat transfer

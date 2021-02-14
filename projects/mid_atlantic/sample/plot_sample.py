@@ -151,5 +151,5 @@ f = plt.gcf()
 f.set_size_inches(width, height)
 
 # save and close
-plt.savefig('Fig3_Sample_Output.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
+plt.savefig('Fig2D_Sample_Output.png', dpi=600, bbox_extra_artists=leg, bbox_inches='tight')
 # plt.close()
