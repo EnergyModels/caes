@@ -16,4 +16,4 @@ cd ../aquifer_flow || exit
 sbatch run_aquifer_flow.sh
 
 cd ../sample || exit
-sbatch run_sample.py
+sbatch run_sample.sh

@@ -4,11 +4,11 @@ channels:
     - conda-forge
 dependencies:
     - python=3.7.3
-    - CoolProp
-    - pandas
-    - numpy
-    - seaborn
-    - matplotlib
-    - scipy
-    - joblib
-    - xlrd
+    - CoolProp=6.3.0
+    - pandas=1.0.3
+    - numpy=1.18.1
+    - seaborn=0.11.0
+    - matplotlib=3.3.3
+    - scipy=1.4.1
+    - joblib=0.14.1
+    - xlrd=1.2.0

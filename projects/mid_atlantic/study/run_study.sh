@@ -19,8 +19,8 @@ python uncertainty_analysis.py
 python analyze_results.py
 
 # plot
+python plot_Fig3_storage_potential.py
 python plot_Fig5_permeability_thickness.py
 python plot_Fig6_select_uncertainty_parameters.py
 python plot_FigS2_all_uncertainty_parameters.py
 python plot_FigS3_Distance_v_Depth_By_State.py
-python plot_Fig3_storage_potential.py

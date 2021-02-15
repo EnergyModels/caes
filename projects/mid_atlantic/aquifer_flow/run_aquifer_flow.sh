@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 1
-#SBATCH --cpus-per-task=20
-#SBATCH -t 6:00:00
+#SBATCH --cpus-per-task=1
+#SBATCH -t 1:00:00
 #SBATCH -p standard
 
 module purge
@@ -14,6 +14,4 @@ source activate caes-py3
 export NUM_PROCS=$SLURM_CPUS_PER_TASK
 
 # run
-python sizing_study.py
-python plot_sizing_study_eff.py
-python plot_sizing_study_all.py
+python aquifer_flow.py
