@@ -8,7 +8,7 @@ import matplotlib.patches as mpatches
 # =====================================
 # data input
 results_filename = "uncertainty_results_all.csv"
-savename = "Fig6_select_uncertainty_parameters.png"
+savename = "Fig6_select_uncertainty_parameters_V2.png"
 
 # figure resolution
 DPI = 400  # Set resolution for saving figures
@@ -27,9 +27,9 @@ y_limit = [0.0, 100.0]
 y_scale = 'linear'
 
 formations = ['MK1-3', 'LK1', 'UJ1']
-formations = ['UJ1']
 formation_dict = {'LK1': 'Lower Cretaceous', 'MK1-3': 'Middle Cretaceous', 'UJ1': 'Upper Jurassic'}
 colors = sns.color_palette('colorblind')
+# colors = [colors[],colors[1],colors[2]]
 markersize = 0.1
 
 # =====================================
@@ -57,8 +57,8 @@ width = 7.48  # inches
 height = 5.0  # inches
 
 # Create plot
-f, a = plt.subplots(1, 3, sharey=True, squeeze=False)
-a = a.ravel()
+f, a = plt.subplots(3, 3, sharey='all', sharex='col', squeeze=False)
+# a = a.ravel()
 
 # Set size
 f.set_size_inches(width, height)
@@ -70,52 +70,54 @@ sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
 
 count = 0
 # iterate through x-variables
-for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
-        zip(x_vars, x_labels, x_converts, x_limits, x_scales)):
+for k, (formation, color) in enumerate(zip(formations, colors)):
 
-    # access subplot
-    ax = a[i]
+    for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
+            zip(x_vars, x_labels, x_converts, x_limits, x_scales)):
 
-    for k, (formation, color) in enumerate(zip(formations, colors)):
+        # access subplot
+        ax = a[k, i]
+
         df2 = df[df.loc[:, 'sheet_name'] == formation]
 
         # get data and convert
         x = x_convert * df2.loc[:, x_var]
         y = y_convert * df2.loc[:, y_var]
-        im = ax.scatter(x, y, c=[color], s=markersize, marker=',')
+        im = ax.scatter(x, y, c=[color], s=markersize, marker='.')
 
-    # set background color
-    # ax = plt.gca()
-    # ax.set_facecolor((0.95, 0.95, 0.95))
+        # set background color
+        # ax = plt.gca()
+        # ax.set_facecolor((0.95, 0.95, 0.95))
 
-    # axes scales
-    ax.set_xscale(x_scale)
-    ax.set_yscale(y_scale)
+        # axes scales
+        ax.set_xscale(x_scale)
+        ax.set_yscale(y_scale)
 
-    # axes labels
-    # x-axis labels
-    ax.set_xlabel(x_label)
+        # axes labels
+        # x-axis labels
+        if k == 2:
+            ax.set_xlabel(x_label)
 
-    # y-axis labels (only left side)
-    if i == 0 or i == 3 or i == 6:
-        ax.set_ylabel(y_label)
+        # y-axis labels (only left side)
+        if i == 0:
+            ax.set_ylabel(y_label)
 
-    # Despine and remove ticks
-    # sns.despine(ax=ax, )
-    ax.tick_params(top=False, right=False)
+        # Despine and remove ticks
+        # sns.despine(ax=ax, )
+        ax.tick_params(top=False, right=False)
 
-    # Axes limits
-    if len(y_limit) == 2:
-        ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
+        # Axes limits
+        if len(y_limit) == 2:
+            ax.set_ylim(bottom=y_limit[0], top=y_limit[1])
 
-    if len(x_limit) == 2:
-        ax.set_xlim(left=x_limit[0], right=x_limit[1])
+        if len(x_limit) == 2:
+            ax.set_xlim(left=x_limit[0], right=x_limit[1])
 
-    # Caption labels
-    caption_labels = ['A)', 'B)', 'C)', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-    plt.text(0.05, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
-             transform=ax.transAxes, fontsize='medium', fontweight='bold')
-    count = count + 1
+        # Caption labels
+        caption_labels = ['A)', 'B)', 'C)', 'D)', 'E)', 'F)', 'G)', 'H)', 'I)', 'J', 'K', 'L', 'M', 'N', 'O']
+        plt.text(0.05, 0.95, caption_labels[count], horizontalalignment='center', verticalalignment='center',
+                 transform=ax.transAxes, fontsize='medium', fontweight='bold')
+        count = count + 1
 
     # # Add vertical line for depth
     # if i == 4 and len(y_limit) == 2:
@@ -133,10 +135,10 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
     # leg = a[j, i].legend(bbox_to_anchor=(x_pos, -0.6), ncol=3, loc='upper center')
 
     # Legend
-    # patches = [mpatches.Patch(color=colors[0], label=formation_dict[formations[0]]),
-    #            mpatches.Patch(color=colors[1], label=formation_dict[formations[1]]),
-    #            mpatches.Patch(color=colors[2], label=formation_dict[formations[2]])]
-# a[1].legend(handles=patches, bbox_to_anchor=(0.5, -0.125), loc="upper center", ncol=3)
+    patches = [mpatches.Patch(color=colors[0], label=formation_dict[formations[0]]),
+               mpatches.Patch(color=colors[1], label=formation_dict[formations[1]]),
+               mpatches.Patch(color=colors[2], label=formation_dict[formations[2]])]
+a[2,1].legend(handles=patches, bbox_to_anchor=(0.5, -0.35), loc="upper center", ncol=3)
 
 # Adjust layout
 # plt.tight_layout()
