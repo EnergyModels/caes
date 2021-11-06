@@ -63,7 +63,7 @@ sns.set_context('talk')
 ax = sns.relplot(x='Mass flow [kg/s]', y='Pressure drop [MPa]', hue='Permeability [mD]', data=df,
                  legend=False,
                  palette='colorblind', kind='line')
-# ax.set_xlabel('Flow rate [kg/s]')
+ax.set_xlabels('Mass flow [kg $s^{-1}$]')
 # ax.set_ylabel('Pressure drop [MPa]')
 ax.set_titles(row_template='{row_name}', col_template='{col_name}')
 

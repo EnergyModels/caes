@@ -15,7 +15,7 @@ DPI = 400  # Set resolution for saving figures
 
 x_vars = ["T_grad_m", "p_hydro_grad", "p_frac_grad", "loss_m_air", "depth_m", "thickness_m", "porosity",
           "permeability_mD", "n_cmp1"]
-x_labels = ["Geothermal Gradient\n(deg C/km)", "Pressure Gradient\n(MPa/km)", "Frac Gradient\n(MPa/km)",
+x_labels = ["Geothermal Gradient\n(deg C km$^{-1}$)", "Pressure Gradient\n(MPa km$^{-1}$)", "Frac Gradient\n(MPa km$^{-1}$)",
             "Air leakage\n(%)", "Depth\n(m)", "Thickness\n(m)", "Porosity\n(-)", "Permeability\n(mD)",
             "Polytropic index\n(-)"]
 x_converts = [1000.0, 1.0, 1.0, 100.0, 1.0, 1.0, 1.0, 1.0,1.0]
@@ -23,7 +23,7 @@ x_limits = [[], [], [], [], [0.0, 5500.0], [], [], [], []]
 x_scales = ["linear", "linear", "linear", "linear", "linear", "log", "linear", "log", "linear"]
 
 y_var = "RTE"
-y_label = "RTE [%]"
+y_label = "RTE (%)"
 y_convert = 100.0
 y_limit = [30.0, 100.0]
 y_scale = 'linear'
@@ -109,7 +109,7 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
         ax.set_xlim(left=x_limit[0], right=x_limit[1])
 
     # Caption labels
-    caption_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
+    caption_labels = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'K', 'L', 'M', 'N', 'O']
     plt.text(0.1, 0.98, caption_labels[count], horizontalalignment='center', verticalalignment='center',
              transform=ax.transAxes, fontsize='medium', fontweight='bold')
     count = count + 1

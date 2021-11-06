@@ -31,7 +31,8 @@ series_var = 'RTE'
 series_convert = 100.0
 series_label = "Efficiency (%)"
 
-formation_dict = {'LK1': 'B) Lower Cretaceous', 'MK1-3': 'A) Middle Cretaceous', 'UJ1': 'C) Upper Jurassic'}
+formation_dict = {'LK1': 'b, Lower Cretaceous', 'MK1-3': 'a, Middle Cretaceous', 'UJ1': 'c, Upper Jurassic'}
+formation_dict = {'LK1': 'b', 'MK1-3': 'a', 'UJ1': 'c'}
 
 markersize = 2
 # =====================================

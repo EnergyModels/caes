@@ -62,13 +62,20 @@ for rgb in palette_rgb:
     palette_hex.append(colors.rgb2hex(rgb / 255))
 # cmap = colors.ListedColormap(palette_hex)
 # Calculate storage potential
-frac = 0.1  # fraction of grid available for storage
-A_grid = 19790 * 19790  # each square is 20 km by 20 km
+# fraction of grid available for storage (formation specific), based on Fukai et al. storage efficiency
+frac = {'LK1': 0.05, 'MK1-3': 0.05, 'UJ1': 0.03}
+A_grid = {'LK1': 19790 * 19790, 'MK1-3': 17600 * 17600, 'UJ1': 21180 * 21180}  # each square is ~20 km by ~20 km
 well_MWh = 200 * 24  # 200 MW at 24 hour duration
 
-df.loc[:, 'A_well'] = pi * df.loc[:, 'r_f'] ** 2
-df.loc[:, 'n_wells'] = frac * A_grid / df.loc[:, 'A_well']
-df.loc[:, 'MWh'] = df.loc[:, 'n_wells'] * well_MWh
+for key in frac:
+    ind = df.loc[:, 'formation'] == key
+
+    df.loc[ind, 'frac'] = frac[key] # store fraction used
+    df.loc[ind, 'A_grid'] = A_grid[key]  # store grid area used
+
+    df.loc[ind, 'A_well'] = pi * df.loc[:, 'r_f'] ** 2
+    df.loc[ind, 'n_wells'] = frac[key] * A_grid[key] / df.loc[:, 'A_well']
+    df.loc[ind, 'MWh'] = df.loc[:, 'n_wells'] * well_MWh
 
 # bin results
 entries = ['RTE', 'MWh', 'Depth']
@@ -114,7 +121,7 @@ plt.ylabel('Storage capacity (TWh)')
 
 # limits
 xlims = [0.0, Depth_bins[-1] * -1.0]
-ylims = [0.0, 400]
+ylims = [0.0, 150]
 plt.xlim(left=xlims[0], right=xlims[1])
 plt.ylim(bottom=ylims[0], top=ylims[1])
 
@@ -133,13 +140,13 @@ patches = [mpatches.Patch(edgecolor='black', facecolor=palette_hex[2], label=RTE
 leg1 = ax.legend(handles=patches, bbox_to_anchor=(1.0, 1.0), loc="upper right", title='Round-trip Efficiency (%)')
 
 # Add text
-plt.text(35, 375, 'Fixed bottom\nwind turbines', horizontalalignment='center', verticalalignment='center',
+plt.text(35, 140, 'Fixed bottom\nwind turbines', horizontalalignment='center', verticalalignment='center',
          fontsize='medium')
-plt.text(85, 375, 'Floating\nwind turbines', horizontalalignment='center', verticalalignment='center',
+plt.text(92.5, 140, 'Floating\nwind turbines', horizontalalignment='center', verticalalignment='center',
          fontsize='medium')
 # Add arrows
-ax.arrow(x=60 - 5, y=350, dx=-25, dy=0.0, width=2.0, color='black')
-ax.arrow(x=60 + 5, y=350, dx=25, dy=0.0, width=2.0, color='black')
+ax.arrow(x=60 - 5, y=130, dx=-25, dy=0.0, width=1.0, color='black')
+ax.arrow(x=60 + 5, y=130, dx=25, dy=0.0, width=1.0, color='black')
 
 # Set size
 # Column width guidelines https://www.elsevier.com/authors/author-schemas/artwork-and-media-instructions/artwork-sizing

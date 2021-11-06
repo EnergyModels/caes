@@ -112,7 +112,7 @@ for i, (x_var, x_label, x_convert, x_limit, x_scale) in enumerate(
         ax.set_xlim(left=x_limit[0], right=x_limit[1])
 
     # Caption labels
-    caption_labels = ['A)', 'B)', 'C)', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
+    caption_labels = ['a', 'b', 'c', 'd', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
     plt.text(0.05, 1.05, caption_labels[count], horizontalalignment='center', verticalalignment='center',
              transform=ax.transAxes, fontsize='medium', fontweight='bold')
     count = count + 1

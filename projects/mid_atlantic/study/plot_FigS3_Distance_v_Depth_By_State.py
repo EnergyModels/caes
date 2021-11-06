@@ -86,10 +86,10 @@ axins.yaxis.set_major_locator(plt.MaxNLocator(3))
 
 a.legend(bbox_to_anchor=(1.025, 0.0), loc="center left", ncol=1)
 
-a.text(-0.1, 1.0, 'A', horizontalalignment='center', verticalalignment='center',
+a.text(-0.1, 1.0, 'a', horizontalalignment='center', verticalalignment='center',
        transform=a.transAxes, fontsize='medium', fontweight='bold')
 
-axins.text(-0.3, 1.0, 'B', horizontalalignment='center', verticalalignment='center',
+axins.text(-0.3, 1.0, 'b', horizontalalignment='center', verticalalignment='center',
            transform=axins.transAxes, fontsize='medium', fontweight='bold')
 
 # Add rectangle that represents subplot2
